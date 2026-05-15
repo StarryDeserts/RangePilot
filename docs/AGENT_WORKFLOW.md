@@ -2,7 +2,7 @@
 Purpose: Operational workflow for agents working on RangePilot.
 Audience: AI agents and human reviewers coordinating agent-led implementation.
 Status: Generated documentation; approved for current main branch.
-Source of truth relationship: Workflow companion to local source docs; does not replace product or protocol authority.
+Source of truth relationship: Workflow companion to local source docs and official-derived references; does not replace product or protocol authority.
 ---
 
 # Agent Workflow
@@ -31,10 +31,14 @@ DeepBook tasks must read all of:
 
 1. [range_pilot_product_architecture_spec.md](./range_pilot_product_architecture_spec.md).
 2. [deepbook_predict_模块架构解析.md](./deepbook_predict_模块架构解析.md).
-3. [DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md](./DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md).
-4. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md).
+3. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md).
+4. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md) for SDK/PTB/entrypoint work.
+5. [DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md](./DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md).
+6. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md).
 
 Do this before changing transaction builders, protocol config, quote logic, portfolio reads, vault reads, or chain integration.
+
+For official Testnet config and entrypoint reference, prefer `docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md` over older analysis notes. For protocol mental model and invariants, continue to use `docs/deepbook_predict_模块架构解析.md` and `docs/DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md`.
 
 ### Agent workflow tasks
 
@@ -96,8 +100,10 @@ If the worktree is dirty:
 ## Uncertainty rules
 
 - Unknown details are `TBD`.
-- Chain/deployment and transaction-building details are `MUST CONFIRM BEFORE CODING`.
-- Do not invent package IDs, object IDs, quote asset coin types, oracle IDs, market/expiry values, PredictManager discovery method, Move signatures, key binary layouts, quote preview shape, or official read server URL.
+- Runtime market state may be marked `MUST CONFIRM AT RUNTIME` if no code decision depends on it yet.
+- Chain/deployment and transaction-building details used by code are `MUST CONFIRM BEFORE CODING`.
+- Use confirmed Testnet deployment/config values from `docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md` and `docs/PROTOCOL_INTEGRATION_NOTES.md`.
+- Do not invent package IDs, object IDs, quote asset coin types, oracle IDs, market/expiry values, PredictManager discovery method, Move signatures, key binary layouts, quote preview shape, public server response schemas, or official read server URLs.
 - If code requires a concrete value and the value is unknown, stop and ask for confirmation or create a clearly scoped integration spike.
 - Do not use fake concrete IDs as examples.
 - Prefer local file references and section names over external references in docs.
@@ -119,6 +125,8 @@ RangePilot must not:
 - Reimplement vault risk or StrikeMatrix logic.
 - Define custom payout rules.
 - Present itself as ML inference or an AI trading bot.
+- Treat the public server as a transaction write path.
+- Present PredictManager positions or ranges as NFTs.
 
 ## ADR conditions
 

@@ -2,7 +2,7 @@
 Purpose: Define the phased implementation roadmap for RangePilot.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
 Status: Generated documentation; approved for current main branch.
-Source of truth relationship: Derived from local product and protocol source docs; implementation details remain subject to confirmation.
+Source of truth relationship: Derived from local product/protocol source docs and official-derived Testnet integration references; implementation details remain subject to confirmation.
 ---
 
 # Implementation Roadmap
@@ -26,12 +26,21 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Field | Content |
 |---|---|
 | Goal | Prove RangePilot can create/load a Predict Account, deposit quote, preview or handle quote unavailability, mint one range position, and read it back. |
-| Deliverables | Minimal wallet app; config shell with `TBD` placeholders until confirmed; transaction builder spike; one guided trade form; minimal portfolio read; integration findings. |
+| Deliverables | Minimal wallet app; confirmed Testnet config shell; public server discovery; transaction builder spike; one guided trade form; minimal portfolio read; integration findings. |
 | Non-goals | Full landing page, creator strategy system, AI composer, PLP supply/withdraw, full indexer, custom Move wrapper. |
-| Acceptance criteria | One confirmed network/config path can execute or clearly identify blocker; all concrete chain values are confirmed before coding; portfolio fallback documented if direct reads fail. |
+| Acceptance criteria | Confirmed Testnet config is used from official-derived docs; one network/config path can execute or clearly identify blocker; runtime market values are confirmed before coding; portfolio fallback documented if direct reads fail. |
 | Recommended skills | `sui-dev-skills`, `sui-transaction-building`, `sui-client`, `sui-bcs`, Context7 plugin. |
-| Required docs | Product spec; protocol analysis; architecture map; protocol integration notes; source documents. |
-| Risks and fallback | Risk: active market or entrypoint details unavailable. Fallback: stop implementation and produce confirmed blocker list; use demo UI only if clearly labeled. |
+| Required docs | Product spec; protocol analysis; architecture map; protocol integration notes; source documents; official contract info; entrypoint bindings plan. |
+| Risks and fallback | Risk: active market, response schemas, or generated-binding call shapes unavailable. Fallback: stop implementation and produce confirmed blocker list; use demo UI only if clearly labeled. |
+
+### Phase 1 subphases
+
+| Subphase | Focus | Exit condition |
+|---|---|---|
+| Phase 1A: Official config + public server discovery | Add confirmed Testnet config; call public server status, predict state, oracles, quote assets, ask bounds, and vault summary endpoints; capture response schemas. | Active oracle/underlying/expiry candidates and response schemas are documented, or blockers are recorded. |
+| Phase 1B: PredictManager create/deposit | Confirm `create_manager`, manager discovery, DUSDC coin selection/splitting, `predict_manager::deposit<DUSDC>`, and `predict_manager::balance<DUSDC>`. | A Predict Account can be created or loaded, DUSDC can be deposited, and balance can be read back, or blockers are recorded. |
+| Phase 1C: Range quote + `mint_range` | Confirm `range_key::new`, `predict::get_range_trade_amounts`, quote preview mapping, and first `predict::mint_range<DUSDC>` transaction. | One range mint succeeds on Testnet and readback is attempted, or the precise blocker is documented. |
+| Phase 1D: Portfolio readback + `redeem_range` | Confirm portfolio read strategy, active/settled range display, redeem preview if available, and `predict::redeem_range<DUSDC>`. | Minted range can be found and redeemed/claimed through the official path, or fallback/blockers are documented. |
 
 ## Phase 2: Guided range trading MVP
 
@@ -42,7 +51,7 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Non-goals | Multi-asset support, advanced trading terminal, custom pricing, custom payout logic, complex secondary market. |
 | Acceptance criteria | User can understand `(lower, upper]` win condition, preview before action, mint through official DeepBook Predict path, and see success state. |
 | Recommended skills | `sui-dev-skills/sui-frontend`, `sui-transaction-building`, `sui-client`, Context7 plugin. |
-| Required docs | Product spec sections `Core User Flows`, `UX Design Principles`, `Transaction Flows`; architecture map; protocol notes. |
+| Required docs | Product spec sections `Core User Flows`, `UX Design Principles`, `Transaction Flows`; architecture map; protocol notes; official contract info; entrypoint bindings plan. |
 | Risks and fallback | Risk: quote preview shape unknown or unstable. Fallback: official dry-run strategy or explicit preview-unavailable state; do not calculate custom pricing. |
 
 ## Phase 3: Portfolio and redeem/claim
@@ -54,7 +63,7 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Non-goals | Full analytics, leaderboard, tax reporting, custom settlement, independent position NFTs. |
 | Acceptance criteria | Minted position appears in portfolio or documented fallback; user can redeem/claim only through confirmed official path; wallet-critical state uses direct reads where needed. |
 | Recommended skills | `sui-client`, `sui-transaction-building`, `sui-bcs`, `sui-dev-skills`. |
-| Required docs | Product spec `Portfolio Flow`; protocol analysis `PredictManager` and read surfaces; architecture map; protocol notes. |
+| Required docs | Product spec `Portfolio Flow`; protocol analysis `PredictManager` and read surfaces; architecture map; protocol notes; official contract info; entrypoint bindings plan. |
 | Risks and fallback | Risk: table layout or manager discovery is hard to decode. Fallback: use Sui events/checkpoints for history while direct wallet-critical reads are confirmed. |
 
 ## Phase 4: Creator strategy pages
@@ -65,7 +74,7 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Deliverables | Strategies list; strategy detail page; thesis metadata; follow trade flow; creator fee display; basic volume/participants tracking; risk disclosure. |
 | Non-goals | Complex on-chain creator protocol, unconfirmed real fee routing, social graph, reputation system, leaderboard unless time permits. |
 | Acceptance criteria | Creator can publish or configure a strategy in confirmed storage; follower can preview and follow the same official DeepBook Predict trade path; fees are either confirmed or labeled demo/TBD. |
-| Recommended skills | `sui-dev-skills/sui-frontend`, `agent-skills:api-and-interface-design`, frontend/UI skill if available. |
+| Recommended skills | `sui-dev-skills/sui-frontend`, frontend/UI skills if available, `agent-skills:api-and-interface-design`. |
 | Required docs | Product spec `Creator Strategy Flow`, `Strategies Page`, `Strategy Detail Page`; roadmap; architecture map. |
 | Risks and fallback | Risk: on-chain fee wrapper adds scope. Fallback: off-chain metadata and direct official follow trade; real fee routing deferred with ADR if needed. |
 
@@ -78,7 +87,7 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Non-goals | Custom vault risk engine, StrikeMatrix reproduction, advanced LP premium analytics, unconfirmed PLP transactions. |
 | Acceptance criteria | Dashboard shows only confirmed official/read-derived metrics or clearly labeled unavailable/demo values; no custom risk calculations drive user decisions. |
 | Recommended skills | `sui-client`, `deepbook-trading`, `sui-dev-skills`, Context7 plugin. |
-| Required docs | Product spec `LP Flow`, `Vault Page`; protocol analysis `Vault` and `StrikeMatrix`; architecture map; protocol notes. |
+| Required docs | Product spec `LP Flow`, `Vault Page`; protocol analysis `Vault` and `StrikeMatrix`; architecture map; protocol notes; official contract info; entrypoint bindings plan. |
 | Risks and fallback | Risk: vault metrics are hard to decode safely. Fallback: show minimal confirmed metrics and explanatory placeholders for unavailable metrics. |
 
 ## Phase 6: Demo polish
@@ -89,6 +98,6 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Deliverables | Landing page; polished trade/portfolio/strategy/vault flows; demo script; fallback screenshots; error messages; share card if feasible; runbook. |
 | Non-goals | Broad protocol coverage, production-grade indexer, paid LP analytics, multi-chain support. |
 | Acceptance criteria | Demo can run end-to-end or has documented fallback; judges understand guided SUI range prediction, creator follow, and LP dashboard positioning. |
-| Recommended skills | `agent-skills:frontend-ui-engineering`, `agent-skills:shipping-and-launch`, `superpowers:verification-before-completion`. |
+| Recommended skills | `agent-skills:frontend-ui-engineering`, `agent-skills:shipping-and-launch`, verification skills. |
 | Required docs | Product spec `Demo Script`, `Hackathon Delivery Checklist`, `Final Positioning`; architecture index; roadmap. |
 | Risks and fallback | Risk: live chain state changes before demo. Fallback: prepare clearly labeled screenshots or recorded successful flow; do not misrepresent demo data as live protocol state. |

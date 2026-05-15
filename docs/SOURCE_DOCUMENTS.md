@@ -1,20 +1,22 @@
 ---
-Purpose: Define authority boundaries for RangePilot source documents.
+Purpose: Define authority boundaries for RangePilot source documents and official-derived integration references.
 Audience: Developers, reviewers, and AI agents deciding what can be inferred from local docs.
 Status: Generated documentation; approved for current main branch.
-Source of truth relationship: Companion guide to the two local source-of-truth docs; does not supersede them.
+Source of truth relationship: Companion guide to local source-of-truth docs and official-derived references; does not supersede them.
 ---
 
 # Source Documents
 
-This project currently has two local source-of-truth documents. Generated docs must cite them by local path and section name, not by external URLs.
+RangePilot uses separate product, protocol-analysis, and official-derived integration references. Generated docs should cite local paths and section names; official URLs are centralized in `docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md`.
 
 ## Authority boundaries
 
-| Source document | Can justify | Cannot justify |
+| Document | Can justify | Cannot justify |
 |---|---|---|
 | [range_pilot_product_architecture_spec.md](./range_pilot_product_architecture_spec.md) | Product identity, business model, UX requirements, MVP priorities, page structure, suggested engineering modules, user flows, demo priorities | Concrete chain deployment values, exact Move signatures, generated TypeScript binding names, object IDs, official read server URL, market availability |
 | [deepbook_predict_模块架构解析.md](./deepbook_predict_模块架构解析.md) | DeepBook Predict mental model, object responsibilities, protocol invariants, read/write surface categories, non-ML meaning of `predict`, source-path map from the analyzed upstream code | Current package IDs, current deployed shared object IDs, exact current entrypoint signatures, generated binding APIs, live market/expiry/oracle state, production read server endpoint |
+| [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md) | Official-derived Testnet package/config/object values, public server endpoint paths, entrypoint roles, source branch reference, and integration guardrails | Active runtime oracle IDs, market/expiry/strike availability, public server response schemas, exact generated binding/PTB call shapes, production/Mainnet values |
+| [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md) | SDK/PTB entrypoint inspection checklist and planned binding targets | Final Move signatures, generated TypeScript APIs, confirmed PTB argument order, event field schemas, or validated transaction behavior |
 
 ## Product source of truth
 
@@ -45,41 +47,59 @@ It cannot confirm deployment or transaction-building details. Treat examples in 
 
 It cannot confirm current on-chain deployment facts or exact generated bindings for this repository.
 
-## Must confirm from official repos, generated bindings, or chain state
+## Official-derived contract/config reference
 
-Mark these as `TBD` until confirmed. Mark implementation use as `MUST CONFIRM BEFORE CODING`.
+`docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md` is the local official-derived integration reference for the current DeepBook Predict Testnet setup. Use it for:
+
+- Testnet network and public server URL.
+- Predict package, registry, and object IDs.
+- DUSDC coin type, currency ID, and decimals.
+- PLP coin type.
+- Public server endpoint paths.
+- Source branch `predict-testnet-4-16`.
+- Entry point roles that must be bound or inspected.
+
+If the official-derived contract info conflicts with older local protocol analysis on current Testnet config or entrypoint reference, prefer the official-derived contract info. If generated bindings, pinned source inspection, devInspect, or real Testnet transaction results conflict with either doc, stop and reconcile before coding.
+
+## Must confirm from generated bindings, live server, or chain state
+
+Static Testnet deployment values are confirmed in `docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md` and `docs/PROTOCOL_INTEGRATION_NOTES.md`. The following remain `TBD` or `MUST CONFIRM BEFORE CODING` until validated from the listed sources.
 
 | Detail | Confirmation source needed |
 |---|---|
-| DeepBook Predict package ID | Official deployment docs, generated bindings, or chain state |
-| Shared `Predict` object ID | Official deployment docs or chain state |
-| Registry object ID, if used | Official deployment docs or chain state |
-| Quote asset coin type and decimals | Official deployment docs, chain state, or protocol config object reads |
-| Oracle IDs | Official read model/server or chain state |
-| Market and expiry values | Official read model/server or chain state |
-| PredictManager discovery method | Official docs, generated bindings, event schema, or chain object ownership pattern |
-| `create_manager` signature | Generated bindings or Move source for the exact target version |
-| `deposit<T>` signature and call path | Generated bindings or Move source for the exact target version |
-| `mint_range` params | Generated bindings or Move source for the exact target version |
-| `redeem_range` params | Generated bindings or Move source for the exact target version |
-| `supply` / `withdraw` params | Generated bindings or Move source for the exact target version |
-| `MarketKey` binary layout | Generated bindings or Move source for the exact target version |
-| `RangeKey` binary layout | Generated bindings or Move source for the exact target version |
-| Quote preview return shape | Official read model/server docs, generated bindings, or dry-run result analysis |
-| Official read server URL | Official deployment docs or project configuration |
+| Active oracle IDs | Official public server or chain state |
+| Active underlying assets | Official public server or chain state |
+| Expiry values | Official public server or chain state |
+| Strike grid | Official public server, `OracleConfig`, generated bindings, or chain state |
+| Oracle freshness rules and current freshness | Official public server, events/checkpoints, or direct object reads |
+| Ask bounds | Official public server or direct object reads |
+| PredictManager discovery method | Official docs, generated bindings, event schema, public server behavior, local post-create storage, or chain object ownership pattern |
+| Public server response schemas | Live server calls and schema capture |
+| `create_manager` exact generated binding/PTB shape | Generated bindings, Move source for the exact target version, or devInspect |
+| `deposit<T>` exact generated binding/PTB shape | Generated bindings, Move source for the exact target version, or devInspect |
+| `balance<T>` exact read/devInspect shape | Generated bindings, Move source for the exact target version, or devInspect |
+| `mint_range` params and PTB construction | Generated bindings, Move source for the exact target version, devInspect, and real Testnet transaction |
+| `redeem_range` params and PTB construction | Generated bindings, Move source for the exact target version, devInspect, and real Testnet transaction |
+| `supply` / `withdraw` params and PTB construction | Generated bindings, Move source for the exact target version, devInspect, and real Testnet transaction |
+| `MarketKey` binary or constructed layout | Generated bindings or Move source for the exact target version |
+| `RangeKey` binary or constructed layout | Generated bindings or Move source for the exact target version |
+| Quote preview return shape | Official read model/server docs, generated bindings, devInspect, or dry-run result analysis |
 
 ## Local citation policy
 
-Use local file references and section names:
+Use local file references and section names in generated docs:
 
 - `docs/range_pilot_product_architecture_spec.md`, section `DeepBook Predict Integration Principles`.
 - `docs/deepbook_predict_模块架构解析.md`, section `核心抽象与数据流`.
+- `docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md`, section `Confirmed Testnet Deployment Values`.
+- `docs/ENTRYPOINT_BINDINGS_PLAN.md`, section `Entrypoint Bindings Plan`.
 
-Do not add external URLs or copied citation tokens to generated docs. If an external source is needed during implementation, summarize the confirmed fact in the implementation notes with the local confirmation method and keep concrete values in config, not prose docs.
+Do not scatter external URLs across generated docs. Keep primary official links in `docs/DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md` and cite that local file elsewhere.
 
 ## Unknowns policy
 
 - Unknown detail: `TBD`.
-- Chain/deployment or transaction-building detail: `MUST CONFIRM BEFORE CODING`.
+- Runtime market state detail: `MUST CONFIRM AT RUNTIME` where no coding decision depends on it yet.
+- Chain/deployment or transaction-building detail used by code: `MUST CONFIRM BEFORE CODING`.
 - If a source doc suggests a path but not a confirmed current value, keep it as an assumption to validate.
 - If docs conflict with generated bindings or chain state, stop and request confirmation before coding.
