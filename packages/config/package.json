@@ -1,0 +1,8 @@
+{
+  "name": "@rangepilot/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./deepbookPredictTestnet": "./src/deepbookPredictTestnet.ts"
+  }
+}

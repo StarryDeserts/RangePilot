@@ -1,0 +1,8 @@
+{
+  "name": "@rangepilot/types",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./deepbookPredict": "./src/deepbookPredict.ts"
+  }
+}

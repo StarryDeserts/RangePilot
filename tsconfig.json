@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@rangepilot/config/deepbookPredictTestnet": [
+        "packages/config/src/deepbookPredictTestnet.ts"
+      ],
+      "@rangepilot/types/deepbookPredict": [
+        "packages/types/src/deepbookPredict.ts"
+      ],
+      "@rangepilot/sdk/deepbookPredict": [
+        "packages/sdk/src/deepbookPredict/index.ts"
+      ]
+    }
+  },
+  "include": ["packages/**/*.ts"]
+}

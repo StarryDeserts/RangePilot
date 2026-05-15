@@ -9,6 +9,8 @@ Source of truth relationship: Derived from official contract info and protocol n
 
 This table records the DeepBook Predict entrypoints RangePilot expects to inspect or bind during the protocol integration spike. It is not final SDK code; every exact generated binding, PTB object argument order, pure argument encoding, return mapping, and event field is `MUST CONFIRM BEFORE CODING`.
 
+Phase 1A added read-only public server discovery and SDK server helpers only. No entrypoint binding, wallet action, or PTB write path was validated. Public server data can support oracle selection and quote asset/vault context, but cannot validate `mint_range` or `redeem_range` PTB construction.
+
 | Entrypoint | Purpose | SDK target | Type arguments | Object arguments | Pure / constructed arguments | Return / event expectation | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | `create_manager` | Create the user-facing Predict Account / `PredictManager`. | `<PREDICT_PACKAGE>::predict::create_manager` | None | None | None | New manager ID and/or `PredictManagerCreated`; exact event fields pending. | Confirmed entrypoint role; binding/PTB shape is `MUST CONFIRM BEFORE CODING`. | Store or discover the resulting manager ID after creation. |

@@ -26,19 +26,34 @@ For the detailed official-derived reference, see [DEEPBOOK_PREDICT_OFFICIAL_CONT
 | DUSDC decimals | `6` | Confirmed | Matches protocol quote-asset decimal constraint |
 | PLP coin type | `0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138::plp::PLP` | Confirmed | Required for later vault / LP dashboard work |
 
+## Phase 1A public server discovery
+
+RangePilot Phase 1A added centralized static Testnet config in code, a read-only public server client, a repeatable discovery script, and compact response-shape docs. The public server remains a read model only and must not be treated as a transaction write path.
+
+| Topic | Phase 1A finding | Coding status | Notes |
+|---|---|---|---|
+| Public server availability | Required discovery endpoints returned HTTP 200 during the Phase 1A snapshot. | Confirmed snapshot; reconfirm at runtime | See [DEEPBOOK_PREDICT_PUBLIC_SERVER_DISCOVERY.md](./DEEPBOOK_PREDICT_PUBLIC_SERVER_DISCOVERY.md) and [DEEPBOOK_PREDICT_RESPONSE_SHAPES.md](./DEEPBOOK_PREDICT_RESPONSE_SHAPES.md). |
+| Active oracle discovery | 5 active BTC oracles were observed. | MUST CONFIRM AT RUNTIME | Oracle IDs are runtime snapshots and must not be static protocol config. |
+| Quote asset endpoint | DUSDC only was observed. | Confirmed snapshot; reconfirm before trading | Static DUSDC config remains the confirmed quote asset for the integration spike. |
+| Vault summary endpoint | Balance, value, liquidity, supply, and utilization fields were available. | Confirmed snapshot; do not reimplement vault logic | Display only official/read-derived metrics in later UI. |
+| Strike metadata | Oracle records exposed `min_strike` and `tick_size`. | MUST CONFIRM BEFORE CODING | Full strike-grid validation remains pending. |
+| Ask bounds | Endpoint returned HTTP 200, but the selected oracle returned `null`. | MUST CONFIRM BEFORE CODING | `null` ask bounds must not be treated as mint eligibility. |
+| Manager and portfolio discovery | Not covered by Phase 1A. | MUST CONFIRM BEFORE CODING | Remains in Phase 1B/1D scope. |
+| Quote preview and write PTB shapes | Not validated by Phase 1A. | MUST CONFIRM BEFORE CODING | `get_range_trade_amounts`, `mint_range`, `redeem_range`, and first mint validation remain pending. |
+
 ## Runtime-confirmation table
 
 These items remain `TBD` because they depend on live server data, chain state, object layout, generated bindings, event schemas, or a real transaction attempt.
 
 | Topic | Current value | Coding status | Confirmation source needed | Notes |
 |---|---|---|---|---|
-| Active oracle IDs | TBD | MUST CONFIRM BEFORE CODING | Public server, chain state, or generated bindings | Required before selecting the first market. |
-| Active underlying assets | TBD | MUST CONFIRM BEFORE CODING | Public server or chain state | Do not hardcode until confirmed for the active Testnet deployment. |
-| Expiry list | TBD | MUST CONFIRM BEFORE CODING | Public server or chain state | Do not hardcode until confirmed for the active Testnet deployment. |
-| Strike grid | TBD | MUST CONFIRM BEFORE CODING | Public server, `OracleConfig`, generated bindings, or chain state | Required for range input validation. |
+| Active oracle IDs | Runtime snapshot observed 5 active BTC oracles | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server, chain state, or generated bindings | Required before selecting the first market; do not hardcode as static config. |
+| Active underlying assets | Runtime snapshot observed BTC only | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server or chain state | No active SUI market was observed in the Phase 1A snapshot; do not hardcode until confirmed for the active Testnet deployment. |
+| Expiry list | Runtime snapshot observed 5 active BTC expiries | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server or chain state | Do not hardcode until confirmed for the active Testnet deployment. |
+| Strike grid | `min_strike` and `tick_size` observed | MUST CONFIRM BEFORE CODING | Public server, `OracleConfig`, generated bindings, or chain state | Required for range input validation; full grid semantics remain pending. |
 | Oracle freshness | TBD | MUST CONFIRM BEFORE CODING | Public server, events/checkpoints, direct object reads, or generated bindings | Required before mint eligibility and stale-market UX. |
-| Ask bounds | TBD | MUST CONFIRM BEFORE CODING | Public server `/oracles/:oracle_id/ask-bounds`, direct object reads, or generated bindings | Required before quote warning and mint eligibility. |
-| Public server response schemas | TBD | MUST CONFIRM BEFORE CODING | Live server responses and schema capture | Do not write final TypeScript response types until captured. |
+| Ask bounds | Selected oracle returned `null` | MUST CONFIRM BEFORE CODING | Public server `/oracles/:oracle_id/ask-bounds`, direct object reads, or generated bindings | Endpoint exists, but usable bounds remain pending before quote warning and mint eligibility. |
+| Public server response schemas | Phase 1A snapshot documented | MUST CONFIRM AT RUNTIME | Live server responses and schema capture | Conservative TypeScript response types are in `packages/types`; final UI assumptions still require runtime confirmation. |
 | PredictManager discovery strategy | TBD | MUST CONFIRM BEFORE CODING | Generated bindings, object ownership pattern, event schema, public server support, or local post-create storage | Must decide owner query, event lookup, registry pattern, or local post-create storage. |
 | Portfolio direct read strategy | TBD | MUST CONFIRM BEFORE CODING | Direct object read layout, dynamic field/table reads, public server, or events/checkpoints | Wallet-critical state should prefer direct reads where practical. |
 | Exact generated-binding/PTB call shapes | TBD | MUST CONFIRM BEFORE CODING | Pinned source branch, generated bindings, devInspect, and real Testnet transaction attempts | Required before SDK/PTB implementation. |
