@@ -9,7 +9,7 @@ Source of truth relationship: Deployment values in this file are confirmed for t
 
 This document records the DeepBook Predict Testnet configuration RangePilot should use for the first protocol integration spike. Confirmed deployment/config values may be copied into environment-specific config code. Runtime market state, server response schemas, and transaction behavior still require live validation before user-facing trading is considered complete.
 
-For the detailed official-derived reference, see [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md). For SDK/PTB entrypoint tracking, see [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md).
+For the detailed official-derived reference, see [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md). For Phase 1B wallet and Predict Account flow details, see [PREDICT_MANAGER_FLOW.md](./PREDICT_MANAGER_FLOW.md). For SDK/PTB entrypoint tracking, see [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md).
 
 ## Confirmed official Testnet configuration
 
@@ -41,6 +41,21 @@ RangePilot Phase 1A added centralized static Testnet config in code, a read-only
 | Manager and portfolio discovery | Not covered by Phase 1A. | MUST CONFIRM BEFORE CODING | Remains in Phase 1B/1D scope. |
 | Quote preview and write PTB shapes | Not validated by Phase 1A. | MUST CONFIRM BEFORE CODING | `get_range_trade_amounts`, `mint_range`, `redeem_range`, and first mint validation remain pending. |
 
+## Phase 1B wallet and Predict Account scaffold
+
+RangePilot Phase 1B adds a minimal Vite React wallet app and conservative SDK helpers for browser-wallet-only Predict Account setup. The scaffold can read wallet DUSDC coins and build the no-argument `predict::create_manager` transaction, but it blocks unconfirmed write/read paths rather than faking success.
+
+| Topic | Phase 1B status | Coding status | Notes |
+|---|---|---|---|
+| Wallet UI scaffold | Minimal Testnet-only dApp Kit UI exists under `apps/web`. | Scaffolded | Browser wallet confirmation is the only signing path; no private keys, mnemonics, or CLI signing. |
+| DUSDC wallet read | SDK paginates DUSDC coin objects and sums atomic balances with `bigint`. | Scaffolded | Uses confirmed DUSDC coin type and 6 decimals; faucet/funding is required for real deposit testing. |
+| DUSDC coin selection | SDK selects enough DUSDC coin objects for an atomic amount. | Scaffolded | Does not assume a single coin object; insufficient balance returns a user-safe error. |
+| PredictManager discovery | Local storage manager ID hint exists; public server and event discovery are not claimed complete. | Partial / MUST CONFIRM BEFORE CODING | Local storage is only a hint; `/managers` owner filtering and `PredictManagerCreated` fields remain unconfirmed. |
+| `create_manager` PTB | SDK builds `<PREDICT_PACKAGE>::predict::create_manager` with no args. | Scaffolded; validate on Testnet | Manager ID recovery from return/event data is `MUST CONFIRM BEFORE CODING`. |
+| `deposit<DUSDC>` PTB | SDK checks coin selection then blocks the transaction builder. | MUST CONFIRM BEFORE REAL DEPOSIT | Exact coin merge/split and `Coin<DUSDC>` argument construction must be validated. |
+| Manager balance read | SDK exposes a blocked scaffold for `predict_manager::balance<DUSDC>`. | MUST CONFIRM BEFORE CODING | Direct read/devInspect or public server summary shape must be confirmed. |
+| Range minting | Not implemented. | Out of Phase 1B scope | Next Phase 1C covers range quote and first `mint_range<DUSDC>` after blockers clear. |
+
 ## Runtime-confirmation table
 
 These items remain `TBD` because they depend on live server data, chain state, object layout, generated bindings, event schemas, or a real transaction attempt.
@@ -54,8 +69,8 @@ These items remain `TBD` because they depend on live server data, chain state, o
 | Oracle freshness | TBD | MUST CONFIRM BEFORE CODING | Public server, events/checkpoints, direct object reads, or generated bindings | Required before mint eligibility and stale-market UX. |
 | Ask bounds | Selected oracle returned `null` | MUST CONFIRM BEFORE CODING | Public server `/oracles/:oracle_id/ask-bounds`, direct object reads, or generated bindings | Endpoint exists, but usable bounds remain pending before quote warning and mint eligibility. |
 | Public server response schemas | Phase 1A snapshot documented | MUST CONFIRM AT RUNTIME | Live server responses and schema capture | Conservative TypeScript response types are in `packages/types`; final UI assumptions still require runtime confirmation. |
-| PredictManager discovery strategy | TBD | MUST CONFIRM BEFORE CODING | Generated bindings, object ownership pattern, event schema, public server support, or local post-create storage | Must decide owner query, event lookup, registry pattern, or local post-create storage. |
-| Portfolio direct read strategy | TBD | MUST CONFIRM BEFORE CODING | Direct object read layout, dynamic field/table reads, public server, or events/checkpoints | Wallet-critical state should prefer direct reads where practical. |
+| PredictManager discovery strategy | Phase 1B uses a local manager ID hint and records public server/event discovery blockers | MUST CONFIRM BEFORE CODING | Generated bindings, object ownership pattern, event schema, public server support, or local post-create storage | Local storage is not authoritative; owner query, event lookup, and direct validation remain pending. |
+| Portfolio direct read strategy | Manager balance read scaffold blocks until `predict_manager::balance<DUSDC>` strategy is validated | MUST CONFIRM BEFORE CODING | Direct object read layout, dynamic field/table reads, public server, or events/checkpoints | Wallet-critical state should prefer direct reads where practical. |
 | Exact generated-binding/PTB call shapes | TBD | MUST CONFIRM BEFORE CODING | Pinned source branch, generated bindings, devInspect, and real Testnet transaction attempts | Required before SDK/PTB implementation. |
 | First real `mint_range<DUSDC>` transaction validation | TBD | MUST CONFIRM BEFORE CODING | Testnet transaction execution and post-transaction readback | Must prove the end-to-end flow before broader MVP work. |
 
@@ -65,9 +80,9 @@ Use the official Testnet package/config above and confirm exact generated bindin
 
 | Order | Entrypoint / helper | Product purpose | Status |
 |---:|---|---|---|
-| 1 | `create_manager` | Create the user-facing Predict Account | Confirmed entrypoint role; exact transaction builder call shape must use confirmed bindings |
-| 2 | `predict_manager::deposit<DUSDC>` | Deposit DUSDC into the Predict Account | Confirmed entrypoint role; coin selection/splitting must be validated in the transaction builder |
-| 3 | `predict_manager::balance<DUSDC>` | Read deposited DUSDC balance | Confirmed read-helper role; direct read/devInspect strategy must be validated |
+| 1 | `create_manager` | Create the user-facing Predict Account | Phase 1B SDK builds the no-arg PTB scaffold; manager ID recovery remains `MUST CONFIRM BEFORE CODING` |
+| 2 | `predict_manager::deposit<DUSDC>` | Deposit DUSDC into the Predict Account | Phase 1B SDK validates wallet DUSDC coin selection but blocks PTB construction until coin split/merge is `MUST CONFIRM BEFORE REAL DEPOSIT` |
+| 3 | `predict_manager::balance<DUSDC>` | Read deposited DUSDC balance | Phase 1B SDK exposes a blocked scaffold; direct read/devInspect strategy must be validated |
 | 4 | `range_key::new` | Construct the range key for lower/upper strikes | Confirmed helper role; strike units and key construction must follow confirmed bindings |
 | 5 | `predict::get_range_trade_amounts` | Preview official range trade amounts | Confirmed entrypoint role; response shape must be confirmed before UI mapping |
 | 6 | `predict::mint_range<DUSDC>` | Mint the guided range prediction | Confirmed entrypoint role; first real transaction validation remains TBD |

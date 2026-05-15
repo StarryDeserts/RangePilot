@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
+    "apps/web",
     "packages/config",
     "packages/sdk",
     "packages/types"
@@ -11,7 +12,12 @@
     "node": ">=18"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "discover:deepbook-predict": "node scripts/discover-deepbook-predict.mjs"
+    "typecheck": "tsc -p tsconfig.json --noEmit && npm --workspace apps/web run typecheck",
+    "discover:deepbook-predict": "node scripts/discover-deepbook-predict.mjs",
+    "dev:web": "npm --workspace apps/web run dev",
+    "build:web": "npm --workspace apps/web run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }
