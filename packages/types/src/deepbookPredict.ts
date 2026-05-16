@@ -136,12 +136,59 @@ export type DeepBookPredictManagerSummary = Record<string, unknown>;
 
 export type DeepBookPredictManagerPositionsSummary = Record<string, unknown>;
 
-export type DeepBookPredictRangeInput = {
+export type RangeKeyInput = {
   oracleId: string;
-  expiry: string | number | bigint;
-  lowerStrike: string | number | bigint;
-  higherStrike: string | number | bigint;
-  quantity: string | number | bigint;
+  expiry: string | bigint;
+  lowerStrike: string | bigint;
+  higherStrike: string | bigint;
+};
+
+export type RangeQuotePreview = {
+  rangeKey: RangeKeyInput;
+  quantity: string;
+  mintCostAtomic: string;
+  redeemPayoutAtomic: string;
+  source: "devInspect";
+};
+
+export type RangeMintParams = RangeKeyInput & {
+  managerId: DeepBookPredictObjectId;
+  oracleObjectId: DeepBookPredictObjectId;
+  quantity: string | bigint;
+};
+
+export type RangeMintedEvent = {
+  type: string;
+  parsedJson: Record<string, unknown> | null;
+};
+
+export type RangeMintResult = {
+  digest: string;
+  explorerUrl: string;
+  event: RangeMintedEvent | null;
+};
+
+export type ActiveOracleCandidate = {
+  oracleId: DeepBookPredictObjectId;
+  oracleObjectId: DeepBookPredictObjectId;
+  underlyingAsset: string | null;
+  status: string;
+  expiry: string;
+};
+
+export type StrikeGrid = {
+  minStrike: string;
+  tickSize: string;
+  source: string;
+};
+
+export type MintSafetyGateResult = {
+  passed: boolean;
+  blockers: string[];
+};
+
+export type DeepBookPredictRangeInput = RangeKeyInput & {
+  quantity: string | bigint;
 };
 
 export type DeepBookPredictAmountLike = string | bigint;

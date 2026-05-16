@@ -1,10 +1,12 @@
 import type {
   DeepBookPredictNetworkConfig,
   PredictManagerCreatedEventCandidate,
+  RangeMintedEvent,
 } from "@rangepilot/types/deepbookPredict";
 import { resolveDeepBookPredictConfig } from "./config.ts";
 
 const MANAGER_CREATED_SUFFIX = "::predict_manager::PredictManagerCreated";
+const RANGE_MINTED_SUFFIX = "::predict::RangeMinted";
 const MANAGER_EVENT_ID_FIELDS = [
   "manager_id",
   "managerId",
@@ -65,6 +67,23 @@ export function parsePredictManagerCreatedEvent(
     unconfirmedReason: managerId
       ? undefined
       : "PredictManagerCreated event matched, but manager ID field was not found in known public field names.",
+  };
+}
+
+export function parseRangeMintedEvent(
+  result: { events?: readonly DeepBookPredictEventLike[] | null },
+  config?: DeepBookPredictNetworkConfig,
+): RangeMintedEvent | null {
+  const resolvedConfig = resolveDeepBookPredictConfig(config);
+  const event = result.events?.find((candidate) => isRangeMintedEvent(candidate, resolvedConfig));
+
+  if (!event?.type) {
+    return null;
+  }
+
+  return {
+    type: event.type,
+    parsedJson: isRecord(event.parsedJson) ? event.parsedJson : null,
   };
 }
 
@@ -136,6 +155,18 @@ function isPredictManagerCreatedEvent(
   return (
     eventType.startsWith(`${config.packageId}::`) &&
     eventType.endsWith(MANAGER_CREATED_SUFFIX)
+  );
+}
+
+function isRangeMintedEvent(
+  event: DeepBookPredictEventLike,
+  config: DeepBookPredictNetworkConfig,
+): boolean {
+  const eventType = event.type ?? "";
+
+  return (
+    eventType.startsWith(`${config.packageId}::`) &&
+    eventType.endsWith(RANGE_MINTED_SUFFIX)
   );
 }
 

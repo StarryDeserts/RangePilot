@@ -5,3 +5,6 @@ export * from "./events.ts";
 export * from "./errors.ts";
 export * from "./manager.ts";
 export * from "./transactions.ts";
+export * from "./rangeKey.ts";
+export * from "./quote.ts";
+export * from "./trade.ts";

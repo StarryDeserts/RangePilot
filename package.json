@@ -15,6 +15,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && npm --workspace apps/web run typecheck",
     "discover:deepbook-predict": "node scripts/discover-deepbook-predict.mjs",
     "validate:predict-manager": "node scripts/validate-predict-manager-flow.mjs",
+    "validate:range-quote": "node scripts/validate-range-mint-flow.mjs --quote-only",
+    "validate:range-mint": "node scripts/validate-range-mint-flow.mjs --mint",
     "dev:web": "npm --workspace apps/web run dev",
     "build:web": "npm --workspace apps/web run build"
   },

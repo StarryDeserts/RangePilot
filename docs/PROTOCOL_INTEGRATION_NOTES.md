@@ -9,7 +9,7 @@ Source of truth relationship: Deployment values in this file are confirmed for t
 
 This document records the DeepBook Predict Testnet configuration RangePilot should use for the first protocol integration spike. Confirmed deployment/config values may be copied into environment-specific config code. Runtime market state, server response schemas, and transaction behavior still require live validation before user-facing trading is considered complete.
 
-For the detailed official-derived reference, see [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md). For Phase 1B wallet and Predict Account flow details, see [PREDICT_MANAGER_FLOW.md](./PREDICT_MANAGER_FLOW.md). For the Phase 1B-Verify local signer validation report, see [PREDICT_MANAGER_TESTNET_VALIDATION.md](./PREDICT_MANAGER_TESTNET_VALIDATION.md). For SDK/PTB entrypoint tracking, see [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md).
+For the detailed official-derived reference, see [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md). For Phase 1B wallet and Predict Account flow details, see [PREDICT_MANAGER_FLOW.md](./PREDICT_MANAGER_FLOW.md). For the Phase 1B-Verify local signer validation report, see [PREDICT_MANAGER_TESTNET_VALIDATION.md](./PREDICT_MANAGER_TESTNET_VALIDATION.md). For the Phase 1C range quote blocker report, see [RANGE_MINT_TESTNET_VALIDATION.md](./RANGE_MINT_TESTNET_VALIDATION.md). For SDK/PTB entrypoint tracking, see [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md).
 
 ## Confirmed official Testnet configuration
 
@@ -55,7 +55,13 @@ RangePilot Phase 1B adds a minimal Vite React wallet app and conservative SDK he
 | `PredictManagerCreated` recovery | Event and object-change recovery helper recovers a unique manager ID. | Verified on Testnet | Recovery source was `event_and_object_change`; ambiguous multiple-object cases abort before deposit. |
 | `deposit<DUSDC>` PTB | SDK keeps the browser-safe default blocker but can build a gated Testnet deposit PTB with `allowRealTestnetDeposit`. | Verified on Testnet for local signer validation | Deposit transactions `DeSdTRYKpA1hGEGXSoGGEu4y8nzn8gwcbFjUAs1zRH5M` and `8pQox3ckxD9uyqaYGgzbKgeUBYMv9CrzzMxEQeKwRS1W` each deposited 1 DUSDC. |
 | Manager balance read | Public server summary for a known manager ID reports owner and DUSDC balance fields. | Verified known-manager public server read path | After two deposits, `/managers/:manager_id/summary` reported `balances[0].balance = 2000000`, `trading_balance = 2000000`, and `account_value = 2000000`. Direct `balance<DUSDC>` devInspect helper remains pending. |
-| Range minting | Not implemented. | Out of Phase 1B scope | Next Phase 1C covers range quote and first `mint_range<DUSDC>` after remaining browser/readback blockers clear. |
+| Range minting | Phase 1C quote-only validation reached the official quote path but blocked before mint. | Blocked / no mint submitted | Runtime active BTC oracle `0x7f6af68a95f01b1c2153edcb7c96475935e8b2d796a8c04f32d57e5d0a83289d` was selected, but ask-bounds returned `null` and `get_range_trade_amounts` aborted in `pricing_config::quote_spread_from_fair_price` code `1`. See [RANGE_MINT_TESTNET_VALIDATION.md](./RANGE_MINT_TESTNET_VALIDATION.md). |
+
+## Phase 1C range quote validation
+
+Phase 1C added a quote-only and gated mint validation script for the official range path. The script keeps active oracle, expiry, strike, and quote data as runtime values; it does not add oracle snapshots to static config. The 2026-05-16 quote-only run confirmed the verified manager owner and `2000000` atomic DUSDC balance, selected an active BTC oracle at runtime, derived a candidate `(lower, higher]` range from public server `min_strike` and `tick_size`, and then blocked before mint because `/oracles/:oracle_id/ask-bounds` returned `null` and `predict::get_range_trade_amounts` devInspect aborted in `pricing_config::quote_spread_from_fair_price` with abort code `1`.
+
+No `predict::mint_range<DUSDC>` transaction was submitted. Quote return mapping, `RangeMinted` event shape, and post-mint portfolio readback remain pending.
 
 ## Runtime-confirmation table
 
@@ -63,17 +69,17 @@ These items remain `TBD` because they depend on live server data, chain state, o
 
 | Topic | Current value | Coding status | Confirmation source needed | Notes |
 |---|---|---|---|---|
-| Active oracle IDs | Runtime snapshot observed 5 active BTC oracles | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server, chain state, or generated bindings | Required before selecting the first market; do not hardcode as static config. |
-| Active underlying assets | Runtime snapshot observed BTC only | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server or chain state | No active SUI market was observed in the Phase 1A snapshot; do not hardcode until confirmed for the active Testnet deployment. |
-| Expiry list | Runtime snapshot observed 5 active BTC expiries | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server or chain state | Do not hardcode until confirmed for the active Testnet deployment. |
-| Strike grid | `min_strike` and `tick_size` observed | MUST CONFIRM BEFORE CODING | Public server, `OracleConfig`, generated bindings, or chain state | Required for range input validation; full grid semantics remain pending. |
-| Oracle freshness | TBD | MUST CONFIRM BEFORE CODING | Public server, events/checkpoints, direct object reads, or generated bindings | Required before mint eligibility and stale-market UX. |
-| Ask bounds | Selected oracle returned `null` | MUST CONFIRM BEFORE CODING | Public server `/oracles/:oracle_id/ask-bounds`, direct object reads, or generated bindings | Endpoint exists, but usable bounds remain pending before quote warning and mint eligibility. |
+| Active oracle IDs | Phase 1C quote-only run selected runtime BTC oracle `0x7f6af68a95f01b1c2153edcb7c96475935e8b2d796a8c04f32d57e5d0a83289d` | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server, chain state, or generated bindings | Required before selecting the first market; do not hardcode as static config. |
+| Active underlying assets | Phase 1C quote-only run observed BTC for the selected active oracle | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server or chain state | No active SUI market has been confirmed; do not hardcode until confirmed for the active Testnet deployment. |
+| Expiry list | Phase 1C selected oracle expiry `1778918400000` as a runtime value | MUST CONFIRM AT RUNTIME / MUST CONFIRM BEFORE CODING | Public server or chain state | Do not hardcode until confirmed for the active Testnet deployment. |
+| Strike grid | Phase 1C selected oracle exposed `min_strike = 50000000000000` and `tick_size = 1000000000` | Partial / MUST CONFIRM BEFORE CODING | Public server, `OracleConfig`, generated bindings, or chain state | Candidate range derivation works from metadata, but full quoteability/ask-bound semantics remain pending. |
+| Oracle freshness | Latest price/SVI fields were not sufficient to pass quote/mint gates | MUST CONFIRM BEFORE CODING | Public server, events/checkpoints, direct object reads, or generated bindings | Required before mint eligibility and stale-market UX. |
+| Ask bounds | Phase 1C selected oracle returned `null` | MUST CONFIRM BEFORE CODING | Public server `/oracles/:oracle_id/ask-bounds`, direct object reads, or generated bindings | `null` ask bounds blocked mint; do not treat it as mint eligibility. |
 | Public server response schemas | Phase 1A snapshot documented | MUST CONFIRM AT RUNTIME | Live server responses and schema capture | Conservative TypeScript response types are in `packages/types`; final UI assumptions still require runtime confirmation. |
 | PredictManager discovery strategy | Post-create event/object-change recovery is verified; known-manager public server summary validates owner; general owner discovery remains pending | Partial / MUST CONFIRM BEFORE CODING | Public server `/managers`, event scan filters, direct object ownership pattern | Local storage is not authoritative; owner query and historical event lookup remain pending. |
 | Portfolio direct read strategy | Known-manager public server summary reports manager owner and DUSDC balances | Partial / direct read still MUST CONFIRM BEFORE CODING | Direct object read layout, dynamic field/table reads, public server, or events/checkpoints | Public server summary can display known manager balance; wallet-critical direct `balance<DUSDC>` helper remains pending. |
-| Exact generated-binding/PTB call shapes | `create_manager` and gated `deposit<DUSDC>` PTBs validated on Testnet; range write shapes remain TBD | Partial / MUST CONFIRM BEFORE CODING for range writes | Pinned source branch, generated bindings, devInspect, and real Testnet transaction attempts | Required before Phase 1C mint implementation. |
-| First real `mint_range<DUSDC>` transaction validation | TBD | MUST CONFIRM BEFORE CODING | Testnet transaction execution and post-transaction readback | Must prove the end-to-end flow before broader MVP work. |
+| Exact generated-binding/PTB call shapes | `create_manager` and gated `deposit<DUSDC>` PTBs validated on Testnet; Phase 1C range quote PTB reached official pricing code but did not produce a successful quote | Partial / MUST CONFIRM BEFORE CODING for range writes | Pinned source branch, generated bindings, devInspect, and real Testnet transaction attempts | `range_key::new` plus `get_range_trade_amounts` command shape is partially exercised; quote return mapping and mint write remain unverified. |
+| First real `mint_range<DUSDC>` transaction validation | Blocked by quote safety gates; no mint submitted | MUST CONFIRM BEFORE CODING | Testnet transaction execution and post-transaction readback | Must prove the end-to-end flow before broader MVP work. |
 
 ## Confirmed entrypoint plan
 
@@ -84,9 +90,9 @@ Use the official Testnet package/config above and confirm exact generated bindin
 | 1 | `create_manager` | Create the user-facing Predict Account | Verified on Testnet with transaction `DKoSBnKWZGJK6H2RV3yF4pAqSnQ3XncWFfgTsB38pf56`; manager ID recovery source `event_and_object_change` |
 | 2 | `predict_manager::deposit<DUSDC>` | Deposit DUSDC into the Predict Account | Verified on Testnet through gated local signer validation; browser builder remains guarded until manual wallet validation |
 | 3 | `predict_manager::balance<DUSDC>` | Read deposited DUSDC balance | Public server summary readback verified for known manager IDs; direct read/devInspect strategy still pending |
-| 4 | `range_key::new` | Construct the range key for lower/upper strikes | Confirmed helper role; strike units and key construction must follow confirmed bindings |
-| 5 | `predict::get_range_trade_amounts` | Preview official range trade amounts | Confirmed entrypoint role; response shape must be confirmed before UI mapping |
-| 6 | `predict::mint_range<DUSDC>` | Mint the guided range prediction | Confirmed entrypoint role; first real transaction validation remains TBD |
+| 4 | `range_key::new` | Construct the range key for lower/upper strikes | Phase 1C helper added and quote devInspect reached official pricing code; exact success path remains pending |
+| 5 | `predict::get_range_trade_amounts` | Preview official range trade amounts | Phase 1C devInspect attempted; selected range aborted in `pricing_config::quote_spread_from_fair_price`, so return mapping remains unverified |
+| 6 | `predict::mint_range<DUSDC>` | Mint the guided range prediction | Blocked by safety gates; first real transaction validation remains TBD |
 | 7 | `predict::redeem_range<DUSDC>` | Redeem or claim range position through official protocol path | Confirmed entrypoint role; live vs settled behavior must be validated |
 | 8 | `predict::supply<DUSDC>` | Supply DUSDC liquidity to the Predict vault | Confirmed entrypoint role; later vault/LP work, not required for core guided range MVP |
 | 9 | `predict::withdraw<DUSDC>` | Withdraw DUSDC liquidity by burning PLP | Confirmed entrypoint role; later vault/LP work, not required for core guided range MVP |

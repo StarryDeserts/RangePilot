@@ -31,6 +31,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | [DEEPBOOK_PREDICT_RESPONSE_SHAPES.md](./DEEPBOOK_PREDICT_RESPONSE_SHAPES.md) | Compact observed public server response shape reference | Protocol Reference / Public Server Schema |
 | [PREDICT_MANAGER_FLOW.md](./PREDICT_MANAGER_FLOW.md) | Phase 1B wallet, Predict Account, and DUSDC deposit flow | Protocol / SDK / Frontend |
 | [PREDICT_MANAGER_TESTNET_VALIDATION.md](./PREDICT_MANAGER_TESTNET_VALIDATION.md) | Phase 1B-Verify Testnet create/deposit/readback validation artifacts | Protocol / SDK / Validation |
+| [RANGE_MINT_TESTNET_VALIDATION.md](./RANGE_MINT_TESTNET_VALIDATION.md) | Phase 1C range quote and gated mint validation artifacts or blockers | Protocol / SDK / Validation |
 | [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md) | SDK/PTB entrypoint binding confirmation checklist | Protocol / SDK / PTB |
 | [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md) | Per-round workflow, Plan Mode, git, uncertainty, ADR rules | Agent workflow |
 | [SKILL_USAGE_GUIDE.md](./SKILL_USAGE_GUIDE.md) | Skill selection guide and found/not-found skill inventory | Agent workflow |
@@ -57,9 +58,10 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 5. [DEEPBOOK_PREDICT_RESPONSE_SHAPES.md](./DEEPBOOK_PREDICT_RESPONSE_SHAPES.md)
 6. [PREDICT_MANAGER_FLOW.md](./PREDICT_MANAGER_FLOW.md)
 7. [PREDICT_MANAGER_TESTNET_VALIDATION.md](./PREDICT_MANAGER_TESTNET_VALIDATION.md)
-8. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
-9. [DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md](./DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md)
-10. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
+8. [RANGE_MINT_TESTNET_VALIDATION.md](./RANGE_MINT_TESTNET_VALIDATION.md)
+9. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
+10. [DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md](./DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md)
+11. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
 
 ### Before UI/product work
 
@@ -81,7 +83,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | Product | Product spec, architecture map, implementation roadmap |
 | Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info |
 | Protocol Reference / Official Contract Info | Official contract info, entrypoint bindings plan |
-| SDK / PTB | Official contract info, PredictManager flow, PredictManager Testnet validation, entrypoint bindings plan, protocol integration notes |
+| SDK / PTB | Official contract info, PredictManager flow, PredictManager Testnet validation, Range Mint Testnet validation, entrypoint bindings plan, protocol integration notes |
 | Engineering | Product spec implementation sections, architecture map, implementation roadmap, protocol integration notes |
 | Agent workflow | Root `CLAUDE.md`, agent workflow, skill usage guide, source documents |
 | ADR | `docs/ADR/0001-architecture-documentation-first.md` |
