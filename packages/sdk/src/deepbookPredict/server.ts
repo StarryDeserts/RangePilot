@@ -1,5 +1,7 @@
 import type {
   DeepBookPredictAskBounds,
+  DeepBookPredictManagerPositionsSummary,
+  DeepBookPredictManagerSummary,
   DeepBookPredictNetworkConfig,
   DeepBookPredictOraclePriceUpdate,
   DeepBookPredictOracleRecord,
@@ -10,17 +12,19 @@ import type {
   DeepBookPredictTradeRecord,
   DeepBookPredictVaultSummary,
 } from "@rangepilot/types/deepbookPredict";
-import { resolveDeepBookPredictConfig } from "./config";
+import { resolveDeepBookPredictConfig } from "./config.ts";
 
 export class DeepBookPredictServerError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly url: string,
-    readonly body: string,
-  ) {
+  readonly status: number;
+  readonly url: string;
+  readonly body: string;
+
+  constructor(message: string, status: number, url: string, body: string) {
     super(message);
     this.name = "DeepBookPredictServerError";
+    this.status = status;
+    this.url = url;
+    this.body = body;
   }
 }
 
@@ -143,6 +147,20 @@ export class DeepBookPredictServerClient {
 
   getOracleTrades(oracleId: string): Promise<DeepBookPredictTradeRecord[]> {
     return this.requestJson<DeepBookPredictTradeRecord[]>(`/trades/${oracleId}`);
+  }
+
+  getManagerSummary(managerId: string): Promise<DeepBookPredictManagerSummary> {
+    return this.requestJson<DeepBookPredictManagerSummary>(
+      `/managers/${managerId}/summary`,
+    );
+  }
+
+  getManagerPositionsSummary(
+    managerId: string,
+  ): Promise<DeepBookPredictManagerPositionsSummary> {
+    return this.requestJson<DeepBookPredictManagerPositionsSummary>(
+      `/managers/${managerId}/positions/summary`,
+    );
   }
 
   async discoverDefaultOracle(

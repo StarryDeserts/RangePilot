@@ -5,8 +5,8 @@ import type {
   ManagerDiscoveryResult,
   PredictManagerRef,
 } from "@rangepilot/types/deepbookPredict";
-import { resolveDeepBookPredictConfig } from "./config";
-import { DeepBookPredictUnconfirmedBindingError } from "./errors";
+import { resolveDeepBookPredictConfig } from "./config.ts";
+import { DeepBookPredictUnconfirmedBindingError } from "./errors.ts";
 
 export type FindPredictManagerByOwnerParams = {
   owner: string;

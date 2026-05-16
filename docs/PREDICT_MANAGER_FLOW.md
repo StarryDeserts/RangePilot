@@ -1,13 +1,13 @@
 ---
-Purpose: Define the Phase 1B wallet, PredictManager, and DUSDC deposit scaffold for RangePilot.
+Purpose: Define the Phase 1B wallet, PredictManager, and DUSDC deposit flow for RangePilot.
 Audience: Frontend developers, SDK implementers, protocol integrators, reviewers, and AI agents.
-Status: Generated documentation; Phase 1B scaffold reference with unresolved binding blockers.
-Source of truth relationship: Supplements official contract info, protocol integration notes, and entrypoint binding docs; exact PTB/read/event shapes remain source-branch or runtime confirmation items.
+Status: Generated documentation; Phase 1B-Verify local signer validation completed for create_manager, deposit<DUSDC>, manager ID recovery, and public-server balance readback.
+Source of truth relationship: Supplements official contract info, protocol integration notes, entrypoint binding docs, and the Phase 1B-Verify validation report; range minting remains future work.
 ---
 
 # PredictManager Flow
 
-Phase 1B adds a minimal browser-wallet scaffold for creating or loading a DeepBook Predict `PredictManager` and preparing DUSDC deposits. It is not a range trading flow and must not call `mint_range` or `redeem_range`.
+Phase 1B adds a minimal browser-wallet scaffold for creating or loading a DeepBook Predict `PredictManager` and preparing DUSDC deposits. Phase 1B-Verify validated the core PTB path with a local Sui Testnet signer, but browser wallet manual validation remains separate. This is not a range trading flow and must not call `mint_range` or `redeem_range`.
 
 ## Product meaning
 
@@ -29,49 +29,53 @@ Positions and range positions are internal manager state, not standalone NFTs.
 4. If no usable hint exists, UI offers **Create Predict Account**.
 5. Button click builds a transaction targeting `<PREDICT_PACKAGE>::predict::create_manager`.
 6. The browser wallet prompts the user to confirm.
-7. After success, RangePilot attempts to recover the manager ID from `PredictManagerCreated` event data or transaction details.
+7. After success, RangePilot recovers the manager ID from `PredictManagerCreated` event data and transaction object changes.
 8. If recovery succeeds, store the manager ID as a local hint keyed by wallet address and network.
-9. If recovery remains unconfirmed, show the digest and require manual manager ID capture after event fields are confirmed.
+9. If recovery is missing or ambiguous, show the digest and block deposit until a manager ID is confirmed.
 
-Current scaffold status:
+Verified local signer status:
 
 - `buildCreateManagerTransaction` builds the no-argument `predict::create_manager` move call using confirmed Testnet package config.
-- Event parsing matches the confirmed `predict_manager::PredictManagerCreated` event type suffix but does not invent parsed field names.
-- Manager ID extraction from the event is `MUST CONFIRM BEFORE CODING`.
+- Sui Testnet transaction `DKoSBnKWZGJK6H2RV3yF4pAqSnQ3XncWFfgTsB38pf56` created manager `0x6f341e107a87812fd4fddfc4fc50a7e3ab5bc21cabff2cd39dd86b662fa75599`.
+- `recoverPredictManagerIdFromCreateResult` recovered the manager ID from matching `PredictManagerCreated` event data and a created object change.
+- The validation script writes only a public local cache hint under `.local/predict-manager-cache.json`; `.local/` remains ignored.
 
 ## Layered manager discovery strategy
 
-1. **Local storage hint**: if a manager ID is stored for `testnet + wallet address`, load it as a non-authoritative hint.
-2. **Public server `/managers`**: use only after owner filtering, pagination, and response schema are confirmed.
-3. **`PredictManagerCreated` event scan**: use only after event fields and event query filters are confirmed.
-4. **Create new manager**: offer `create_manager` when discovery cannot find a manager.
-5. **Post-create capture**: parse event/transaction effects and store the confirmed manager ID as a new local hint.
+1. **Local storage/cache hint**: if a manager ID is stored for `testnet + wallet address`, load it as a non-authoritative hint.
+2. **Known-manager public server validation**: for a known manager ID, `/managers/:manager_id/summary` can validate owner and deposited DUSDC summary fields.
+3. **Fresh create transaction capture**: parse `PredictManagerCreated` event data and created `PredictManager` object changes immediately after `create_manager`.
+4. **Future public server `/managers` owner discovery**: use only after owner filtering, pagination, and response schema are confirmed.
+5. **Future event scan**: use only after event query filters and historical lookup behavior are confirmed.
 
-Local storage is never the only source of truth; it is only a UX hint until direct owner validation is confirmed.
+Local storage is never the only source of truth; it is only a UX hint until the app can validate it through public server, object read, or event history.
 
-Unresolved:
+Still pending:
 
 - `/managers` owner discovery is `MUST CONFIRM BEFORE CODING`.
-- Event scan query and `PredictManagerCreated` parsed fields are `MUST CONFIRM BEFORE CODING`.
-- Direct owner validation for a locally stored manager ID is `MUST CONFIRM BEFORE CODING`.
+- Event scan query filters for historical manager discovery are `MUST CONFIRM BEFORE CODING`.
+- Browser local-storage owner validation must be wired from the verified public server summary or a direct read before claiming full UI discovery.
 
 ## DUSDC deposit flow
 
 1. Query connected wallet DUSDC coins by the confirmed Testnet DUSDC coin type.
 2. Sum balances with `bigint` and display both atomic units and 6-decimal DUSDC.
-3. User enters a deposit amount in atomic units.
+3. User enters a small deposit amount in atomic units or DUSDC display units.
 4. SDK selects enough wallet DUSDC coin objects; it must not assume a single coin object.
-5. Deposit PTB should merge/split coins as needed.
-6. PTB passes `&mut PredictManager` and `Coin<DUSDC>` into `predict_manager::deposit<DUSDC>`.
-7. Browser wallet prompts the user to confirm.
-8. After success, refresh wallet DUSDC balance and manager balance.
+5. Deposit PTB merges selected coins into the destination coin when multiple coins are needed.
+6. If selected total is greater than the requested amount, PTB splits the exact deposit coin.
+7. PTB passes `&mut PredictManager` and `Coin<DUSDC>` into `predict_manager::deposit<DUSDC>`.
+8. Browser wallet prompts the user to confirm.
+9. After success, refresh wallet DUSDC balance and manager balance.
 
-Current scaffold status:
+Verified local signer status:
 
 - `getDusdcCoins` paginates Sui wallet coin results for the configured DUSDC coin type.
 - `getDusdcBalance` sums wallet DUSDC with `bigint` and returns string atomic totals.
 - `selectDusdcCoinsForAmount` selects enough coin objects and throws on insufficient balance.
-- `buildDepositDusdcTransaction` intentionally blocks with `MUST CONFIRM BEFORE REAL DEPOSIT` until exact coin merge/split and `deposit<DUSDC>` PTB construction are validated.
+- `buildDepositDusdcTransaction` remains blocked by default and only builds the real Testnet PTB when `allowRealTestnetDeposit === true`.
+- First validation deposit succeeded for `1000000` atomic DUSDC in transaction `DeSdTRYKpA1hGEGXSoGGEu4y8nzn8gwcbFjUAs1zRH5M`.
+- A cached-manager rerun deposited another `1000000` atomic DUSDC in transaction `8pQox3ckxD9uyqaYGgzbKgeUBYMv9CrzzMxEQeKwRS1W`.
 
 ## DUSDC coin selection strategy
 
@@ -81,25 +85,30 @@ Current scaffold status:
 - Select multiple coin objects if one coin cannot cover the requested amount.
 - Throw a user-safe insufficient-balance error when selected total is below the requested amount.
 - Do not use JavaScript `number` for core deposit amounts.
+- Keep the browser UI guarded until the verified Testnet PTB path is deliberately exposed through wallet actions.
 
 ## Manager balance read strategy
 
 Preferred order after deposit:
 
-1. Direct read or devInspect of `predict_manager::balance<DUSDC>` for wallet-critical confirmation.
-2. Public server manager summary only after `/managers/:manager_id/summary` response fields are confirmed.
-3. Event/checkpoint fallback for history or delayed server indexing.
+1. Public server manager summary for known manager IDs, now verified for deposited DUSDC summary display.
+2. Direct read or devInspect of `predict_manager::balance<DUSDC>` for wallet-critical confirmation after the direct shape is confirmed.
+3. Public server positions summary for portfolio/positions display where needed.
+4. Event/checkpoint fallback for history or delayed server indexing.
 
-Current scaffold status:
+Verified local signer status:
 
-- `getManagerBalance` is blocked with `MUST CONFIRM BEFORE CODING`.
-- The UI does not fake a manager balance.
+- `/managers/:manager_id/summary` returned HTTP 200 for manager `0x6f341e107a87812fd4fddfc4fc50a7e3ab5bc21cabff2cd39dd86b662fa75599`.
+- Summary owner matched `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`.
+- After two 1 DUSDC deposits, summary reported `balances[0].balance = 2000000`, `trading_balance = 2000000`, and `account_value = 2000000`.
+- `getManagerBalance` remains conservative until a reusable direct/devInspect helper is confirmed and wired.
+- The UI must not fake a manager balance.
 
 ## Event fallback strategy
 
 Use events for manager creation and future portfolio history only after field shapes are confirmed.
 
-Confirmed event type to inspect:
+Confirmed event type:
 
 ```text
 <PREDICT_PACKAGE>::predict_manager::PredictManagerCreated
@@ -108,28 +117,37 @@ Confirmed event type to inspect:
 Current parser behavior:
 
 - Matches the confirmed package ID and event type suffix.
-- Returns raw candidate event data.
-- Returns `managerId: null` until the manager ID field is confirmed.
+- Checks public candidate ID fields: `manager_id`, `managerId`, `manager`, `predict_manager`, `predictManager`, `id`, `object_id`, and `objectId`.
+- Accepts only `0x` hex object-ID-shaped strings.
+- Cross-checks parsed event manager ID against created `PredictManager` object changes.
+- Returns an ambiguous result if multiple created `PredictManager` object candidates exist.
 
-## Manual test checklist
+## Automated local signer validation
 
-- [ ] Connect wallet on Sui Testnet
-- [ ] Confirm wallet address
-- [ ] Confirm DUSDC coin type balance
-- [ ] Create PredictManager
-- [ ] Capture manager ID
-- [ ] Refresh page and recover manager ID
-- [ ] Deposit small DUSDC amount
-- [ ] Confirm manager balance changed
-- [ ] Confirm explorer transaction digest
-- [ ] Confirm no private key or secret is used
+See [PREDICT_MANAGER_TESTNET_VALIDATION.md](./PREDICT_MANAGER_TESTNET_VALIDATION.md) for public validation artifacts, digests, explorer links, manager summary fields, and security notes.
 
-## Unresolved issues
+## Browser wallet manual validation checklist
 
-- `PredictManagerCreated` manager ID field is `MUST CONFIRM BEFORE CODING`.
+- [ ] Open `apps/web` locally.
+- [ ] Connect browser wallet.
+- [ ] Confirm wallet is on Sui Testnet.
+- [ ] Confirm connected address matches or differs from the CLI test address.
+- [ ] Confirm DUSDC balance displays correctly.
+- [ ] Click Create Predict Account.
+- [ ] Approve transaction in wallet.
+- [ ] Confirm transaction digest appears.
+- [ ] Confirm manager ID is recovered.
+- [ ] Refresh page and confirm manager ID persists.
+- [ ] Enter small DUSDC deposit amount.
+- [ ] Approve deposit transaction.
+- [ ] Confirm deposit digest appears.
+- [ ] Confirm manager balance updates or known readback limitation is shown.
+- [ ] Confirm no private key is used by browser app.
+
+## Remaining Phase 1B issues
+
+- Browser wallet manual validation is pending.
 - Public server `/managers` owner discovery is `MUST CONFIRM BEFORE CODING`.
-- Local manager hint owner validation is `MUST CONFIRM BEFORE CODING`.
-- `predict_manager::deposit<DUSDC>` coin split/merge PTB construction is `MUST CONFIRM BEFORE REAL DEPOSIT`.
-- `predict_manager::balance<DUSDC>` readback strategy is `MUST CONFIRM BEFORE CODING`.
-- DUSDC faucet/funding path is required for real deposit testing.
-- Phase 1C must confirm active market, strike grid, ask bounds, quote preview, and first `mint_range<DUSDC>` only after Phase 1B blockers are resolved.
+- Historical event-scan manager discovery is `MUST CONFIRM BEFORE CODING`.
+- Direct `predict_manager::balance<DUSDC>` devInspect/read helper remains pending; public server summary is the verified known-manager read path.
+- Phase 1C must confirm active market, strike grid, ask bounds, quote preview, and first `mint_range<DUSDC>` only after remaining Phase 1B browser/readback blockers are resolved.

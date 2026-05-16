@@ -2,3 +2,7 @@ node_modules/
 apps/web/dist/
 .claude/
 .playwright-mcp/
+.env.local
+.env*
+!.env.example
+.local/

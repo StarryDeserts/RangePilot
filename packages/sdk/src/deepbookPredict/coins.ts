@@ -5,8 +5,8 @@ import type {
   DusdcBalance,
   DusdcCoin,
 } from "@rangepilot/types/deepbookPredict";
-import { resolveDeepBookPredictConfig } from "./config";
-import { DeepBookPredictCoinSelectionError } from "./errors";
+import { resolveDeepBookPredictConfig } from "./config.ts";
+import { DeepBookPredictCoinSelectionError } from "./errors.ts";
 
 const DUSDC_COIN_PAGE_LIMIT = 50;
 

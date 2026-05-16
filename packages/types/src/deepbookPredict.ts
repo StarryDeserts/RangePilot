@@ -132,6 +132,10 @@ export type DeepBookPredictVaultSummary = {
 
 export type DeepBookPredictTradeRecord = Record<string, unknown>;
 
+export type DeepBookPredictManagerSummary = Record<string, unknown>;
+
+export type DeepBookPredictManagerPositionsSummary = Record<string, unknown>;
+
 export type DeepBookPredictRangeInput = {
   oracleId: string;
   expiry: string | number | bigint;
