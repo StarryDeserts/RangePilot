@@ -14,6 +14,7 @@ import type {
   RangeQuoteAbortClassification,
   RangeQuoteAttempt,
   RangeQuoteCandidate,
+  RangeQuoteCandidateFamily,
   RangeQuoteCandidateStrategy,
   RangeQuotePreview,
 } from "@rangepilot/types/deepbookPredict";
@@ -33,6 +34,10 @@ import {
 const SUI_CLOCK_OBJECT_ID = "0x6";
 const SUI_OBJECT_ID_PATTERN = /^0x[0-9a-fA-F]+$/;
 const DEFAULT_RANGE_WIDTH_TICKS = [1n, 5n, 10n, 25n, 50n, 100n, 250n, 500n, 1000n, 2500n, 5000n, 10000n] as const;
+const SOURCE_INFORMED_WIDE_WIDTH_TICKS = [250n, 500n, 1000n, 2500n, 5000n, 10000n] as const;
+const SOURCE_INFORMED_FORWARD_WIDTH_TICKS = [10n, 25n, 50n, 100n, 250n, 500n, 1000n] as const;
+const SOURCE_INFORMED_TARGET_PCTS = [5n, 10n, 25n, 50n, 75n, 90n] as const;
+const SOURCE_INFORMED_GRID_TICKS = 100_000n;
 const BINARY_STRIKE_OFFSETS_TICKS = [-250n, -100n, -50n, -10n, 0n, 10n, 50n, 100n, 250n] as const;
 
 export const RANGE_QUOTE_QUANTITY_SWEEP = [
@@ -99,6 +104,14 @@ export type ScanQuoteableRangesParams = {
 
 export type ScanRangeQuoteQuantitiesParams = Omit<ScanQuoteableRangesParams, "quantity"> & {
   quantities: readonly (string | bigint)[];
+  maxAttempts?: number;
+  signal?: AbortSignal;
+  onAttempt?: (progress: {
+    attemptCount: number;
+    maxAttempts: number | null;
+    candidate: RangeQuoteCandidate;
+    quantity: string;
+  }) => void;
 };
 
 export type MarketQuoteParams = MarketKeyInput & {
@@ -406,19 +419,123 @@ export function deriveCandidateRanges(input: DeriveCandidateRangesInput): RangeQ
     for (const widthTicks of widths) {
       const widthAtomic = widthTicks * tickSize;
       const leftTicks = widthTicks / 2n;
-      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "centered", anchorStrike - leftTicks * tickSize, anchorStrike - leftTicks * tickSize + widthAtomic);
-      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "below-anchor", anchorStrike - widthAtomic, anchorStrike);
-      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "above-anchor", anchorStrike, anchorStrike + widthAtomic);
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "centered", anchorStrike - leftTicks * tickSize, anchorStrike - leftTicks * tickSize + widthAtomic, "baseline");
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "below-anchor", anchorStrike - widthAtomic, anchorStrike, "baseline");
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "above-anchor", anchorStrike, anchorStrike + widthAtomic, "baseline");
 
       if (widthTicks >= 250n) {
-        addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-around-anchor", anchorStrike - widthAtomic, anchorStrike + widthAtomic);
-        addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-below-anchor", anchorStrike - 2n * widthAtomic, anchorStrike - widthAtomic);
-        addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-above-anchor", anchorStrike + widthAtomic, anchorStrike + 2n * widthAtomic);
+        addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-around-anchor", anchorStrike - widthAtomic, anchorStrike + widthAtomic, "baseline");
+        addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-below-anchor", anchorStrike - 2n * widthAtomic, anchorStrike - widthAtomic, "baseline");
+        addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-above-anchor", anchorStrike + widthAtomic, anchorStrike + 2n * widthAtomic, "baseline");
       }
     }
   }
 
   return [...candidates.values()];
+}
+
+export function deriveSourceInformedRangeCandidates(input: DeriveCandidateRangesInput): RangeQuoteCandidate[] {
+  const minStrike = BigInt(normalizeNonNegativeInteger(input.minStrike, "Range candidate min strike"));
+  const tickSize = BigInt(normalizePositiveInteger(input.tickSize, "Range candidate tick size"));
+  const maxStrike = minStrike + SOURCE_INFORMED_GRID_TICKS * tickSize;
+  const expiry = normalizePositiveInteger(input.expiry, "Range candidate expiry");
+  const candidates = new Map<string, RangeQuoteCandidate>();
+
+  for (const candidate of deriveCandidateRanges(input)) {
+    setRangeCandidate(candidates, candidate);
+  }
+
+  const anchors = deriveAnchors(input);
+
+  for (const anchor of anchors) {
+    const anchorStrike = snapToStrike(anchor.price, minStrike, tickSize);
+    const family = anchor.source === "forward" ? "wide_around_forward" : "wide_around_spot";
+
+    for (const widthTicks of SOURCE_INFORMED_WIDE_WIDTH_TICKS) {
+      const widthAtomic = widthTicks * tickSize;
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, anchor, "wide-around-anchor", anchorStrike - widthAtomic, anchorStrike + widthAtomic, family);
+    }
+  }
+
+  const forwardAnchor = anchors.find((anchor) => anchor.source === "forward") ?? null;
+
+  if (forwardAnchor) {
+    const forwardStrike = snapToStrike(forwardAnchor.price, minStrike, tickSize);
+
+    for (const widthTicks of SOURCE_INFORMED_FORWARD_WIDTH_TICKS) {
+      const widthAtomic = widthTicks * tickSize;
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, forwardAnchor, "wide-around-anchor", forwardStrike - widthAtomic, forwardStrike + widthAtomic, "forward_below_to_above");
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, forwardAnchor, "centered", forwardStrike - widthAtomic / 2n, forwardStrike + widthAtomic / 2n, "forward_centered_target_width");
+    }
+
+    for (const target of SOURCE_INFORMED_TARGET_PCTS) {
+      const widthTicks = SOURCE_INFORMED_GRID_TICKS * target / 100n;
+      const widthAtomic = (widthTicks < 1n ? 1n : widthTicks) * tickSize;
+      const family = `target_fair_price_${target}pct` as RangeQuoteCandidateFamily;
+      addRangeCandidate(candidates, input, expiry, minStrike, tickSize, forwardAnchor, "centered", forwardStrike - widthAtomic / 2n, forwardStrike + widthAtomic / 2n, family);
+    }
+  }
+
+  for (const candidate of [...candidates.values()].slice(0, 24)) {
+    setRangeCandidate(candidates, {
+      ...candidate,
+      family: "safe_larger_quantity_probe",
+    });
+  }
+
+  return rankRangeCandidates([...candidates.values()]);
+}
+
+export function rangeCandidateKey(candidate: RangeKeyInput): string {
+  const normalized = normalizeRangeKeyInput(candidate);
+  return `${normalized.oracleId}:${normalized.expiry}:${normalized.lowerStrike}:${normalized.higherStrike}`;
+}
+
+export function rangeQuoteAttemptKey(candidate: RangeKeyInput, quantity: string | bigint): string {
+  return `${rangeCandidateKey(candidate)}:${normalizePositiveInteger(quantity, "Range quote quantity")}`;
+}
+
+export function rankRangeCandidates(candidates: readonly RangeQuoteCandidate[]): RangeQuoteCandidate[] {
+  return [...candidates].sort(compareRangeCandidates);
+}
+
+export function rangeCandidateFamilyPriority(candidate: RangeQuoteCandidate): number {
+  switch (candidate.family ?? candidate.strategy) {
+    case "wide_around_forward":
+      return 0;
+    case "forward_below_to_above":
+      return 1;
+    case "forward_centered_target_width":
+      return 2;
+    case "target_fair_price_50pct":
+      return 3;
+    case "target_fair_price_25pct":
+    case "target_fair_price_75pct":
+      return 4;
+    case "target_fair_price_10pct":
+    case "target_fair_price_90pct":
+      return 5;
+    case "target_fair_price_5pct":
+      return 6;
+    case "wide_around_spot":
+      return 7;
+    case "safe_larger_quantity_probe":
+      return 8;
+    case "wide-around-anchor":
+      return 9;
+    case "centered":
+      return 10;
+    case "below-anchor":
+      return 11;
+    case "above-anchor":
+      return 12;
+    case "wide-below-anchor":
+      return 13;
+    case "wide-above-anchor":
+      return 14;
+    default:
+      return 15;
+  }
 }
 
 export function deriveMarketQuoteCandidates(input: DeriveMarketQuoteCandidatesInput): MarketQuoteCandidate[] {
@@ -485,10 +602,28 @@ export async function scanRangeQuoteQuantities(
   params: ScanRangeQuoteQuantitiesParams,
 ): Promise<RangeQuoteAttempt[]> {
   const attempts: RangeQuoteAttempt[] = [];
+  const seen = new Set<string>();
 
   for (const candidate of params.candidates) {
     for (const quantityValue of params.quantities) {
+      if (params.signal?.aborted || (params.maxAttempts !== undefined && attempts.length >= params.maxAttempts)) {
+        return attempts;
+      }
+
       const quantity = normalizePositiveInteger(quantityValue, "Range quote quantity");
+      const key = rangeQuoteAttemptKey(candidate, quantity);
+
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      params.onAttempt?.({
+        attemptCount: attempts.length + 1,
+        maxAttempts: params.maxAttempts ?? null,
+        candidate,
+        quantity,
+      });
 
       try {
         const quote = await devInspectRangeQuote({
@@ -571,9 +706,10 @@ function addRangeCandidate(
   strategy: RangeQuoteCandidateStrategy,
   lowerStrikeValue: bigint,
   higherStrikeValue: bigint,
+  family?: RangeQuoteCandidateFamily,
 ) {
-  const lowerStrike = lowerStrikeValue < minStrike ? minStrike : lowerStrikeValue;
-  const higherStrike = higherStrikeValue;
+  const lowerStrike = snapRangeBoundary(lowerStrikeValue, minStrike, tickSize);
+  const higherStrike = snapRangeBoundary(higherStrikeValue, minStrike, tickSize);
 
   if (higherStrike <= lowerStrike || (higherStrike - lowerStrike) % tickSize !== 0n) {
     return;
@@ -590,14 +726,42 @@ function addRangeCandidate(
     anchorSource: anchor.source,
     anchorPrice: anchor.price.toString(),
     strategy,
+    family,
   };
 
   if (isQuoteableRangeCandidate(candidate)) {
-    const key = `${candidate.oracleId}:${candidate.expiry}:${candidate.lowerStrike}:${candidate.higherStrike}`;
-    if (!candidates.has(key)) {
-      candidates.set(key, candidate);
-    }
+    setRangeCandidate(candidates, candidate);
   }
+}
+
+function setRangeCandidate(candidates: Map<string, RangeQuoteCandidate>, candidate: RangeQuoteCandidate) {
+  const key = `${rangeCandidateKey(candidate)}:${candidate.family ?? candidate.strategy}`;
+  candidates.set(key, candidate);
+}
+
+function compareRangeCandidates(left: RangeQuoteCandidate, right: RangeQuoteCandidate): number {
+  const familyDelta = rangeCandidateFamilyPriority(left) - rangeCandidateFamilyPriority(right);
+
+  if (familyDelta !== 0) {
+    return familyDelta;
+  }
+
+  const leftWidth = BigInt(left.widthTicks);
+  const rightWidth = BigInt(right.widthTicks);
+
+  if (leftWidth !== rightWidth) {
+    return leftWidth < rightWidth ? -1 : 1;
+  }
+
+  const leftAnchor = left.anchorSource === "forward" ? 0 : 1;
+  const rightAnchor = right.anchorSource === "forward" ? 0 : 1;
+
+  return leftAnchor - rightAnchor;
+}
+
+function snapRangeBoundary(value: bigint, minStrike: bigint, tickSize: bigint): bigint {
+  const snapped = snapToStrike(value, minStrike, tickSize);
+  return snapped < minStrike ? minStrike : snapped;
 }
 
 function extractReturnValues(result: unknown): unknown[] {

@@ -266,6 +266,21 @@ export type RangeQuoteCandidateStrategy =
   | "wide-below-anchor"
   | "wide-above-anchor";
 
+export type RangeQuoteCandidateFamily =
+  | "wide_around_forward"
+  | "wide_around_spot"
+  | "forward_below_to_above"
+  | "forward_centered_target_width"
+  | "target_fair_price_5pct"
+  | "target_fair_price_10pct"
+  | "target_fair_price_25pct"
+  | "target_fair_price_50pct"
+  | "target_fair_price_75pct"
+  | "target_fair_price_90pct"
+  | "safe_larger_quantity_probe"
+  | "manual_import"
+  | "baseline";
+
 export type RangeQuoteCandidate = RangeKeyInput & {
   oracleObjectId: DeepBookPredictObjectId;
   underlyingAsset: string | null;
@@ -273,6 +288,7 @@ export type RangeQuoteCandidate = RangeKeyInput & {
   anchorSource: "spot" | "forward";
   anchorPrice: string;
   strategy: RangeQuoteCandidateStrategy;
+  family?: RangeQuoteCandidateFamily;
 };
 
 export type RangeQuoteAttemptSuccess = RangeQuoteCandidate & {

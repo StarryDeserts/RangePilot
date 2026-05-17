@@ -43,6 +43,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md) | Per-round workflow, Plan Mode, git, uncertainty, ADR rules | Agent workflow |
 | [SKILL_USAGE_GUIDE.md](./SKILL_USAGE_GUIDE.md) | Skill selection guide and found/not-found skill inventory | Agent workflow |
 | [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) | Phase 2A browser-wallet guided range trading scaffold scope, gates, flows, and manual validation checklist | Product / SDK / Frontend |
+| [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md) | Phase 2B browser candidate scan and portfolio RangeKey recovery fixes | Product / SDK / Frontend / Validation |
 | [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) | Phased implementation plan from docs to demo polish | Product / engineering |
 | [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md) | Confirmed Testnet config and runtime-confirmation checklist | Protocol / engineering |
 | [ADR/0001-architecture-documentation-first.md](./ADR/0001-architecture-documentation-first.md) | Decision record for documentation-first architecture | ADR |
@@ -83,7 +84,8 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 1. Product spec sections: `Core User Flows`, `UX Design Principles`, `Page Information Architecture`, `Component Specification`
 2. [DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md](./DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md) for protocol naming and boundaries
 3. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) for phase scope
-4. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) for Phase 2A browser-wallet scaffold gates and manual validation
+4. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) for browser-wallet scaffold gates and manual validation
+5. [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md) for Phase 2B scan/recovery fixes
 
 ### Before agent-led implementation rounds
 
@@ -96,7 +98,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 
 | Category | Primary docs |
 |---|---|
-| Product | Product spec, architecture map, implementation roadmap, guided range trading MVP guide |
+| Product | Product spec, architecture map, implementation roadmap, guided range trading MVP guide, browser wallet manual validation fixes |
 | Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info |
 | Protocol Reference / Official Contract Info | Official contract info, entrypoint bindings plan |
 | SDK / PTB | Official contract info, PredictManager flow, PredictManager Testnet validation, Range Mint Testnet validation, entrypoint bindings plan, protocol integration notes |
@@ -108,13 +110,13 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 
 | Task type | Required docs before work |
 |---|---|
-| Guided SUI range prediction UI | Product spec, architecture map, implementation roadmap, guided range trading MVP guide |
+| Guided SUI range prediction UI | Product spec, architecture map, implementation roadmap, guided range trading MVP guide, browser wallet manual validation fixes |
 | DeepBook Predict integration spike | Product spec, protocol analysis, official contract info, entrypoint bindings plan, architecture map, protocol integration notes |
 | DeepBook Predict transaction builder / PTB | Product spec, protocol analysis, official contract info, entrypoint bindings plan, architecture map, protocol integration notes |
 | SDK binding planning | Official contract info, entrypoint bindings plan, protocol integration notes, source documents |
 | PredictManager load/create/deposit | Product spec, protocol analysis, official contract info, PredictManager flow, PredictManager Testnet validation, entrypoint bindings plan, architecture map, protocol integration notes |
 | Quote preview | Product spec, protocol analysis, official contract info, entrypoint bindings plan, architecture map, protocol integration notes |
-| Portfolio/redeem/claim | Product spec, protocol analysis, official contract info, entrypoint bindings plan, portfolio readback validation, range redeem validation, guided range trading MVP guide, architecture map, protocol integration notes |
+| Portfolio/redeem/claim | Product spec, protocol analysis, official contract info, entrypoint bindings plan, portfolio readback validation, range redeem validation, guided range trading MVP guide, browser wallet manual validation fixes, architecture map, protocol integration notes |
 | Creator strategy pages | Product spec, architecture map, implementation roadmap |
 | Vault / LP dashboard | Product spec, protocol analysis, official contract info, entrypoint bindings plan, architecture map, protocol integration notes |
 | New ADR | Agent workflow, source documents, existing ADRs |

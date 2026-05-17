@@ -59,7 +59,8 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 
 | Subphase | Focus | Exit condition |
 |---|---|---|
-| Phase 2A: Guided range trading MVP scaffold | Add minimal browser-wallet `/trade` and `/portfolio` scaffolds around the validated create/deposit/mint/readback/redeem lifecycle, with non-secret persistence and full preflight gates. | Engineering scaffold exists and is documented in [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md). It is not final UI design; browser wallet manual validation remains the next checkpoint. |
+| Phase 2A: Guided range trading MVP scaffold | Add minimal browser-wallet `/trade` and `/portfolio` scaffolds around the validated create/deposit/mint/readback/redeem lifecycle, with non-secret persistence and full preflight gates. | Engineering scaffold exists and is documented in [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md). It is not final UI design; browser wallet manual validation identified scan/recovery fixes for Phase 2B. |
+| Phase 2B-fix: Browser scan and portfolio recovery | Deduplicate and bound `/trade` candidate scans, add progress/cancel/diagnostics and Advanced Diagnostics candidate import, recover `/portfolio` RangeKeys from manager-scoped localStorage and mint digests, and move manual RangeKey input to Advanced Debug. | Implemented as scaffold fixes and documented in [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md). Browser wallet approval remains manual; final UI design remains deferred. |
 
 ## Phase 3: Portfolio and redeem/claim
 

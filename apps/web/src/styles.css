@@ -265,3 +265,30 @@ select {
   padding: 0.7rem 0.8rem;
   font: inherit;
 }
+
+.checkboxRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.75rem 0;
+}
+
+.checkboxRow input {
+  width: auto;
+}
+
+.knownRangeList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.knownRangeItem {
+  border: 1px solid #dde4f0;
+  border-radius: 14px;
+  padding: 0.75rem;
+}
+
+.knownRangeItem.selected {
+  border-color: #2546f0;
+  background: #f3f6ff;
+}

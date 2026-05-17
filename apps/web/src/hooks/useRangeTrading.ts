@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import type { RangeQuoteCandidate, TransactionStatus } from "@rangepilot/types/deepbookPredict";
@@ -6,16 +6,37 @@ import { DEEPBOOK_PREDICT_TESTNET } from "@rangepilot/config/deepbookPredictTest
 import {
   buildMintRangeTransaction,
   buildSuiExplorerTransactionUrl,
+  extractRangePositionFromMintEvent,
   parseRangeMintedEvent,
   prepareRangeMint,
   scanMintableRangeCandidates,
   translateDeepBookPredictError,
   type GuidedRangeMintPreparation,
+  type MintableRangeScanProgress,
   type MintableRangeScanResult,
 } from "@rangepilot/sdk/deepbookPredict";
 import { useRangeTradingPersistence } from "./useRangeTradingPersistence";
 
 const DEFAULT_MINT_QUANTITY = "1000";
+const BROWSER_SCAN_LIMITS = {
+  maxQuoteAttempts: 120,
+  maxPreflightAttempts: 30,
+  maxOracleContexts: 4,
+};
+
+type CandidateScanStatus = {
+  state: "idle" | "scanning" | "success" | "no_candidate" | "cancelled" | "failed";
+  message?: string;
+  error?: string;
+};
+
+export type ManualCandidateInput = {
+  oracleId: string;
+  expiry: string;
+  lowerStrike: string;
+  higherStrike: string;
+  quantity: string;
+};
 
 export function useRangeTrading({
   address,
@@ -28,8 +49,11 @@ export function useRangeTrading({
 }) {
   const client = useSuiClient();
   const queryClient = useQueryClient();
-  const persistence = useRangeTradingPersistence(address);
+  const persistence = useRangeTradingPersistence(address, managerId);
+  const scanAbortController = useRef<AbortController | null>(null);
   const [scanResult, setScanResult] = useState<MintableRangeScanResult | null>(null);
+  const [scanProgress, setScanProgress] = useState<MintableRangeScanProgress | null>(null);
+  const [scanStatus, setScanStatus] = useState<CandidateScanStatus>({ state: "idle" });
   const [selectedCandidate, setSelectedCandidate] = useState<RangeQuoteCandidate | null>(null);
   const [quantity, setQuantity] = useState(DEFAULT_MINT_QUANTITY);
   const [preparation, setPreparation] = useState<GuidedRangeMintPreparation | null>(null);
@@ -57,6 +81,7 @@ export function useRangeTrading({
     return (
       preparation.quantity === quantity &&
       preparation.candidate.oracleId === selectedCandidate.oracleId &&
+      preparation.candidate.oracleObjectId === selectedCandidate.oracleObjectId &&
       preparation.candidate.expiry === selectedCandidate.expiry &&
       preparation.candidate.lowerStrike === selectedCandidate.lowerStrike &&
       preparation.candidate.higherStrike === selectedCandidate.higherStrike
@@ -65,18 +90,22 @@ export function useRangeTrading({
 
   async function findCandidate() {
     if (!address || !isTestnet || !managerId) {
-      setTransactionStatus({
+      setScanStatus({
         state: "failed",
         error: "Connect a Sui Testnet wallet and load a Predict Account before scanning.",
       });
       return;
     }
 
+    const controller = new AbortController();
+    scanAbortController.current = controller;
     setIsScanning(true);
     setPreparation(null);
-    setTransactionStatus({
-      state: "building",
-      message: "Scanning runtime active oracles, quotes, and mint preflights.",
+    setScanResult(null);
+    setScanProgress(null);
+    setScanStatus({
+      state: "scanning",
+      message: "Scanning runtime active oracles, quotes, and full mint preflights.",
     });
 
     try {
@@ -85,27 +114,60 @@ export function useRangeTrading({
         sender: address,
         managerId,
         config: DEEPBOOK_PREDICT_TESTNET,
+        ...BROWSER_SCAN_LIMITS,
+        signal: controller.signal,
+        onProgress: setScanProgress,
       });
 
       setScanResult(result);
       setSelectedCandidate(result.selectedCandidate);
-      setQuantity(result.selectedCandidate?.quantity ?? quantity);
-      persistence.updateRecord({ managerId });
-      setTransactionStatus({
-        state: result.selectedCandidate ? "success" : "failed",
-        message: result.selectedCandidate
-          ? "Found a range candidate whose full mint preflight passed."
-          : "Candidate scan completed without a preflight-passing mint candidate.",
-        error: result.selectedCandidate ? undefined : result.blockers.map((blocker) => blocker.message).join("\n"),
-      });
+
+      if (result.selectedCandidate) {
+        setQuantity(result.selectedCandidate.quantity);
+      }
+
+      if (result.cancelled || controller.signal.aborted) {
+        setScanStatus({
+          state: "cancelled",
+          message: "Candidate scan cancelled.",
+        });
+      } else if (result.selectedCandidate) {
+        setScanStatus({
+          state: "success",
+          message: "Found a range candidate whose full mint preflight passed.",
+        });
+      } else {
+        setScanStatus({
+          state: "no_candidate",
+          message: "Candidate scan: no mintable candidate found.",
+        });
+      }
     } catch (error) {
-      setTransactionStatus({
-        state: "failed",
-        error: translateDeepBookPredictError(error),
-      });
+      if (controller.signal.aborted) {
+        setScanStatus({
+          state: "cancelled",
+          message: "Candidate scan cancelled.",
+        });
+      } else {
+        setScanStatus({
+          state: "failed",
+          error: translateDeepBookPredictError(error),
+        });
+      }
     } finally {
+      if (scanAbortController.current === controller) {
+        scanAbortController.current = null;
+      }
       setIsScanning(false);
     }
+  }
+
+  function cancelScan() {
+    scanAbortController.current?.abort();
+    setScanStatus({
+      state: "cancelled",
+      message: "Candidate scan cancellation requested.",
+    });
   }
 
   async function prepareMintForCandidate(candidate = selectedCandidate, requestedQuantity = quantity) {
@@ -153,6 +215,20 @@ export function useRangeTrading({
     }
   }
 
+  async function importCandidate(input: ManualCandidateInput) {
+    const candidate = buildManualCandidate(input);
+
+    setSelectedCandidate(candidate);
+    setQuantity(input.quantity.trim());
+    setPreparation(null);
+    setScanStatus({
+      state: "success",
+      message: "Imported candidate selected. Running quote and full mint preflight for this exact range.",
+    });
+
+    return prepareMintForCandidate(candidate, input.quantity.trim());
+  }
+
   async function mint() {
     if (!address || !isTestnet || !managerId || !selectedCandidate) {
       setTransactionStatus({
@@ -190,27 +266,28 @@ export function useRangeTrading({
         {
           onSuccess: (result) => {
             const event = parseRangeMintedEvent(result, DEEPBOOK_PREDICT_TESTNET);
-            const eventFields = event?.fields;
+            const eventPosition = event ? extractRangePositionFromMintEvent(event, result.digest) : null;
             const persistedRange = {
-              oracleId: eventFields?.oracleId ?? selectedCandidate.oracleId,
+              oracleId: eventPosition?.oracleId ?? selectedCandidate.oracleId,
               oracleObjectId: selectedCandidate.oracleObjectId,
               underlyingAsset: selectedCandidate.underlyingAsset,
-              expiry: eventFields?.expiry ?? String(selectedCandidate.expiry),
-              lowerStrike: eventFields?.lowerStrike ?? String(selectedCandidate.lowerStrike),
-              higherStrike: eventFields?.higherStrike ?? String(selectedCandidate.higherStrike),
-              quantity: eventFields?.quantity ?? quantity,
+              expiry: String(eventPosition?.expiry ?? selectedCandidate.expiry),
+              lowerStrike: String(eventPosition?.lowerStrike ?? selectedCandidate.lowerStrike),
+              higherStrike: String(eventPosition?.higherStrike ?? selectedCandidate.higherStrike),
+              quantity: String(eventPosition?.quantity ?? quantity),
             };
 
-            persistence.updateRecord({
-              managerId,
-              lastRangeKey: persistedRange,
-              lastMintDigest: result.digest,
+            persistence.upsertKnownRange({
+              ...persistedRange,
+              source: "mint_event",
+              status: "unknown",
+              mintDigest: result.digest,
             });
             setTransactionStatus({
               state: "success",
               digest: result.digest,
               explorerUrl: buildSuiExplorerTransactionUrl(result.digest),
-              message: event ? "RangeMinted event parsed and last RangeKey persisted." : "Mint succeeded; RangeMinted event was not parsed from wallet result.",
+              message: event ? "RangeMinted event parsed and known RangeKey persisted." : "Mint succeeded; RangeMinted event was not parsed from wallet result.",
             });
             void queryClient.invalidateQueries({ queryKey: ["portfolio-readback"] });
           },
@@ -232,6 +309,8 @@ export function useRangeTrading({
 
   return {
     scanResult,
+    scanProgress,
+    scanStatus,
     selectedCandidate,
     setSelectedCandidate,
     quantity,
@@ -243,7 +322,31 @@ export function useRangeTrading({
     canMint,
     persistenceRecord: persistence.record,
     findCandidate,
+    cancelScan,
+    importCandidate,
     prepareMint: () => prepareMintForCandidate(),
     mint,
+  };
+}
+
+function buildManualCandidate(input: ManualCandidateInput): RangeQuoteCandidate {
+  const oracleId = input.oracleId.trim();
+  const expiry = input.expiry.trim();
+  const lowerStrike = input.lowerStrike.trim();
+  const higherStrike = input.higherStrike.trim();
+  const width = BigInt(higherStrike) - BigInt(lowerStrike);
+
+  return {
+    oracleId,
+    oracleObjectId: oracleId,
+    underlyingAsset: null,
+    expiry,
+    lowerStrike,
+    higherStrike,
+    widthTicks: width > 0n ? width.toString() : "1",
+    anchorSource: "forward",
+    anchorPrice: lowerStrike,
+    strategy: "centered",
+    family: "manual_import",
   };
 }

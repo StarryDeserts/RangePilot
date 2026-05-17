@@ -1,5 +1,5 @@
 import { buildSuiExplorerTransactionUrl } from "@rangepilot/sdk/deepbookPredict";
-import type { PersistedRangeKey } from "../hooks/useRangeTradingPersistence";
+import type { KnownRangeKeyRecord, PersistedRangeKey } from "../hooks/useRangeTradingPersistence";
 import { usePortfolioReadback } from "../hooks/usePortfolioReadback";
 import { RangeKeyDetails } from "./RangeKeyDetails";
 import { TransactionStatus } from "./TransactionStatus";
@@ -19,7 +19,7 @@ export function PortfolioReadbackCard({
     <section className="card wideCard">
       <h2>Portfolio readback + redeem</h2>
       <p className="noticeInline">
-        Direct devInspect range_position is the wallet-critical active quantity source. Public server summaries are diagnostic only.
+        Direct devInspect range_position is the wallet-critical active quantity source. Public server summaries and mint history are diagnostic recovery hints only.
       </p>
 
       <dl className="details compactDetails">
@@ -29,17 +29,22 @@ export function PortfolioReadbackCard({
         <dd className="mono">{portfolio.managerBalanceAtomic ?? "Unavailable from diagnostic summary"}</dd>
         <dt>Manager summary</dt>
         <dd>{portfolio.managerSummaryQuery.status}</dd>
+        <dt>Mint history recovery</dt>
+        <dd>{portfolio.mintHistoryQuery.status}</dd>
         <dt>Last mint digest</dt>
         <dd><DigestLink digest={portfolio.persistenceRecord?.lastMintDigest} /></dd>
         <dt>Last redeem digest</dt>
         <dd><DigestLink digest={portfolio.persistenceRecord?.lastRedeemDigest} /></dd>
       </dl>
 
+      <KnownRangeRecovery portfolio={portfolio} />
+      <MintDigestImport portfolio={portfolio} disabled={!address || !isTestnet || !managerId} />
+
       <section className="subsection">
-        <h3>{portfolio.persistedRange ? "Persisted RangeKey" : "Manual RangeKey"}</h3>
+        <h3>{portfolio.useManualRange ? "Manual RangeKey target" : "Selected recovered range"}</h3>
         <RangeKeyDetails range={portfolio.activeRange} />
-        {!portfolio.persistedRange && (
-          <ManualRangeForm range={portfolio.manualRange} updateRange={portfolio.updateManualRange} />
+        {!portfolio.activeRange && (
+          <p className="warningText">No recovered minted range is selected yet. Import a mint digest or use Advanced Debug.</p>
         )}
       </section>
 
@@ -105,7 +110,121 @@ export function PortfolioReadbackCard({
         </section>
       )}
 
+      <details className="subsection">
+        <summary>Advanced Debug: Enter RangeKey manually</summary>
+        <p className="muted">Manual RangeKey entry is a developer fallback. Redeem still requires direct range_position readback, quote, positive payout, and full redeem preflight.</p>
+        <ManualRangeForm range={portfolio.manualRange} updateRange={portfolio.updateManualRange} />
+        <div className="actions stackedActions">
+          <button disabled={!canUseManualRange(portfolio.manualRange)} onClick={portfolio.useManualRangeNow}>
+            Use manual RangeKey
+          </button>
+        </div>
+      </details>
+
       <TransactionStatus status={portfolio.transactionStatus} />
+    </section>
+  );
+}
+
+type PortfolioReadbackState = ReturnType<typeof usePortfolioReadback>;
+
+function KnownRangeRecovery({ portfolio }: { portfolio: PortfolioReadbackState }) {
+  return (
+    <section className="subsection">
+      <h3>Known recovered ranges</h3>
+      {portfolio.knownRanges.length === 0 ? (
+        <p className="warningText">No known minted ranges recovered for this manager yet.</p>
+      ) : (
+        <>
+          <label className="checkboxRow">
+            <input
+              type="checkbox"
+              checked={portfolio.showInactiveRanges}
+              onChange={(event) => portfolio.setShowInactiveRanges(event.target.checked)}
+            />
+            Show inactive ranges
+          </label>
+          <div className="knownRangeList">
+            {portfolio.visibleKnownRanges.map((range) => (
+              <KnownRangeRow
+                key={range.key}
+                range={range}
+                selected={portfolio.selectedKnownRange?.key === range.key && !portfolio.useManualRange}
+                onSelect={() => portfolio.selectRange(range.key)}
+              />
+            ))}
+          </div>
+          {portfolio.visibleKnownRanges.length === 0 && (
+            <p className="muted">Inactive ranges are hidden. Enable “Show inactive ranges” to inspect zero-quantity records.</p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function KnownRangeRow({
+  range,
+  selected,
+  onSelect,
+}: {
+  range: KnownRangeKeyRecord;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <article className={`knownRangeItem${selected ? " selected" : ""}`}>
+      <dl className="details compactDetails">
+        <dt>Range</dt>
+        <dd className="mono breakAll">{range.lowerStrike}/{range.higherStrike}</dd>
+        <dt>Status</dt>
+        <dd>{formatKnownRangeStatus(range)}</dd>
+        <dt>Source</dt>
+        <dd>{range.source}</dd>
+        <dt>Readback quantity</dt>
+        <dd className="mono">{range.lastReadbackQuantity ?? "Not confirmed"}</dd>
+        <dt>Mint digest</dt>
+        <dd><DigestLink digest={range.mintDigests[0]} /></dd>
+      </dl>
+      <div className="actions stackedActions">
+        <button disabled={selected} onClick={onSelect}>
+          {selected ? "Selected" : "Use range"}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function MintDigestImport({
+  portfolio,
+  disabled,
+}: {
+  portfolio: PortfolioReadbackState;
+  disabled: boolean;
+}) {
+  return (
+    <section className="subsection">
+      <h3>Import from mint transaction digest</h3>
+      <p className="muted">Use this when local recovery has no RangeMinted event for the active manager.</p>
+      <form
+        className="formRow"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void portfolio.importMintDigest();
+        }}
+      >
+        <input
+          className="mono"
+          placeholder="Mint transaction digest"
+          value={portfolio.mintDigestInput}
+          onChange={(event) => portfolio.setMintDigestInput(event.target.value)}
+        />
+        <button disabled={disabled || portfolio.importStatus.state === "loading" || !portfolio.mintDigestInput.trim()}>
+          Import minted range
+        </button>
+      </form>
+      {portfolio.importStatus.message && <p className="success">{portfolio.importStatus.message}</p>}
+      {portfolio.importStatus.error && <p className="error">{portfolio.importStatus.error}</p>}
     </section>
   );
 }
@@ -156,5 +275,27 @@ function DigestLink({ digest }: { digest: string | undefined }) {
     <a href={buildSuiExplorerTransactionUrl(digest)} target="_blank" rel="noreferrer">
       <span className="mono breakAll">{digest}</span>
     </a>
+  );
+}
+
+function formatKnownRangeStatus(range: KnownRangeKeyRecord) {
+  if (range.status === "inactive") {
+    return "Inactive";
+  }
+
+  if (range.status === "active") {
+    return "Active";
+  }
+
+  return "Unconfirmed";
+}
+
+function canUseManualRange(range: PersistedRangeKey) {
+  return Boolean(
+    range.oracleId.trim() &&
+      range.oracleObjectId.trim() &&
+      range.expiry.trim() &&
+      range.lowerStrike.trim() &&
+      range.higherStrike.trim(),
   );
 }
