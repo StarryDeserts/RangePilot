@@ -76,15 +76,17 @@ The wrapper must not implement or replace:
 
 ## DeepBook Predict dependency boundary
 
-Local source snapshot used for wrapper build/debug:
+The wrapper formal dependency source is the official DeepBookV3 Git repository:
 
 ```text
-deepbookv3-predict-testnet-4-16/packages/predict
+https://github.com/MystenLabs/deepbookv3.git
+subdir: packages/predict
+rev: predict-testnet-4-16
 ```
 
-The full local third-party snapshot root is `deepbookv3-predict-testnet-4-16/`. Official docs remain the deployment/config source of truth, and the local snapshot is not vendored into or committed to the repository.
+`move/rangepilot/Move.toml` uses Testnet `dep-replacements` to bind DeepBook Predict and DeepBook to the deployed Testnet package IDs. The local `deepbookv3-predict-testnet-4-16/` snapshot is source-level debugging/reference only; it must stay ignored and uncommitted, and it is not the formal wrapper dependency source.
 
-Confirmed local source signature:
+Confirmed source signature:
 
 ```move
 public fun mint_range<Quote>(
@@ -151,7 +153,7 @@ MVP fees are separate from DeepBook Predict mint cost.
 - The wrapper may split fee coin into creator/platform amounts and transfer them.
 - If `predict::mint_range<T>` aborts, the entire transaction aborts and fee transfers roll back.
 
-The wrapper must not compute fee from DeepBook Predict mint cost by reimplementing pricing. Phase 3A/B uses explicit fee amount validation in the skeleton.
+The wrapper must not compute fee from DeepBook Predict mint cost by reimplementing pricing. Phase 3C uses explicit nonzero `fee_amount` validation, requires `coin::value(&fee_coin) >= fee_amount`, and splits that explicit amount by creator/platform bps. `MAX_TOTAL_FEE_BPS`, `MAX_CREATOR_FEE_BPS`, and `MAX_PLATFORM_FEE_BPS` are hard accounting bounds of `10_000`, not final tokenomics.
 
 ## Follow strategy flow
 
@@ -160,7 +162,7 @@ The wrapper must not compute fee from DeepBook Predict mint cost by reimplementi
 3. Follower approves wrapper transaction.
 4. Wrapper checks `strategy.active`.
 5. Wrapper checks `quantity > 0`.
-6. Wrapper validates fee bps and fee coin value.
+6. Wrapper validates nonzero explicit fee amount, fee bps, and fee coin value.
 7. Wrapper builds `RangeKey` from Strategy fields.
 8. Wrapper calls DeepBook Predict `predict::mint_range<T>`.
 9. Wrapper emits `StrategyFollowed` after the protocol call succeeds.
@@ -181,7 +183,7 @@ Planned wrapper surface:
   - calls DeepBook Predict `mint_range<T>`;
   - emits `StrategyFollowed`.
 
-The local skeleton entrypoints compile against the full local DeepBookV3 snapshot. Concrete published package IDs, final fee token policy, and deployment-specific DUSDC examples remain `MUST CONFIRM BEFORE CODING` before publish.
+The local skeleton entrypoints compile against official DeepBookV3 Git dependencies with Testnet dep-replacements. Concrete published wrapper package IDs, final fee token policy, platform recipient, and deployment-specific DUSDC examples remain `MUST CONFIRM BEFORE PUBLISH`.
 
 ## Events
 
@@ -207,6 +209,8 @@ Wrapper-specific errors should cover only wrapper policy:
 | `EFeeBpsTooHigh` | Creator + platform fee bps exceeds wrapper max. |
 | `EInsufficientFee` | Provided fee coin is below explicit fee amount. |
 | `EUnauthorized` | Non-creator tried to deactivate a strategy. |
+| `EZeroFee` | Explicit fee amount is zero. |
+| `EEmptyMetadataUri` | Strategy metadata URI is empty. |
 
 Do not mirror DeepBook Predict pricing, oracle, or vault errors in wrapper code. Surface those from transaction effects or preflight diagnostics.
 
@@ -221,26 +225,28 @@ Do not mirror DeepBook Predict pricing, oracle, or vault errors in wrapper code.
 
 ## Upgrade and deployment assumptions
 
-- The wrapper package is not published in Phase 3A/B.
+- The wrapper package is not published in Phase 3C.
 - Wrapper package ID is `TBD` until an explicit future Testnet publish round.
+- Platform fee recipient is `MUST CONFIRM BEFORE PUBLISH`.
 - SDK builders must block by default without a wrapper package ID.
 - Mainnet is out of scope.
-- `deepbookv3-predict-testnet-4-16/` is local third-party source for build/debug only and must not be committed.
+- `deepbookv3-predict-testnet-4-16/` is local third-party source for debugging/reference only and must not be committed.
 
 ## Open follow-ups
 
 | Follow-up | Status | Handling |
 |---|---|---|
-| Full local DeepBookV3 snapshot | Resolved for local build: `move/rangepilot/Move.toml` depends on `../../deepbookv3-predict-testnet-4-16/packages/predict`, whose sibling `packages/deepbook` dependency resolves. The DeepBook package still pins `token` from the upstream DeepBookV3 git dependency, and `Move.lock` records that resolved dependency. | Keep `deepbookv3-predict-testnet-4-16/` ignored and uncommitted. Do not edit third-party source for wrapper fixes. |
+| Official DeepBookV3 dependency source | Resolved for Phase 3C: `move/rangepilot/Move.toml` uses official DeepBookV3 Git dependencies for `packages/predict` and `packages/deepbook` at `predict-testnet-4-16`, with Testnet dep-replacements binding deployed package IDs. | Keep local snapshots ignored and uncommitted. Do not switch formal dependencies back to local paths. |
 | DUSDC source dependency for published examples | `mint_range<T>` remains generic in the skeleton; concrete DUSDC publish examples still require final package/source confirmation. | Keep skeleton generic and docs Testnet-specific. Confirm before publish. |
 | Wrapper package ID | `TBD` until publish. | SDK stubs must block without explicit package ID. |
-| Final fee policy | Explicit fee amount and bps split are MVP skeleton policy, not final tokenomics. | Revisit before publish and audits. |
+| Platform recipient | `MUST CONFIRM BEFORE PUBLISH`. | Do not invent an address in code, docs, or config. |
+| Final fee policy | Explicit nonzero fee amount and bps split are MVP readiness policy, not final tokenomics. | Revisit before publish and audits. |
 
 ## Verification status
 
-Current Phase 3B-fix verification:
+Current Phase 3C verification:
 
 - `npm run typecheck`: passed.
 - `npm run build:web`: passed with the existing Vite chunk-size warning.
-- `npm run move:build:rangepilot`: passed against `deepbookv3-predict-testnet-4-16/packages/predict`.
-- `npm run move:test:rangepilot`: passed with 2 tests.
+- `npm run move:build:rangepilot`: passed with official DeepBookV3 Git dependencies and Testnet dep-replacements.
+- `npm run move:test:rangepilot`: passed with 11 tests.

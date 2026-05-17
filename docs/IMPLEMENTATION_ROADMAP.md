@@ -79,7 +79,8 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Subphase | Focus | Exit condition |
 |---|---|---|
 | Phase 3A: Business model and wrapper architecture | Define the creator/user/platform fee model, Route B DeepBook Predict boundary, and accepted ADR. | Docs and ADR state that RangePilot wrapper internally calls DeepBook Predict `mint_range<DUSDC>` and does not own pricing/oracle/vault/StrikeMatrix/payout/position custody. |
-| Phase 3B: Minimal wrapper skeleton and guarded SDK stubs | Add `move/rangepilot`, fee helpers, Strategy events, `follow_strategy_and_mint`, build scripts, optional TS types/stubs, and build/dependency documentation. | Local Move build and tests pass against `deepbookv3-predict-testnet-4-16/packages/predict`; TypeScript compiles; no publish or real transaction is executed. |
+| Phase 3B: Minimal wrapper skeleton and guarded SDK stubs | Add `move/rangepilot`, fee helpers, Strategy events, `follow_strategy_and_mint`, build scripts, optional TS types/stubs, and build/dependency documentation. | Local Move build and tests passed; TypeScript compiled; no publish or real transaction was executed. |
+| Phase 3C: Wrapper hardening and publish readiness | Switch formal Move dependencies to official DeepBookV3 Git plus Testnet dep-replacements, harden fee/strategy policy, expand tests, add SDK placeholders, and create publish-readiness docs. | Move build passes with official Git dependencies; Move tests pass with 11 tests; wrapper package ID and platform recipient remain unconfigured until publish; no publish or real transaction is executed. |
 
 ## Phase 4: Portfolio and redeem/claim hardening
 

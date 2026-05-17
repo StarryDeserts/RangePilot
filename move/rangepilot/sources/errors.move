@@ -5,6 +5,8 @@ const EZeroQuantity: u64 = 1;
 const EFeeBpsTooHigh: u64 = 2;
 const EInsufficientFee: u64 = 3;
 const EUnauthorized: u64 = 4;
+const EZeroFee: u64 = 5;
+const EEmptyMetadataUri: u64 = 6;
 
 public fun inactive_strategy(): u64 {
     EInactiveStrategy
@@ -24,4 +26,12 @@ public fun insufficient_fee(): u64 {
 
 public fun unauthorized(): u64 {
     EUnauthorized
+}
+
+public fun zero_fee(): u64 {
+    EZeroFee
+}
+
+public fun empty_metadata_uri(): u64 {
+    EEmptyMetadataUri
 }

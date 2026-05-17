@@ -125,11 +125,11 @@ Negative:
 - A RangePilot Move package must be deployed in a future round.
 - Wrapper package ID is unknown until publish and must be `TBD` in config.
 - SDK wrapper builders must block unless a package ID is explicitly provided.
-- The wrapper build depends on the full local DeepBookV3 Testnet source snapshot at `deepbookv3-predict-testnet-4-16/packages/predict`; that snapshot is for local build/debug only and must not be committed.
+- The wrapper formal dependency source is the official DeepBookV3 Git repository with Testnet dep-replacements for the deployed DeepBook Predict and DeepBook package IDs; the local `deepbookv3-predict-testnet-4-16/` snapshot is debugging/reference-only and must not be committed.
 
 ## Follow-up requirements
 
-- Keep `move/rangepilot` compiling against `deepbookv3-predict-testnet-4-16/packages/predict`; current local verification passes `npm run move:build:rangepilot` and `npm run move:test:rangepilot`.
+- Keep `move/rangepilot` compiling against official DeepBookV3 Git dependencies plus Testnet dep-replacements; current Phase 3C verification passes `npm run move:build:rangepilot` and `npm run move:test:rangepilot`.
 - Decide final fee product cap and platform recipient before publish.
 - Publish wrapper only after explicit future approval.
 - Add SDK transaction builders that default-block without wrapper package ID.

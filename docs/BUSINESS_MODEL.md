@@ -65,12 +65,14 @@ MVP fee policy should be explicit and protocol-bounded:
 | Creator fee | follower | strategy creator | wrapper follow transaction | separate fee `Coin<DUSDC>` or generic `Coin<T>` |
 | Platform fee | follower | RangePilot platform address | wrapper follow transaction | separate fee `Coin<DUSDC>` or generic `Coin<T>` |
 
-The wrapper should not compute fees from DeepBook Predict mint cost unless the protocol exposes that cost directly to the wrapper without reproducing pricing. Recommended MVP policy is one of:
+The wrapper must not compute fees from DeepBook Predict mint cost unless the protocol exposes that cost directly to the wrapper without reproducing pricing. Phase 3C MVP policy is explicit fee amount only:
 
-1. explicit `fee_amount` argument validated against the fee coin value; or
-2. simple quantity-based fee that does not require option pricing.
+1. frontend/SDK passes nonzero `fee_amount` explicitly;
+2. wrapper validates `fee_coin.value() >= fee_amount`;
+3. wrapper splits `fee_amount` by creator/platform bps;
+4. wrapper returns any unused fee coin remainder to the follower.
 
-For Phase 3A/B, the skeleton should treat fee bps and explicit fee amount as wrapper policy, not protocol pricing.
+The hard Phase 3C accounting bound is `10_000` bps for total, creator, and platform fee bps. Final product caps and platform recipient remain `MUST CONFIRM BEFORE PUBLISH`.
 
 ## Failure and rollback behavior
 

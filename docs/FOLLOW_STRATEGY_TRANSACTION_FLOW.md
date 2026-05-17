@@ -18,7 +18,7 @@ Planned wrapper transaction inputs:
 - user's DeepBook Predict `PredictManager` shared object;
 - DeepBook Predict `OracleSVI` object;
 - fee `Coin<DUSDC>` or generic fee `Coin<T>`;
-- explicit fee amount or quantity-based fee inputs;
+- explicit nonzero fee amount;
 - follow quantity;
 - `Clock`;
 - `TxContext`.
@@ -65,8 +65,8 @@ let key = range_key::new(
 ```
 
 4. Validate the caller owns `PredictManager` if the wrapper can do so directly; otherwise rely on DeepBook Predict `mint_range` owner check. The local source confirms `mint_range` asserts `ctx.sender() == manager.owner()`.
-5. Validate creator/platform fee bps or explicit fee amount without computing DeepBook Predict pricing.
-6. Split and transfer fee coin if fee routing is implemented in this skeleton.
+5. Validate creator/platform fee bps, nonzero explicit fee amount, and fee coin value without computing DeepBook Predict pricing.
+6. Split and transfer the explicit fee amount if fee routing is implemented in this skeleton.
 7. Call DeepBook Predict:
 
 ```move
@@ -91,20 +91,21 @@ The frontend should still preflight to avoid unnecessary wallet failures, but th
 
 ## Fee flow
 
-Recommended MVP fee flow:
+Phase 3C MVP fee flow:
 
 ```text
 fee Coin<T> passed to wrapper
+→ wrapper validates explicit_fee_amount > 0
 → wrapper validates fee_coin.value() >= explicit_fee_amount
-→ wrapper splits creator fee and platform fee from the fee coin
+→ wrapper splits creator fee and platform fee from explicit_fee_amount
 → wrapper transfers split fees to creator and platform recipient
 → wrapper returns any remainder to follower or destroys zero remainder by normal coin flow
 → wrapper calls DeepBook Predict mint_range<T>
 ```
 
-The fee type may be generic in the skeleton. Product docs expect DUSDC for the Testnet user path, but concrete DUSDC source dependencies may require future compile/publish confirmation.
+The fee type may be generic in the skeleton. Product docs expect DUSDC for the Testnet user path, but concrete DUSDC publish examples still require future confirmation.
 
-The wrapper must not compute fee from DeepBook Predict mint cost by reproducing pricing. Use explicit fee amount or a simple quantity-based policy until a safe protocol-exposed basis is confirmed.
+The wrapper must not compute fee from DeepBook Predict mint cost by reproducing pricing. Phase 3C uses explicit fee amount only; quantity-based tokenomics remain a future product decision.
 
 ## DeepBook Predict mint behavior
 
@@ -160,7 +161,7 @@ All failures abort the transaction. Fee transfers do not persist after abort.
 
 ## Out of scope
 
-- direct real follow transaction in Phase 3A/B;
+- direct real follow transaction in Phase 3C;
 - wrapper package publish;
 - mainnet;
 - custom pricing;

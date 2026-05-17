@@ -75,12 +75,8 @@ entry fun create_strategy(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    assert!(default_quantity > 0, errors::zero_quantity());
-    fees::assert_valid_fee_bps(creator_fee_bps, platform_fee_bps);
-
-    let strategy = Strategy {
-        id: object::new(ctx),
-        creator: ctx.sender(),
+    let strategy = new_strategy(
+        ctx.sender(),
         oracle_id,
         expiry,
         lower_strike,
@@ -90,9 +86,9 @@ entry fun create_strategy(
         platform_fee_bps,
         platform_recipient,
         metadata_uri,
-        active: true,
-        created_at_ms: clock.timestamp_ms(),
-    };
+        clock.timestamp_ms(),
+        ctx,
+    );
     let strategy_id = object::id(&strategy);
 
     event::emit(StrategyCreated {
@@ -118,15 +114,7 @@ entry fun deactivate_strategy(
     clock: &Clock,
     ctx: &TxContext,
 ) {
-    assert!(ctx.sender() == strategy.creator, errors::unauthorized());
-
-    strategy.active = false;
-
-    event::emit(StrategyDeactivated {
-        strategy_id: object::id(strategy),
-        creator: strategy.creator,
-        timestamp_ms: clock.timestamp_ms(),
-    });
+    deactivate(strategy, ctx.sender(), clock.timestamp_ms());
 }
 
 entry fun follow_strategy_and_mint<T>(
@@ -142,6 +130,7 @@ entry fun follow_strategy_and_mint<T>(
 ) {
     assert!(strategy.active, errors::inactive_strategy());
     assert!(quantity > 0, errors::zero_quantity());
+    fees::assert_nonzero_fee_amount(fee_amount);
     assert!(coin::value(&fee_coin) >= fee_amount, errors::insufficient_fee());
     fees::assert_valid_fee_bps(strategy.creator_fee_bps, strategy.platform_fee_bps);
 
@@ -198,4 +187,108 @@ entry fun follow_strategy_and_mint<T>(
         platform_fee,
         timestamp_ms: clock.timestamp_ms(),
     });
+}
+
+fun new_strategy(
+    creator: address,
+    oracle_id: ID,
+    expiry: u64,
+    lower_strike: u64,
+    higher_strike: u64,
+    default_quantity: u64,
+    creator_fee_bps: u64,
+    platform_fee_bps: u64,
+    platform_recipient: address,
+    metadata_uri: vector<u8>,
+    created_at_ms: u64,
+    ctx: &mut TxContext,
+): Strategy {
+    assert!(default_quantity > 0, errors::zero_quantity());
+    assert!(!metadata_uri.is_empty(), errors::empty_metadata_uri());
+    fees::assert_valid_fee_bps(creator_fee_bps, platform_fee_bps);
+
+    Strategy {
+        id: object::new(ctx),
+        creator,
+        oracle_id,
+        expiry,
+        lower_strike,
+        higher_strike,
+        default_quantity,
+        creator_fee_bps,
+        platform_fee_bps,
+        platform_recipient,
+        metadata_uri,
+        active: true,
+        created_at_ms,
+    }
+}
+
+fun deactivate(strategy: &mut Strategy, sender: address, timestamp_ms: u64) {
+    assert!(sender == strategy.creator, errors::unauthorized());
+
+    strategy.active = false;
+
+    event::emit(StrategyDeactivated {
+        strategy_id: object::id(strategy),
+        creator: strategy.creator,
+        timestamp_ms,
+    });
+}
+
+#[test_only]
+public fun new_strategy_for_testing(
+    creator: address,
+    oracle_id: ID,
+    expiry: u64,
+    lower_strike: u64,
+    higher_strike: u64,
+    default_quantity: u64,
+    creator_fee_bps: u64,
+    platform_fee_bps: u64,
+    platform_recipient: address,
+    metadata_uri: vector<u8>,
+    created_at_ms: u64,
+    ctx: &mut TxContext,
+): Strategy {
+    new_strategy(
+        creator,
+        oracle_id,
+        expiry,
+        lower_strike,
+        higher_strike,
+        default_quantity,
+        creator_fee_bps,
+        platform_fee_bps,
+        platform_recipient,
+        metadata_uri,
+        created_at_ms,
+        ctx,
+    )
+}
+
+#[test_only]
+public fun deactivate_for_testing(strategy: &mut Strategy, sender: address, timestamp_ms: u64) {
+    deactivate(strategy, sender, timestamp_ms);
+}
+
+#[test_only]
+public fun destroy_for_testing(strategy: Strategy) {
+    let Strategy { id, metadata_uri: _, .. } = strategy;
+    id.delete();
+}
+
+#[test_only]
+public fun creator_for_testing(strategy: &Strategy): address {
+    strategy.creator
+}
+
+#[test_only]
+public fun default_quantity_for_testing(strategy: &Strategy): u64 {
+    strategy.default_quantity
+}
+
+#[test_only]
+public fun active_for_testing(strategy: &Strategy): bool {
+    strategy.active
 }

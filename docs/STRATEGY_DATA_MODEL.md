@@ -97,7 +97,7 @@ Deactivation prevents new follows. It does not affect already minted positions b
 
 ## Metadata location
 
-Use an on-chain URI/hash pointer for MVP. Keep long-form strategy content off-chain:
+Use an on-chain URI/hash pointer for MVP. Phase 3C rejects empty metadata URIs but does not enforce a scheme, max length, or content hash. Keep long-form strategy content off-chain:
 
 - title;
 - thesis;
@@ -112,13 +112,16 @@ Use an on-chain URI/hash pointer for MVP. Keep long-form strategy content off-ch
 
 ## Fee bps upper bound
 
-The wrapper should enforce a maximum combined fee bps. Recommended skeleton default:
+The wrapper enforces hard accounting fee bps bounds in Phase 3C:
 
 ```text
+BPS_DENOMINATOR = 10_000
 MAX_TOTAL_FEE_BPS = 10_000
+MAX_CREATOR_FEE_BPS = 10_000
+MAX_PLATFORM_FEE_BPS = 10_000
 ```
 
-That maximum means creator + platform split cannot exceed 100% of the explicit fee amount. Product policy should likely set a lower default before publish, but Phase 3A/B should only enforce the hard accounting bound.
+Those maxima mean creator + platform split cannot exceed 100% of the explicit fee amount, and each individual side cannot exceed the full explicit fee. Product policy should likely set lower defaults before publish; final creator/platform caps remain `MUST CONFIRM BEFORE PUBLISH`.
 
 ## Strategy active/deactivated state
 

@@ -17,13 +17,13 @@ manifest_digest = "7AFB66695545775FBFBB2D3078ADFD084244D5002392E837FDE21D9EA1C6D
 deps = { MoveStdlib = "MoveStdlib" }
 
 [pinned.testnet.deepbook]
-source = { local = '..\..\deepbookv3-predict-testnet-4-16\packages\deepbook' }
+source = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = 'packages\deepbook', rev = "1159d79af33c70e09e406310e1d8f067832ede9d" }
 use_environment = "testnet"
 manifest_digest = "3101923B9428545A4F52FFAD1C4F959F9BFFF84CD09CE4BCC1CB831286999B5A"
 deps = { std = "MoveStdlib", sui = "Sui", token = "token" }
 
 [pinned.testnet.deepbook_predict]
-source = { local = '..\..\deepbookv3-predict-testnet-4-16\packages\predict' }
+source = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = 'packages\predict', rev = "1159d79af33c70e09e406310e1d8f067832ede9d" }
 use_environment = "testnet"
 manifest_digest = "A81C4B20DFD70F7717C352CAEDCFF55ECC2D8ADF14590ACD328B67C26E88C321"
 deps = { deepbook = "deepbook", std = "MoveStdlib", sui = "Sui" }
@@ -31,8 +31,8 @@ deps = { deepbook = "deepbook", std = "MoveStdlib", sui = "Sui" }
 [pinned.testnet.rangepilot]
 source = { root = true }
 use_environment = "testnet"
-manifest_digest = "2B8169559B1BD03D1788EA4E9B6B61BE55CE479ECA38D8EF4F86C3AA4977AA62"
-deps = { deepbook_predict = "deepbook_predict", std = "MoveStdlib", sui = "Sui" }
+manifest_digest = "B8B2FCB7D95984B063691320257DB69ECF701F150F946E5F4317967AFD68D430"
+deps = { deepbook = "deepbook", deepbook_predict = "deepbook_predict", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.testnet.token]
 source = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = 'packages\token', rev = "9eea8d7d04f6b79160b3c4fe2f08a5ee037bc3ec" }

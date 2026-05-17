@@ -1,4 +1,15 @@
 import type { DeepBookPredictNetworkConfig } from "@rangepilot/types/deepbookPredict";
+import type { RangePilotStrategyConfig } from "@rangepilot/types/rangePilotStrategy";
+
+export const RANGEPILOT_WRAPPER_PACKAGE_ID = null;
+export const RANGEPILOT_PLATFORM_FEE_RECIPIENT = null;
+
+export const RANGEPILOT_STRATEGY_TESTNET = {
+  network: "testnet",
+  wrapperPackageId: RANGEPILOT_WRAPPER_PACKAGE_ID,
+  moduleName: "strategy",
+  platformFeeRecipient: RANGEPILOT_PLATFORM_FEE_RECIPIENT,
+} as const satisfies RangePilotStrategyConfig;
 
 export const DEEPBOOK_PREDICT_TESTNET = {
   network: "testnet",

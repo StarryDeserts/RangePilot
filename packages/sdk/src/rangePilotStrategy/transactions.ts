@@ -10,7 +10,9 @@ import { DeepBookPredictUnconfirmedBindingError } from "../deepbookPredict/error
 export const RANGE_PILOT_WRAPPER_TESTNET: RangePilotWrapperConfig = {
   network: "testnet",
   packageId: null,
+  wrapperPackageId: null,
   moduleName: "strategy",
+  platformFeeRecipient: null,
 };
 
 export type BuildFollowStrategyAndMintTransactionOptions = FollowStrategyParams & {
@@ -84,7 +86,11 @@ function assertFollowSafetyGates(
 function resolveWrapperPackageId(
   params: BuildFollowStrategyAndMintTransactionOptions,
 ): string {
-  const packageId = params.wrapperPackageId ?? params.wrapper?.packageId ?? null;
+  const packageId =
+    params.wrapperPackageId ??
+    params.wrapper?.wrapperPackageId ??
+    params.wrapper?.packageId ??
+    null;
 
   if (!packageId) {
     throw new DeepBookPredictUnconfirmedBindingError(

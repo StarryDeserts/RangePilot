@@ -4,6 +4,9 @@ import type {
   DeepBookPredictObjectId,
 } from "./deepbookPredict.ts";
 
+export type StrategyObjectId = DeepBookPredictObjectId;
+export type PlatformFeeRecipient = DeepBookPredictObjectId;
+
 export type RangePilotStrategyRangeKey = {
   oracleId: DeepBookPredictObjectId;
   expiry: string;
@@ -11,10 +14,15 @@ export type RangePilotStrategyRangeKey = {
   higherStrike: string;
 };
 
-export type RangePilotWrapperConfig = {
+export type RangePilotStrategyConfig = {
   network: DeepBookPredictNetwork;
-  packageId: DeepBookPredictObjectId | null;
+  wrapperPackageId: DeepBookPredictObjectId | null;
   moduleName: "strategy";
+  platformFeeRecipient: PlatformFeeRecipient | null;
+};
+
+export type RangePilotWrapperConfig = RangePilotStrategyConfig & {
+  packageId: DeepBookPredictObjectId | null;
 };
 
 export type RangePilotStrategy = RangePilotStrategyRangeKey & {
@@ -58,8 +66,16 @@ export type StrategyDeactivatedEvent = {
   timestampMs: string;
 };
 
+export type CreateStrategyParams = RangePilotStrategyRangeKey & {
+  defaultQuantity: string;
+  creatorFeeBps: number;
+  platformFeeBps: number;
+  platformRecipient: PlatformFeeRecipient;
+  metadataUri: string;
+};
+
 export type FollowStrategyParams = {
-  strategyId: DeepBookPredictObjectId;
+  strategyId: StrategyObjectId;
   predictId: DeepBookPredictObjectId;
   managerId: DeepBookPredictObjectId;
   oracleObjectId: DeepBookPredictObjectId;
@@ -68,6 +84,8 @@ export type FollowStrategyParams = {
   quantity: string;
   quoteCoinType: DeepBookPredictCoinType;
 };
+
+export type FollowStrategyAndMintParams = FollowStrategyParams;
 
 export type FollowStrategyAndMintPlan = Omit<FollowStrategyParams, "feeAmountAtomic" | "quantity"> & {
   feeAmountAtomic: string;

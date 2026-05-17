@@ -47,6 +47,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | [BROWSER_WALLET_TESTNET_VALIDATION.md](./BROWSER_WALLET_TESTNET_VALIDATION.md) | Manual browser-wallet Testnet create/deposit/mint/portfolio/redeem validation notes | Product / SDK / Frontend / Validation |
 | [BUSINESS_MODEL.md](./BUSINESS_MODEL.md) | Creator strategy business model, fee separation, and DeepBook Predict dependency boundary | Product / business |
 | [WRAPPER_CONTRACT_ARCHITECTURE.md](./WRAPPER_CONTRACT_ARCHITECTURE.md) | Route B wrapper contract architecture and DeepBook Predict boundary | Move / protocol / product |
+| [WRAPPER_PUBLISH_READINESS.md](./WRAPPER_PUBLISH_READINESS.md) | Phase 3C wrapper publish-readiness checklist, dependency policy, and pre-publish blockers | Move / protocol / product |
 | [CREATOR_STRATEGY_PRODUCT_FLOW.md](./CREATOR_STRATEGY_PRODUCT_FLOW.md) | Creator strategy discovery, preview, follow, portfolio-linking, and creator analytics flow | Product |
 | [FOLLOW_STRATEGY_TRANSACTION_FLOW.md](./FOLLOW_STRATEGY_TRANSACTION_FLOW.md) | Route B follow transaction inputs, validation order, atomic fee/mint behavior, and preflight rules | Move / SDK / protocol |
 | [STRATEGY_DATA_MODEL.md](./STRATEGY_DATA_MODEL.md) | Strategy object, events, metadata, fee, and indexer mapping model | Move / SDK / product |
@@ -135,7 +136,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 
 ## Local source snapshot note
 
-`deepbookv3-predict-package/predict` is a non-committed local DeepBook Predict source snapshot used for Phase 1C-debug source-level diagnostics. `deepbookv3-predict-testnet-4-16/` is the full non-committed local DeepBookV3 Testnet source snapshot used for Phase 3B wrapper build/debug, with the wrapper depending on `deepbookv3-predict-testnet-4-16/packages/predict`. These snapshots may be read and cited by relative path, but they must not be staged or committed; official docs remain the deployment/config source of truth.
+`deepbookv3-predict-package/predict` is a non-committed local DeepBook Predict source snapshot used for Phase 1C-debug source-level diagnostics. `deepbookv3-predict-testnet-4-16/` is the full non-committed local DeepBookV3 Testnet source snapshot used for source-level debugging/reference. These snapshots may be read and cited by relative path, but they must not be staged or committed. The formal RangePilot wrapper dependency source is the official DeepBookV3 Git repository with Testnet dep-replacements, not a local snapshot path; official docs remain the deployment/config source of truth.
 
 ## Global anti-invention rules
 
