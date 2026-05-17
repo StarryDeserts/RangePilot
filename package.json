@@ -26,6 +26,8 @@
     "investigate:range-quote-units": "node scripts/investigate-range-quote-units.mjs",
     "investigate:binary-quote": "node scripts/investigate-binary-quote.mjs",
     "investigate:ask-bounds": "node scripts/investigate-ask-bounds.mjs",
+    "move:build:rangepilot": "sui move build --path move/rangepilot",
+    "move:test:rangepilot": "sui move test --path move/rangepilot",
     "dev:web": "npm --workspace apps/web run dev",
     "build:web": "npm --workspace apps/web run build"
   },

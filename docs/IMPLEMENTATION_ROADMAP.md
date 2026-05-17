@@ -62,29 +62,36 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Phase 2A: Guided range trading MVP scaffold | Add minimal browser-wallet `/trade` and `/portfolio` scaffolds around the validated create/deposit/mint/readback/redeem lifecycle, with non-secret persistence and full preflight gates. | Engineering scaffold exists and is documented in [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md). It is not final UI design; browser wallet manual validation identified scan/recovery fixes for Phase 2B. |
 | Phase 2B-fix: Browser scan and portfolio recovery | Deduplicate and bound `/trade` candidate scans, add progress/cancel/diagnostics and Advanced Diagnostics candidate import, recover `/portfolio` RangeKeys from manager-scoped localStorage and mint digests, and move manual RangeKey input to Advanced Debug. | Implemented as scaffold fixes and documented in [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md). Browser wallet approval remains manual; final UI design remains deferred. |
 
-## Phase 3: Portfolio and redeem/claim
+## Phase 3: Creator strategy wrapper architecture
+
+| Field | Content |
+|---|---|
+| Goal | Define and scaffold Route B: a thin RangePilot wrapper that owns creator strategy metadata, fee attribution, and follow events while internally calling DeepBook Predict `mint_range<DUSDC>`. |
+| Deliverables | Business model; wrapper contract architecture; creator strategy product flow; follow strategy transaction flow; strategy data model; ADR 0002; minimal `move/rangepilot` wrapper skeleton; guarded TypeScript types/SDK stubs; documented Move build result or blocker. |
+| Non-goals | Final creator UI, vault dashboard, leaderboard, AI composer, mainnet, package publish, custom pricing, custom oracle settlement, custom vault risk, custom payout, independent position NFTs. |
+| Acceptance criteria | Wrapper boundary is documented; `follow_strategy_and_mint` derives `RangeKey` from Strategy fields and calls DeepBook Predict `mint_range`; creator/platform fee is separate from PredictManager mint cost; wrapper package ID remains `TBD` until explicit publish approval; frontend still requires official quote plus full preflight before any wrapper wallet prompt. |
+| Recommended skills | `sui-dev-skills/move`, `sui-dev-skills/sui-ts-sdk`, `sui-transaction-building`, `superpowers:executing-plans`. |
+| Required docs | Business model; wrapper contract architecture; creator strategy product flow; follow strategy transaction flow; strategy data model; ADR 0002; official contract info; entrypoint bindings plan; protocol integration notes. |
+| Risks and fallback | Risk: future DeepBook Predict source or publish dependency shape may change after the local compile snapshot. Fallback: document the exact external dependency blocker without vendoring fake modules or editing ignored source snapshots. |
+
+### Phase 3 subphases
+
+| Subphase | Focus | Exit condition |
+|---|---|---|
+| Phase 3A: Business model and wrapper architecture | Define the creator/user/platform fee model, Route B DeepBook Predict boundary, and accepted ADR. | Docs and ADR state that RangePilot wrapper internally calls DeepBook Predict `mint_range<DUSDC>` and does not own pricing/oracle/vault/StrikeMatrix/payout/position custody. |
+| Phase 3B: Minimal wrapper skeleton and guarded SDK stubs | Add `move/rangepilot`, fee helpers, Strategy events, `follow_strategy_and_mint`, build scripts, optional TS types/stubs, and build/dependency documentation. | Local Move build and tests pass against `deepbookv3-predict-testnet-4-16/packages/predict`; TypeScript compiles; no publish or real transaction is executed. |
+
+## Phase 4: Portfolio and redeem/claim hardening
 
 | Field | Content |
 |---|---|
 | Goal | Let users monitor active/settled predictions and close or claim positions through official protocol paths. |
-| Deliverables | Portfolio page; active/settled position cards; Predict Account balance; range position reads; redeem_range transaction; claim/settlement UX if same path or confirmed path supports it; history fallback. |
+| Deliverables | Portfolio page hardening; active/settled position cards; Predict Account balance; range position reads; redeem_range transaction; claim/settlement UX if same path or confirmed path supports it; history fallback. |
 | Non-goals | Full analytics, leaderboard, tax reporting, custom settlement, independent position NFTs. |
 | Acceptance criteria | Minted position appears in portfolio or documented fallback; user can redeem/claim only through confirmed official path; wallet-critical state uses direct reads where needed. |
 | Recommended skills | `sui-client`, `sui-transaction-building`, `sui-bcs`, `sui-dev-skills`. |
 | Required docs | Product spec `Portfolio Flow`; protocol analysis `PredictManager` and read surfaces; architecture map; protocol notes; official contract info; entrypoint bindings plan; portfolio readback validation; range redeem validation. |
 | Risks and fallback | Risk: table layout or manager discovery is hard to decode. Fallback: use Sui events/checkpoints for history while direct wallet-critical reads are confirmed. |
-
-## Phase 4: Creator strategy pages
-
-| Field | Content |
-|---|---|
-| Goal | Add creator strategy pages that make range predictions shareable and followable. |
-| Deliverables | Strategies list; strategy detail page; thesis metadata; follow trade flow; creator fee display; basic volume/participants tracking; risk disclosure. |
-| Non-goals | Complex on-chain creator protocol, unconfirmed real fee routing, social graph, reputation system, leaderboard unless time permits. |
-| Acceptance criteria | Creator can publish or configure a strategy in confirmed storage; follower can preview and follow the same official DeepBook Predict trade path; fees are either confirmed or labeled demo/TBD. |
-| Recommended skills | `sui-dev-skills/sui-frontend`, frontend/UI skills if available, `agent-skills:api-and-interface-design`. |
-| Required docs | Product spec `Creator Strategy Flow`, `Strategies Page`, `Strategy Detail Page`; roadmap; architecture map. |
-| Risks and fallback | Risk: on-chain fee wrapper adds scope. Fallback: off-chain metadata and direct official follow trade; real fee routing deferred with ADR if needed. |
 
 ## Phase 5: Vault / LP dashboard
 

@@ -1,0 +1,10 @@
+[package]
+name = "rangepilot"
+edition = "2024.beta"
+version = "0.0.1"
+
+[dependencies]
+deepbook_predict = { local = "../../deepbookv3-predict-testnet-4-16/packages/predict" }
+
+[addresses]
+rangepilot = "0x0"

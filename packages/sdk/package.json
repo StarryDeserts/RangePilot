@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./deepbookPredict": "./src/deepbookPredict/index.ts"
+    "./deepbookPredict": "./src/deepbookPredict/index.ts",
+    "./rangePilotStrategy": "./src/rangePilotStrategy/index.ts"
   }
 }

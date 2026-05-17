@@ -7,3 +7,6 @@ apps/web/dist/
 !.env.example
 .local/
 deepbookv3-predict-package/
+.traces/
+deepbookv3-predict-testnet-4-16/
+move/rangepilot/build/

@@ -44,9 +44,16 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | [SKILL_USAGE_GUIDE.md](./SKILL_USAGE_GUIDE.md) | Skill selection guide and found/not-found skill inventory | Agent workflow |
 | [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) | Phase 2A browser-wallet guided range trading scaffold scope, gates, flows, and manual validation checklist | Product / SDK / Frontend |
 | [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md) | Phase 2B browser candidate scan and portfolio RangeKey recovery fixes | Product / SDK / Frontend / Validation |
+| [BROWSER_WALLET_TESTNET_VALIDATION.md](./BROWSER_WALLET_TESTNET_VALIDATION.md) | Manual browser-wallet Testnet create/deposit/mint/portfolio/redeem validation notes | Product / SDK / Frontend / Validation |
+| [BUSINESS_MODEL.md](./BUSINESS_MODEL.md) | Creator strategy business model, fee separation, and DeepBook Predict dependency boundary | Product / business |
+| [WRAPPER_CONTRACT_ARCHITECTURE.md](./WRAPPER_CONTRACT_ARCHITECTURE.md) | Route B wrapper contract architecture and DeepBook Predict boundary | Move / protocol / product |
+| [CREATOR_STRATEGY_PRODUCT_FLOW.md](./CREATOR_STRATEGY_PRODUCT_FLOW.md) | Creator strategy discovery, preview, follow, portfolio-linking, and creator analytics flow | Product |
+| [FOLLOW_STRATEGY_TRANSACTION_FLOW.md](./FOLLOW_STRATEGY_TRANSACTION_FLOW.md) | Route B follow transaction inputs, validation order, atomic fee/mint behavior, and preflight rules | Move / SDK / protocol |
+| [STRATEGY_DATA_MODEL.md](./STRATEGY_DATA_MODEL.md) | Strategy object, events, metadata, fee, and indexer mapping model | Move / SDK / product |
 | [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) | Phased implementation plan from docs to demo polish | Product / engineering |
 | [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md) | Confirmed Testnet config and runtime-confirmation checklist | Protocol / engineering |
 | [ADR/0001-architecture-documentation-first.md](./ADR/0001-architecture-documentation-first.md) | Decision record for documentation-first architecture | ADR |
+| [ADR/0002-wrapper-internal-mint-route-b.md](./ADR/0002-wrapper-internal-mint-route-b.md) | Decision record accepting Route B wrapper internal mint architecture | ADR |
 | [../CLAUDE.md](../CLAUDE.md) | Root guidance for agents working in this repo | Agent workflow |
 
 ## Recommended reading order
@@ -78,6 +85,8 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 16. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
 17. [DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md](./DEEPBOOK_PREDICT_ARCHITECTURE_MAP.md)
 18. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
+19. [WRAPPER_CONTRACT_ARCHITECTURE.md](./WRAPPER_CONTRACT_ARCHITECTURE.md) before wrapper, creator strategy, or follow-strategy work
+20. [FOLLOW_STRATEGY_TRANSACTION_FLOW.md](./FOLLOW_STRATEGY_TRANSACTION_FLOW.md) before Route B transaction-builder work
 
 ### Before UI/product work
 
@@ -98,13 +107,13 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 
 | Category | Primary docs |
 |---|---|
-| Product | Product spec, architecture map, implementation roadmap, guided range trading MVP guide, browser wallet manual validation fixes |
-| Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info |
+| Product | Product spec, architecture map, implementation roadmap, guided range trading MVP guide, browser wallet manual validation fixes, business model, creator strategy product flow |
+| Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info, wrapper contract architecture |
 | Protocol Reference / Official Contract Info | Official contract info, entrypoint bindings plan |
-| SDK / PTB | Official contract info, PredictManager flow, PredictManager Testnet validation, Range Mint Testnet validation, entrypoint bindings plan, protocol integration notes |
-| Engineering | Product spec implementation sections, architecture map, implementation roadmap, protocol integration notes |
+| SDK / PTB | Official contract info, PredictManager flow, PredictManager Testnet validation, Range Mint Testnet validation, entrypoint bindings plan, protocol integration notes, follow strategy transaction flow |
+| Engineering | Product spec implementation sections, architecture map, implementation roadmap, protocol integration notes, wrapper contract architecture, strategy data model |
 | Agent workflow | Root `CLAUDE.md`, agent workflow, skill usage guide, source documents |
-| ADR | `docs/ADR/0001-architecture-documentation-first.md` |
+| ADR | `docs/ADR/0001-architecture-documentation-first.md`, `docs/ADR/0002-wrapper-internal-mint-route-b.md` |
 
 ## Task-to-required-doc map
 
@@ -117,7 +126,8 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | PredictManager load/create/deposit | Product spec, protocol analysis, official contract info, PredictManager flow, PredictManager Testnet validation, entrypoint bindings plan, architecture map, protocol integration notes |
 | Quote preview | Product spec, protocol analysis, official contract info, entrypoint bindings plan, architecture map, protocol integration notes |
 | Portfolio/redeem/claim | Product spec, protocol analysis, official contract info, entrypoint bindings plan, portfolio readback validation, range redeem validation, guided range trading MVP guide, browser wallet manual validation fixes, architecture map, protocol integration notes |
-| Creator strategy pages | Product spec, architecture map, implementation roadmap |
+| Creator strategy wrapper / follow flow | Product spec, business model, wrapper contract architecture, creator strategy product flow, follow strategy transaction flow, strategy data model, ADR 0002, official contract info, entrypoint bindings plan, protocol integration notes |
+| Creator strategy pages | Product spec, business model, creator strategy product flow, strategy data model, architecture map, implementation roadmap |
 | Vault / LP dashboard | Product spec, protocol analysis, official contract info, entrypoint bindings plan, architecture map, protocol integration notes |
 | New ADR | Agent workflow, source documents, existing ADRs |
 | Agent skill selection | Skill usage guide, agent workflow |
@@ -125,7 +135,7 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 
 ## Local source snapshot note
 
-`deepbookv3-predict-package/predict` is a non-committed local DeepBook Predict source snapshot used for Phase 1C-debug source-level diagnostics. It may be read and cited by relative path, but it must not be staged or committed; official docs remain the deployment/config source of truth.
+`deepbookv3-predict-package/predict` is a non-committed local DeepBook Predict source snapshot used for Phase 1C-debug source-level diagnostics. `deepbookv3-predict-testnet-4-16/` is the full non-committed local DeepBookV3 Testnet source snapshot used for Phase 3B wrapper build/debug, with the wrapper depending on `deepbookv3-predict-testnet-4-16/packages/predict`. These snapshots may be read and cited by relative path, but they must not be staged or committed; official docs remain the deployment/config source of truth.
 
 ## Global anti-invention rules
 

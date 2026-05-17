@@ -15,8 +15,14 @@
       "@rangepilot/types/deepbookPredict": [
         "packages/types/src/deepbookPredict.ts"
       ],
+      "@rangepilot/types/rangePilotStrategy": [
+        "packages/types/src/rangePilotStrategy.ts"
+      ],
       "@rangepilot/sdk/deepbookPredict": [
         "packages/sdk/src/deepbookPredict/index.ts"
+      ],
+      "@rangepilot/sdk/rangePilotStrategy": [
+        "packages/sdk/src/rangePilotStrategy/index.ts"
       ]
     }
   },

@@ -11,7 +11,7 @@ Phase 2A turns the validated DeepBook Predict Testnet lifecycle into a minimal b
 
 Phase 2B fixes manual browser validation blockers around slow duplicate candidate scans and portfolio RangeKey recovery. See [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md) for the detailed scan/recovery checklist and remaining limitations.
 
-This is not final UI design. It intentionally excludes final brand polish, complex layouts, creator strategy pages, vault/LP dashboards, AI composer flows, leaderboards, social sharing, wrapper Move contracts, binary trading, supply, withdraw, mainnet, and full landing-page work.
+This is not final UI design. It intentionally excludes final brand polish, complex layouts, creator strategy pages, vault/LP dashboards, AI composer flows, leaderboards, social sharing, binary trading, supply, withdraw, mainnet, and full landing-page work. Phase 3A/B now adds a separate Route B wrapper skeleton for future creator follow flows; this Phase 2 browser scaffold remains the direct DeepBook Predict validation path until that wrapper is published and explicitly wired.
 
 ## Scope
 
@@ -89,6 +89,12 @@ Validation scripts remain protocol regression tests. The browser app uses wallet
   - `parseRangeRedeemedEvent`
 
 The UI composes these helpers through `useRangeTrading`, `usePortfolioReadback`, `usePredictManager`, and non-secret localStorage persistence.
+
+## Future creator strategy wrapper flow
+
+Route B is accepted for the future creator follow flow: the RangePilot wrapper internally calls DeepBook Predict `mint_range<DUSDC>`. That wrapper owns Strategy metadata, creator/platform fee splitting, and `StrategyFollowed` attribution, while DeepBook Predict owns pricing, oracle checks, vault risk, payout, settlement, and `PredictManager` custody.
+
+The direct browser `/trade` mint path remains validated and useful for quote/preflight diagnostics. After a future wrapper package publish, strategy follow UI should call the wrapper only after the same official quote preview and full `mint_range<DUSDC>` preflight gates pass. The wrapper package ID is currently `TBD`, so frontend wiring must remain blocked by default.
 
 ## Mint gates
 
@@ -206,8 +212,8 @@ Portfolio page:
 - Settled claim behavior remains pending.
 - Mintable candidates still depend on runtime market state and may not exist within browser scan limits.
 - Browser wallet approval and live wallet transactions require manual user action and were not automated.
-- No creator strategy, vault dashboard, binary trading, supply, withdraw, or mainnet support is included.
+- No final creator strategy UI, vault dashboard, binary trading, supply, withdraw, or mainnet support is included.
 
 ## Next phase
 
-After Phase 2B browser manual validation, refine product UX and final visual design around the confirmed scaffold behavior without weakening the quote, direct readback, and full-preflight gates.
+Phase 3A/B defines the creator strategy business model and Route B wrapper skeleton. Final creator UI should remain deferred until the wrapper package is published, package ID is known, and the follow flow preserves the official quote, direct readback where relevant, and full-preflight gates.
