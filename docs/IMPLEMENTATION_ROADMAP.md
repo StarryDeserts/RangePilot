@@ -52,8 +52,14 @@ This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guide
 | Non-goals | Multi-asset support, advanced trading terminal, custom pricing, custom payout logic, complex secondary market. |
 | Acceptance criteria | User can understand `(lower, upper]` win condition, preview before action, mint through official DeepBook Predict path, and see success state. |
 | Recommended skills | `sui-dev-skills/sui-frontend`, `sui-transaction-building`, `sui-client`, Context7 plugin. |
-| Required docs | Product spec sections `Core User Flows`, `UX Design Principles`, `Transaction Flows`; architecture map; protocol notes; official contract info; entrypoint bindings plan. |
+| Required docs | Product spec sections `Core User Flows`, `UX Design Principles`, `Transaction Flows`; architecture map; protocol notes; official contract info; entrypoint bindings plan; guided range trading MVP guide. |
 | Risks and fallback | Risk: quote preview shape unknown or unstable. Fallback: official dry-run strategy or explicit preview-unavailable state; do not calculate custom pricing. |
+
+### Phase 2 subphases
+
+| Subphase | Focus | Exit condition |
+|---|---|---|
+| Phase 2A: Guided range trading MVP scaffold | Add minimal browser-wallet `/trade` and `/portfolio` scaffolds around the validated create/deposit/mint/readback/redeem lifecycle, with non-secret persistence and full preflight gates. | Engineering scaffold exists and is documented in [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md). It is not final UI design; browser wallet manual validation remains the next checkpoint. |
 
 ## Phase 3: Portfolio and redeem/claim
 

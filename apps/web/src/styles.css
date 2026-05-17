@@ -170,3 +170,98 @@ a {
 .transactionStatus.blocked_unconfirmed {
   border-color: #f0c4cb;
 }
+
+.appNav {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem max(1rem, calc((100vw - 1120px) / 2));
+  border-bottom: 1px solid #dde4f0;
+  background: rgb(245 247 251 / 92%);
+  backdrop-filter: blur(10px);
+}
+
+.appBrand {
+  color: #172033;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.navLinks {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.navLinks a {
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  text-decoration: none;
+}
+
+.navLinks a.active {
+  background: #e4eaff;
+}
+
+.routeNotice {
+  width: min(1120px, calc(100vw - 2rem));
+  margin: 1rem auto 0;
+}
+
+.wideCard {
+  grid-column: 1 / -1;
+}
+
+.subsection {
+  margin-top: 1rem;
+  border-top: 1px solid #e8edf7;
+  padding-top: 1rem;
+}
+
+.subsection h3 {
+  margin-top: 0;
+}
+
+.compactDetails {
+  grid-template-columns: minmax(150px, max-content) minmax(0, 1fr);
+}
+
+.fieldStack,
+.manualRangeGrid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fieldStack {
+  margin-top: 1rem;
+}
+
+.manualRangeGrid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.stackedActions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.statusList {
+  padding-left: 1.25rem;
+}
+
+.warningText {
+  color: #7c3d00;
+}
+
+select {
+  width: 100%;
+  border: 1px solid #cbd3e5;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+}

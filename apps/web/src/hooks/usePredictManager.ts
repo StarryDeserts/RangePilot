@@ -7,14 +7,14 @@ import {
   buildDepositDusdcTransaction,
   buildSuiExplorerTransactionUrl,
   findPredictManagerByOwner,
-  parsePredictManagerCreatedEvent,
+  recoverPredictManagerIdFromCreateResult,
   translateDeepBookPredictError,
 } from "@rangepilot/sdk/deepbookPredict";
 import { DEEPBOOK_PREDICT_TESTNET } from "@rangepilot/config/deepbookPredictTestnet";
 
 const MANAGER_STORAGE_PREFIX = "rangepilot:predict-manager";
 
-export function usePredictManager(address: string | null) {
+export function usePredictManager(address: string | null, isTestnet = false) {
   const client = useSuiClient();
   const queryClient = useQueryClient();
   const [transactionStatus, setTransactionStatus] = useState<TransactionStatus>({
@@ -46,8 +46,12 @@ export function usePredictManager(address: string | null) {
         knownManagerId,
         config: DEEPBOOK_PREDICT_TESTNET,
       }),
-    enabled: Boolean(address),
+    enabled: Boolean(address && isTestnet),
   });
+  const managerId =
+    managerQuery.data?.status === "found"
+      ? managerQuery.data.manager.managerId
+      : knownManagerId;
 
   const signAndExecuteTransaction = useSignAndExecuteTransaction({
     execute: async ({ bytes, signature }) =>
@@ -56,6 +60,7 @@ export function usePredictManager(address: string | null) {
         signature,
         options: {
           showEvents: true,
+          showEffects: true,
           showObjectChanges: true,
           showRawEffects: true,
         },
@@ -72,7 +77,7 @@ export function usePredictManager(address: string | null) {
   }
 
   function createManager() {
-    if (!address) {
+    if (!address || !isTestnet) {
       setTransactionStatus({
         state: "failed",
         error: "Connect a Sui Testnet wallet before creating a Predict Account.",
@@ -97,21 +102,21 @@ export function usePredictManager(address: string | null) {
         },
         {
           onSuccess: (result) => {
-            const event = parsePredictManagerCreatedEvent(result.events, DEEPBOOK_PREDICT_TESTNET);
+            const recovery = recoverPredictManagerIdFromCreateResult(result, DEEPBOOK_PREDICT_TESTNET);
             const digest = result.digest;
             const explorerUrl = buildSuiExplorerTransactionUrl(digest);
 
-            if (event?.managerId) {
-              rememberManagerId(event.managerId);
+            if (recovery.managerId) {
+              rememberManagerId(recovery.managerId);
             }
 
             setTransactionStatus({
               state: "success",
               digest,
               explorerUrl,
-              message: event?.managerId
-                ? "Predict Account created and manager ID stored."
-                : "Transaction succeeded, but manager ID recovery remains unconfirmed. Copy the manager ID manually after confirming event fields.",
+              message: recovery.managerId
+                ? `${recovery.message} Manager ID stored.`
+                : `${recovery.message} Copy the manager ID manually after confirming event fields.`,
             });
             void queryClient.invalidateQueries({ queryKey: ["predict-manager"] });
           },
@@ -132,13 +137,34 @@ export function usePredictManager(address: string | null) {
   }
 
   function depositDusdc(amountAtomic: string, coins: readonly DusdcCoin[]) {
-    const managerId =
-      managerQuery.data?.status === "found" ? managerQuery.data.manager.managerId : null;
-
     if (!managerId) {
       setTransactionStatus({
         state: "failed",
         error: "A Predict Account manager ID is required before depositing DUSDC.",
+      });
+      return;
+    }
+
+    if (!address || !isTestnet) {
+      setTransactionStatus({
+        state: "failed",
+        error: "Connect a Sui Testnet wallet before depositing DUSDC.",
+      });
+      return;
+    }
+
+    if (!/^[1-9][0-9]*$/.test(amountAtomic)) {
+      setTransactionStatus({
+        state: "failed",
+        error: "Deposit amount must be a positive integer in atomic DUSDC units.",
+      });
+      return;
+    }
+
+    if (coins.length === 0) {
+      setTransactionStatus({
+        state: "failed",
+        error: "No DUSDC coin objects are available for deposit.",
       });
       return;
     }
@@ -154,6 +180,7 @@ export function usePredictManager(address: string | null) {
         amountAtomic,
         coins: [...coins],
         config: DEEPBOOK_PREDICT_TESTNET,
+        allowRealTestnetDeposit: true,
       });
 
       setTransactionStatus({
@@ -206,6 +233,7 @@ export function usePredictManager(address: string | null) {
   return {
     managerQuery,
     knownManagerId,
+    managerId,
     transactionStatus,
     createManager,
     depositDusdc,

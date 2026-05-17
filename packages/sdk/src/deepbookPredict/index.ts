@@ -9,3 +9,4 @@ export * from "./rangeKey.ts";
 export * from "./quote.ts";
 export * from "./trade.ts";
 export * from "./portfolio.ts";
+export * from "./lifecycle.ts";

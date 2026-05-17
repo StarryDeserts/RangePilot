@@ -4,20 +4,22 @@ import { useDusdcBalance } from "../hooks/useDusdcBalance";
 import { usePredictManager } from "../hooks/usePredictManager";
 import { TransactionStatus } from "./TransactionStatus";
 
+type PredictManagerHook = ReturnType<typeof usePredictManager>;
+
 export function PredictManagerCard({
   address,
   isTestnet,
+  manager,
 }: {
   address: string | null;
   isTestnet: boolean;
+  manager: PredictManagerHook;
 }) {
   const balanceQuery = useDusdcBalance(address);
-  const manager = usePredictManager(address);
   const [manualManagerId, setManualManagerId] = useState("");
   const [depositAmountAtomic, setDepositAmountAtomic] = useState("1000000");
   const managerResult = manager.managerQuery.data;
-  const managerId =
-    managerResult?.status === "found" ? managerResult.manager.managerId : null;
+  const managerId = manager.managerId;
   const canCreate = Boolean(address && isTestnet);
   const canDeposit = Boolean(
     address &&
