@@ -1,6 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import type {
   DeepBookPredictNetworkConfig,
+  DevInspectU64Diagnostic,
   DevInspectU64PairDiagnostic,
   DevInspectU64ReturnDiagnostic,
   MarketKeyInput,
@@ -337,11 +338,40 @@ export function inspectDevInspectU64Pair(result: unknown): DevInspectU64PairDiag
   };
 }
 
+export function inspectDevInspectU64(result: unknown): DevInspectU64Diagnostic {
+  const returnValues = extractReturnValues(result);
+  const returns = returnValues.map(inspectU64ReturnValue);
+  const decodedValues = returns
+    .map((entry) => entry.decodedU64)
+    .filter((value): value is string => value !== null);
+  const decoded = returnValues.length === 1 && decodedValues.length === 1
+    ? decodedValues[0]
+    : null;
+
+  return {
+    returnValueCount: returnValues.length,
+    returns,
+    decoded,
+  };
+}
+
 export function decodeDevInspectU64Pair(result: unknown): DecodedRangeQuoteAmounts | null {
   return inspectDevInspectU64Pair(result).decoded;
 }
 
+export function decodeDevInspectU64(result: unknown): string | null {
+  return inspectDevInspectU64(result).decoded;
+}
+
 export function summarizeDevInspectU64PairDiagnostic(diagnostic: DevInspectU64PairDiagnostic): string {
+  const returns = diagnostic.returns.map((entry) => {
+    return `${entry.index}:${entry.typeTag ?? "unknown"}:${entry.byteLength ?? "unknown"}:${entry.decodedU64 ?? "null"}:${entry.status}`;
+  });
+
+  return `returnValues=${diagnostic.returnValueCount} returns=[${returns.join(",")}]`;
+}
+
+export function summarizeDevInspectU64Diagnostic(diagnostic: DevInspectU64Diagnostic): string {
   const returns = diagnostic.returns.map((entry) => {
     return `${entry.index}:${entry.typeTag ?? "unknown"}:${entry.byteLength ?? "unknown"}:${entry.decodedU64 ?? "null"}:${entry.status}`;
   });

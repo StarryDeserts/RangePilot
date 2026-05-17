@@ -1,7 +1,9 @@
 import type {
   DeepBookPredictNetworkConfig,
+  NormalizedRangeMintedFields,
   PredictManagerCreatedEventCandidate,
   RangeMintedEvent,
+  RangePositionSummary,
 } from "@rangepilot/types/deepbookPredict";
 import { resolveDeepBookPredictConfig } from "./config.ts";
 
@@ -81,9 +83,55 @@ export function parseRangeMintedEvent(
     return null;
   }
 
+  const parsedJson = isRecord(event.parsedJson) ? event.parsedJson : null;
+
   return {
     type: event.type,
-    parsedJson: isRecord(event.parsedJson) ? event.parsedJson : null,
+    parsedJson,
+    fields: extractRangeMintedFields(parsedJson),
+  };
+}
+
+export function extractRangeMintedFields(parsedJson: unknown): NormalizedRangeMintedFields {
+  const record = isRecord(parsedJson) ? parsedJson : {};
+
+  return {
+    predictId: stringOrNull(record.predict_id),
+    managerId: stringOrNull(record.manager_id),
+    trader: stringOrNull(record.trader),
+    quoteAsset: stringOrNull(record.quote_asset),
+    oracleId: stringOrNull(record.oracle_id),
+    expiry: integerStringOrNull(record.expiry),
+    lowerStrike: integerStringOrNull(record.lower_strike),
+    higherStrike: integerStringOrNull(record.higher_strike),
+    quantity: integerStringOrNull(record.quantity),
+    costAtomic: integerStringOrNull(record.cost),
+    askPrice: integerStringOrNull(record.ask_price),
+  };
+}
+
+export function extractRangePositionFromMintEvent(
+  event: RangeMintedEvent,
+  digest?: string,
+): RangePositionSummary | null {
+  const fields = event.fields ?? extractRangeMintedFields(event.parsedJson);
+
+  if (!fields.managerId || !fields.oracleId || !fields.expiry || !fields.lowerStrike || !fields.higherStrike || !fields.quantity) {
+    return null;
+  }
+
+  return {
+    managerId: fields.managerId,
+    oracleId: fields.oracleId,
+    expiry: fields.expiry,
+    lowerStrike: fields.lowerStrike,
+    higherStrike: fields.higherStrike,
+    quantity: fields.quantity,
+    source: "range_minted_event",
+    digest,
+    costAtomic: fields.costAtomic,
+    askPrice: fields.askPrice,
+    quoteAsset: fields.quoteAsset,
   };
 }
 
@@ -184,6 +232,23 @@ function extractManagerIdFromParsedJson(parsedJson: unknown): string | null {
   }
 
   return null;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function integerStringOrNull(value: unknown): string | null {
+  if (typeof value !== "string" && typeof value !== "number" && typeof value !== "bigint") {
+    return null;
+  }
+
+  try {
+    const integer = BigInt(value);
+    return integer >= 0n ? integer.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 function extractPredictManagerObjectChangeIds(

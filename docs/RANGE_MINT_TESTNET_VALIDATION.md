@@ -1,13 +1,13 @@
 ---
 Purpose: Record Phase 1C range quote and mint_range Testnet validation artifacts.
 Audience: Protocol integrators, transaction-builder authors, frontend developers, reviewers, and AI agents.
-Status: Quote-only, quoteability scanner, quantity-unit, return-decoding, binary quote, ask-bounds, mintability preflight, and source-level mintability diagnostics completed on 2026-05-16; no full mint preflight success found yet.
+Status: Quote-only, quoteability scanner, quantity-unit, return-decoding, binary quote, ask-bounds, mintability preflight, source-level mintability diagnostics, first Testnet mint, and portfolio readback completed through Phase 1D-1.
 Source of truth relationship: Supplements official contract info, protocol notes, and entrypoint binding docs; runtime market state remains subject to live confirmation.
 ---
 
 # Range Mint Testnet Validation
 
-Phase 1C attempted the official DeepBook Predict range quote path through a local signer validation script. The first run discovered an active oracle at runtime, derived a candidate range from public server oracle metadata, attempted `predict::get_range_trade_amounts` through devInspect, and correctly blocked before `predict::mint_range<DUSDC>` because mint safety gates did not pass. Phase 1C-fix added a quoteability scanner that derives market-centered candidates around runtime spot/forward prices; it reached successful quote return decoding, but the selected quote returned zero mint cost and remained blocked before mint. Phase 1C-fix2 added quantity-unit sweep, safe return-decoding diagnostics, binary quote sanity checks, and wider/asymmetric candidate strategies; it found positive official range quotes and nonzero binary quotes, then reached the real mint submission path before failing in `predict::assert_mintable_ask` with abort code `7` before digest. Phase 1C-fix3 identifies code `7` as `EAskPriceOutOfBounds` and upgrades mint safety so full `mint_range<DUSDC>` devInspect preflight, not quote success alone, is required before real mint execution. Phase 1C-debug inspected `deepbookv3-predict-package/predict` and confirmed the source-level difference: quote uses current state, while mint inserts exposure, refreshes risk, and checks the recomputed post-trade ask.
+Phase 1C attempted the official DeepBook Predict range quote path through a local signer validation script. The first run discovered an active oracle at runtime, derived a candidate range from public server oracle metadata, attempted `predict::get_range_trade_amounts` through devInspect, and correctly blocked before `predict::mint_range<DUSDC>` because mint safety gates did not pass. Phase 1C-fix added a quoteability scanner that derives market-centered candidates around runtime spot/forward prices; it reached successful quote return decoding, but the selected quote returned zero mint cost and remained blocked before mint. Phase 1C-fix2 added quantity-unit sweep, safe return-decoding diagnostics, binary quote sanity checks, and wider/asymmetric candidate strategies; it found positive official range quotes and nonzero binary quotes, then reached the real mint submission path before failing in `predict::assert_mintable_ask` with abort code `7` before digest. Phase 1C-fix3 identifies code `7` as `EAskPriceOutOfBounds` and upgrades mint safety so full `mint_range<DUSDC>` devInspect preflight, not quote success alone, is required before real mint execution. Phase 1C-debug inspected `deepbookv3-predict-package/predict`, confirmed the source-level difference between quote and mint, found source-informed preflight-passing candidates, and submitted the first gated Sui Testnet range mint. Phase 1D-1 then confirmed portfolio readback for the minted range; see [PORTFOLIO_READBACK_TESTNET_VALIDATION.md](./PORTFOLIO_READBACK_TESTNET_VALIDATION.md).
 
 No private key, `.env.local` contents, or `.local/` cache contents are documented here.
 
@@ -17,7 +17,7 @@ No private key, `.env.local` contents, or `.local/` cache contents are documente
 |---|---|
 | Test date | 2026-05-16 |
 | Network | Sui Testnet |
-| Mode | Quote-only validation passed; gated mint attempt failed before digest |
+| Mode | Quote-only validation, full mint preflight, gated first mint, and portfolio readback passed |
 | Signer public address | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
 | Manager ID | `0x6f341e107a87812fd4fddfc4fc50a7e3ab5bc21cabff2cd39dd86b662fa75599` |
 | Manager owner source | Public server `/managers/:manager_id/summary` |
@@ -117,8 +117,8 @@ The source-level mintability blocker model is now documented in [MINTABILITY_SOU
 | Digest | `3XoGAs2NgEMbkn59y9KrRGsRbicBvTN6po5gmTsoHARe` |
 | Explorer URL | `https://suiexplorer.com/txblock/3XoGAs2NgEMbkn59y9KrRGsRbicBvTN6po5gmTsoHARe?network=testnet` |
 | `RangeMinted` event | Found; parsed JSON keys: `ask_price`, `cost`, `expiry`, `higher_strike`, `lower_strike`, `manager_id`, `oracle_id`, `predict_id`, `quantity`, `quote_asset`, `trader` |
-| Manager/positions readback after mint | Manager summary readback succeeded; positions summary returned an object with no top-level keys from the public server path. |
-| Failure | `MoveAbort` code `7` / `EAskPriceOutOfBounds` in `0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138::predict::assert_mintable_ask` |
+| Manager/positions readback after mint | Manager summary readback succeeded; initial positions summary was not usable as active-position proof. Phase 1D-1 direct `range_position` devInspect later confirmed quantity `1000` for the event-derived range `78194000000000 / 78204000000000`. |
+| Previous failure class | Earlier positive-quote mint attempts failed with `MoveAbort` code `7` / `EAskPriceOutOfBounds` in `0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138::predict::assert_mintable_ask`; the successful mint path passed fresh full preflight first. |
 | Public ask-bounds endpoint | `null` for all four active runtime BTC oracles scanned by `npm run investigate:ask-bounds` |
 | Onchain `predict::ask_bounds` | Succeeded for all four active runtime BTC oracles; decoded `min_ask = 10000000`, `max_ask = 990000000` |
 | Full mint preflight | `npm run find:mintable-range` tested `40` full preflight attempts; `0` passed, `29` failed with code `7` / `EAskPriceOutOfBounds`, and `11` failed with other classified aborts. `npm run validate:range-quote` selected a positive quote but also blocked because full preflight failed with code `7` / `EAskPriceOutOfBounds`. |
@@ -135,16 +135,15 @@ The source-level mintability blocker model is now documented in [MINTABILITY_SOU
 - Public ask-bounds endpoint `null` is diagnostic and must not be treated as mint eligibility by itself.
 - Successful quote return mapping for `(mint_cost, redeem_payout)` is verified by Phase 1C-fix and Phase 1C-fix2 devInspect results.
 - Phase 1C-fix2 found positive official range quotes, including `quantity=1 mint_cost=1` on a wide-around-anchor range, so the previous zero-cost result is no longer the only observed range quote outcome.
-- `validate:range-mint` selected a positive quote and reached the real mint submission path, but the mint failed with `MoveAbort` code `7` / `EAskPriceOutOfBounds` in `predict::assert_mintable_ask` before returning a digest.
+- Earlier positive-quote mint attempts failed with `MoveAbort` code `7` / `EAskPriceOutOfBounds` in `predict::assert_mintable_ask` before source-informed candidate generation was added.
 - Full `mint_range<DUSDC>` preflight must pass before any further real mint attempt.
-- `npm run find:mintable-range` derived `390` candidate ranges, tested `120` quote candidates across `960` quote attempts, found `772` positive quotes under the 5 DUSDC cap, and found `0` full preflight successes across `40` preflight attempts.
-- `npm run validate:range-quote` selected a runtime positive quote with `mint=1` and onchain ask bounds `10000000 / 990000000`, then blocked because full mint preflight failed in `predict::assert_mintable_ask` with code `7` / `EAskPriceOutOfBounds`.
-- First successful `predict::mint_range<DUSDC>` is verified on Sui Testnet with digest `3XoGAs2NgEMbkn59y9KrRGsRbicBvTN6po5gmTsoHARe`.
-- `RangeMinted` event shape is verified at the key level. Public server positions summary readback after mint returned no top-level keys, so direct portfolio/range-position read strategy remains pending.
+- Source-informed scans later found preflight-passing candidates, enabling the first successful `predict::mint_range<DUSDC>` on Sui Testnet with digest `3XoGAs2NgEMbkn59y9KrRGsRbicBvTN6po5gmTsoHARe`.
+- `RangeMinted` event shape is verified at the key level.
+- Phase 1D-1 re-read the digest, normalized event-derived strikes `78194000000000 / 78204000000000`, found one matching `/ranges/minted` record, and directly devInspected `predict_manager::range_position` twice with quantity `1000`.
 
 ## Browser wallet manual validation checklist
 
-Browser validation remains pending and should wait until the `predict::assert_mintable_ask` blocker is understood in the automated local signer path.
+Browser validation remains pending and should use the full mint preflight gate plus the Phase 1D-1 direct range-position readback strategy.
 
 - [ ] Open `apps/web` locally.
 - [ ] Connect browser wallet.
@@ -161,6 +160,6 @@ Browser validation remains pending and should wait until the `predict::assert_mi
 
 ## Next steps
 
-1. Implement portfolio readback for the minted range using the confirmed `RangeMinted` event keys and direct/public-server reads.
+1. Plan Phase 1D-2 `redeem_range<DUSDC>` validation using direct `range_position` pre/post checks.
 2. Keep full `mint_range<DUSDC>` preflight as the permanent real-mint gate because mintability remains runtime-state dependent.
-3. Do not add `redeem_range`, supply, withdraw, binary mint/redeem, or mainnet transactions until separately planned and validated.
+3. Do not add supply, withdraw, binary mint/redeem, or mainnet transactions until separately planned and validated.

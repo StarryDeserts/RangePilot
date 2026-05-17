@@ -8,3 +8,4 @@ export * from "./transactions.ts";
 export * from "./rangeKey.ts";
 export * from "./quote.ts";
 export * from "./trade.ts";
+export * from "./portfolio.ts";

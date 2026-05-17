@@ -174,10 +174,63 @@ type OracleSviUpdate = {
 
 ## `GET /trades/:oracle_id`
 
-Observed HTTP status: 200 for the selected active BTC oracle. The snapshot returned an empty array.
+Observed HTTP status: 200 for the Phase 1A selected active BTC oracle. The Phase 1A snapshot returned an empty array. Phase 1D-1 later read the known minted BTC oracle and returned `count=24`, but the compact validation scan did not find the known manager/range mint in those records.
 
 ```ts
 type TradesResponse = Record<string, unknown>[];
+```
+
+## `GET /managers/:manager_id/summary`
+
+Observed HTTP status: 200 for the validated manager after Phase 1D-1.
+
+```ts
+type ManagerSummaryResponse = {
+  manager_id?: string;
+  owner?: string;
+  balances?: unknown[];
+  trading_balance?: number | string;
+  open_exposure?: number | string;
+  redeemable_value?: number | string;
+  realized_pnl?: number | string;
+  unrealized_pnl?: number | string;
+  account_value?: number | string;
+  open_positions?: unknown;
+  awaiting_settlement_positions?: unknown;
+  [key: string]: unknown;
+};
+```
+
+## `GET /managers/:manager_id/positions/summary`
+
+Observed HTTP status: 200 for the validated manager after Phase 1D-1. The response was an empty array for the known active minted range, so this endpoint is diagnostic only until broader indexing semantics are confirmed.
+
+```ts
+type ManagerPositionsSummaryResponse = Record<string, unknown>[] | Record<string, unknown>;
+```
+
+## `GET /managers/:manager_id/pnl?range=ALL`
+
+Observed HTTP status: 200 for the validated manager after Phase 1D-1.
+
+```ts
+type ManagerPnlResponse = {
+  manager_id?: string;
+  range?: string;
+  series_type?: string;
+  points?: unknown[];
+  current_unrealized_pnl?: number | string;
+  current_total_pnl?: number | string;
+  [key: string]: unknown;
+};
+```
+
+## `GET /ranges/minted`
+
+Observed HTTP status: 200 for Phase 1D-1 with `manager_id` and `oracle_id` query params. The response was an array with one compact-match record for the known mint.
+
+```ts
+type RangeMintsResponse = Record<string, unknown>[];
 ```
 
 ## Still-pending runtime and transaction items
@@ -187,4 +240,4 @@ type TradesResponse = Record<string, unknown>[];
 - Full strike-grid validation remains `MUST CONFIRM BEFORE CODING`.
 - Non-null ask-bounds semantics remain `MUST CONFIRM BEFORE CODING` for mint eligibility.
 - Quote preview mapping remains `MUST CONFIRM BEFORE CODING` from official call, public server output, devInspect, or dry-run analysis.
-- PredictManager discovery, portfolio direct reads, exact PTB call shapes, and first real `mint_range<DUSDC>` validation remain pending.
+- PredictManager discovery, direct `balance<DUSDC>`, exact unvalidated PTB call shapes, position enumeration, and `redeem_range<DUSDC>` validation remain pending.

@@ -136,6 +136,19 @@ export type DeepBookPredictManagerSummary = Record<string, unknown>;
 
 export type DeepBookPredictManagerPositionsSummary = Record<string, unknown>;
 
+export type DeepBookPredictManagerPnl = Record<string, unknown>;
+
+export type DeepBookPredictRangeMintRecord = Record<string, unknown>;
+
+export type DeepBookPredictRangeMintQuery = {
+  managerId?: string;
+  manager_id?: string;
+  oracleId?: string;
+  oracle_id?: string;
+  limit?: string | number;
+  cursor?: string;
+};
+
 export type DevInspectU64ReturnDiagnostic = {
   index: number;
   typeTag: string | null;
@@ -151,6 +164,12 @@ export type DevInspectU64PairDiagnostic = {
     mintCostAtomic: string;
     redeemPayoutAtomic: string;
   } | null;
+};
+
+export type DevInspectU64Diagnostic = {
+  returnValueCount: number;
+  returns: DevInspectU64ReturnDiagnostic[];
+  decoded: string | null;
 };
 
 export type RangeKeyInput = {
@@ -319,9 +338,75 @@ export type RangeMintParams = RangeKeyInput & {
   quantity: string | bigint;
 };
 
+export type NormalizedRangeMintedFields = {
+  predictId: string | null;
+  managerId: string | null;
+  trader: string | null;
+  quoteAsset: string | null;
+  oracleId: string | null;
+  expiry: string | null;
+  lowerStrike: string | null;
+  higherStrike: string | null;
+  quantity: string | null;
+  costAtomic: string | null;
+  askPrice: string | null;
+};
+
 export type RangeMintedEvent = {
   type: string;
   parsedJson: Record<string, unknown> | null;
+  fields?: NormalizedRangeMintedFields;
+};
+
+export type PortfolioReadPathStatus =
+  | "verified"
+  | "available"
+  | "empty"
+  | "unavailable"
+  | "blocked";
+
+export type RangePositionSummary = RangeKeyInput & {
+  managerId: DeepBookPredictObjectId;
+  quantity: string;
+  source: "range_minted_event" | "public_server" | "dev_inspect";
+  digest?: string;
+  costAtomic?: string | null;
+  askPrice?: string | null;
+  quoteAsset?: string | null;
+};
+
+export type ManagerRangePositionResult = RangeKeyInput & {
+  managerId: DeepBookPredictObjectId;
+  quantity: string;
+  source: "dev_inspect";
+  diagnostic?: DevInspectU64Diagnostic;
+};
+
+export type GetManagerRangePositionParams = RangeKeyInput & {
+  managerId: DeepBookPredictObjectId;
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: unknown;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  config?: DeepBookPredictNetworkConfig;
+};
+
+export type PortfolioReadbackResult = {
+  managerId: DeepBookPredictObjectId;
+  range: RangeKeyInput;
+  eventPosition: RangePositionSummary | null;
+  directPosition: ManagerRangePositionResult | null;
+  paths: {
+    managerSummary: PortfolioReadPathStatus;
+    positionsSummary: PortfolioReadPathStatus;
+    rangeHistory: PortfolioReadPathStatus;
+    tradeHistory: PortfolioReadPathStatus;
+    eventReadback: PortfolioReadPathStatus;
+    directRangePosition: PortfolioReadPathStatus;
+  };
 };
 
 export type RangeMintResult = {

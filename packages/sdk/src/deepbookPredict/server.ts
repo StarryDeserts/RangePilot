@@ -1,5 +1,6 @@
 import type {
   DeepBookPredictAskBounds,
+  DeepBookPredictManagerPnl,
   DeepBookPredictManagerPositionsSummary,
   DeepBookPredictManagerSummary,
   DeepBookPredictNetworkConfig,
@@ -7,6 +8,8 @@ import type {
   DeepBookPredictOracleRecord,
   DeepBookPredictOracleState,
   DeepBookPredictPredictState,
+  DeepBookPredictRangeMintQuery,
+  DeepBookPredictRangeMintRecord,
   DeepBookPredictServerStatus,
   DeepBookPredictSviUpdate,
   DeepBookPredictTradeRecord,
@@ -41,6 +44,19 @@ export type DiscoverDefaultOracleOptions = {
 
 function joinUrl(baseUrl: string, path: string): string {
   return `${baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+}
+
+function buildQueryString(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      search.set(key, String(value));
+    }
+  }
+
+  const query = search.toString();
+  return query ? `?${query}` : "";
 }
 
 function toFiniteNumber(value: unknown): number | null {
@@ -160,6 +176,25 @@ export class DeepBookPredictServerClient {
   ): Promise<DeepBookPredictManagerPositionsSummary> {
     return this.requestJson<DeepBookPredictManagerPositionsSummary>(
       `/managers/${managerId}/positions/summary`,
+    );
+  }
+
+  getManagerPnl(managerId: string, range = "ALL"): Promise<DeepBookPredictManagerPnl> {
+    return this.requestJson<DeepBookPredictManagerPnl>(
+      `/managers/${managerId}/pnl${buildQueryString({ range })}`,
+    );
+  }
+
+  getRangeMints(
+    query: DeepBookPredictRangeMintQuery = {},
+  ): Promise<DeepBookPredictRangeMintRecord[]> {
+    return this.requestJson<DeepBookPredictRangeMintRecord[]>(
+      `/ranges/minted${buildQueryString({
+        manager_id: query.manager_id ?? query.managerId,
+        oracle_id: query.oracle_id ?? query.oracleId,
+        limit: query.limit,
+        cursor: query.cursor,
+      })}`,
     );
   }
 
