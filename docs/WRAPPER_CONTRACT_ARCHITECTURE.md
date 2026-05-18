@@ -7,6 +7,12 @@ Source of truth relationship: Supplements official Sui DeepBook Predict docs, lo
 
 # Wrapper Contract Architecture
 
+## Current status after DeepVol pivot
+
+The RangePilot wrapper is a validated prior prototype and reusable infrastructure reference. It is no longer the primary product direction after ADR-0003 because public Strategy parameters can be copied and used to bypass a high creator follow fee.
+
+Reusable pieces for DeepVol include `ProtocolVault`, fee split/custody patterns, wrapper-mediated DeepBook Predict calls, preflight discipline, and event linkage between product events and DeepBook Predict events. The non-reusable moat is creator Strategy parameter secrecy: oracle, expiry, strikes, and quantity are public on-chain.
+
 RangePilot wrapper internally calls DeepBook Predict `mint_range<T>`.
 
 The wrapper is a thin creator-strategy layer above DeepBook Predict. It owns RangePilot strategy metadata, follow attribution, fee policy validation, ProtocolVault platform-fee custody, and creator-fee transfer. DeepBook Predict remains the only authority for prediction-market pricing, oracle lifecycle, vault risk, range position accounting, payout, and settlement.

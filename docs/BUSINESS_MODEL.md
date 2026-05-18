@@ -1,17 +1,73 @@
 ---
-Purpose: Define RangePilot's creator strategy business model on top of DeepBook Predict.
+Purpose: Define the current product business model after the DeepVol BTC MOVE pivot.
 Audience: Product leads, frontend developers, SDK implementers, Move developers, protocol integrators, reviewers, and AI agents.
-Status: Phase 3D ProtocolVault fee model; not final tokenomics or UI design.
-Source of truth relationship: Supplements the product architecture and official DeepBook Predict integration docs; official Sui docs, local validated entrypoint bindings, and Move source remain source of truth for protocol behavior.
+Status: Updated for DeepVol foundation; prior RangePilot creator-follow model is preserved as validated historical work.
+Source of truth relationship: Supplements DeepVol foundation docs and official DeepBook Predict integration docs; official Sui docs, local validated entrypoint bindings, and Move source remain source of truth for protocol behavior.
 ---
 
 # Business Model
 
-RangePilot monetizes guided DeepBook Predict strategy discovery and execution. Creators publish range strategies with a thesis, target range, expiry, default quantity, and creator fee policy. Users follow those strategies through a RangePilot wrapper transaction that validates RangePilot strategy state, handles creator/platform attribution, deposits platform fees into a RangePilot `ProtocolVault<T>`, and internally calls DeepBook Predict `mint_range<DUSDC>`.
+DeepVol BTC MOVE is the current primary business direction. DeepVol monetizes structured volatility exposure on DeepBook Predict by packaging binary UP and DOWN legs into a BTC MOVE Receipt and charging an enforceable Create Fee.
 
-DeepBook Predict remains the prediction-market protocol. RangePilot does not price ranges, settle oracles, custody positions, run vault risk, reproduce StrikeMatrix logic, or calculate payout. The business layer is built on top of the official protocol's `Predict`, `PredictManager`, `RangeKey`, `OracleSVI`, and Vault behavior.
+The previous RangePilot creator-follow strategy wrapper remains technically validated, but it is no longer the primary commercial model. Public on-chain strategy parameters can be copied, which lets users bypass high creator follow fees by minting directly through DeepBook Predict.
 
-## Core model
+For the detailed DeepVol fee model, see [DEEPVOL_BUSINESS_MODEL.md](./DEEPVOL_BUSINESS_MODEL.md).
+
+## Current primary model: DeepVol BTC MOVE
+
+```text
+User selects BTC MOVE series
+→ DeepVol previews UP binary leg above upper strike
+→ DeepVol previews DOWN binary leg below lower strike
+→ user pays DeepBook Predict premium from PredictManager balance
+→ DeepVol charges Create Fee as a separate fee payment
+→ Create Fee deposits into ProtocolVault
+→ user receives non-custodial MoveReceipt metadata
+→ DeepBook Predict stores binary legs in the user's PredictManager
+```
+
+DeepBook Predict remains the prediction-market protocol. DeepVol does not price binary legs, settle oracles, custody positions in MVP, run vault risk, reproduce StrikeMatrix logic, or calculate payout. The business layer is built on top of the official protocol's `Predict`, `PredictManager`, `MarketKey`, `OracleSVI`, and Vault behavior.
+
+## MVP fee model
+
+DeepVol MVP uses one enforceable fee:
+
+| Fee | Paid by | Paid to | Stage | Status |
+|---|---|---|---|---|
+| DeepBook Predict premium | user | DeepBook Predict Vault | binary mint | official protocol cost |
+| Create Fee | user | `ProtocolVault` | receipt creation | MVP enforceable |
+| Profit Fee | user | protocol / creator split | settlement | V2 only |
+| Creator Share | protocol | VolSeries creator | marketplace | future only |
+
+Suggested MVP Create Fee:
+
+```text
+Create Fee = 0.30% of premium
+```
+
+The premium is the sum of the official UP and DOWN binary mint costs. The Create Fee should be charged during wrapper-mediated receipt creation and deposited into `ProtocolVault`.
+
+## Profit Fee boundary
+
+Profit Fee is a V2 feature unless settlement is wrapper-mediated or receipt becomes custodial.
+
+In the MVP, the underlying Predict positions remain in the user's `PredictManager`. The user can redeem directly through DeepBook Predict, so DeepVol cannot enforce a Profit Fee while the receipt is non-custodial.
+
+## Future revenue lines
+
+Future-only revenue lines include:
+
+- Creator Share after third-party VolSeries marketplace.
+- Listing Fee.
+- Pro API.
+- Custodial / escrow settlement fees.
+- Advanced analytics.
+
+These should not block the BTC MOVE MVP.
+
+## Preserved prior model: RangePilot creator-follow strategy
+
+The validated RangePilot wrapper flow was:
 
 ```text
 User follows creator strategy
@@ -25,124 +81,31 @@ User follows creator strategy
 → DeepBook Predict stores the range position in the user's PredictManager
 ```
 
-The mint cost and RangePilot fee are separate payment surfaces:
+This work proved useful infrastructure:
 
-- DeepBook Predict mint cost is withdrawn from the user's `PredictManager` balance by `predict::mint_range`.
-- Creator/platform fee is paid with a separate fee coin passed to the RangePilot wrapper.
-- The creator fee transfers to the Strategy creator.
-- The platform fee deposits into a RangePilot `ProtocolVault<T>`, not a direct platform recipient address.
-- The wrapper returns any fee coin remainder to the follower.
-- The wrapper does not deduct creator/platform fees from `PredictManager` because `PredictManager` is the protocol account boundary for official quote assets and positions.
-- If DeepBook Predict `mint_range` aborts, the Sui transaction aborts and fee movement in the same transaction rolls back.
+- wrapper-mediated official Predict calls;
+- atomic fee movement and protocol call rollback;
+- ProtocolVault fee custody;
+- event linkage between wrapper events and DeepBook Predict events;
+- preflight requirements before wallet approval.
 
-## Why creators publish strategies
-
-Creators get a strategy distribution surface without building their own protocol integration. RangePilot can attribute followers, volume, and fee revenue to a creator's strategy through `StrategyCreated`, `StrategyFollowed`, and later analytics/indexing.
-
-Creator incentives:
-
-- build a public track record around range theses;
-- earn creator fee share when followers execute a strategy;
-- publish reusable strategy metadata and updates;
-- receive distribution through RangePilot discovery surfaces;
-- avoid owning protocol pricing, vault risk, or settlement logic.
-
-## Why users follow strategies
-
-Users get a simplified decision path for DeepBook Predict ranges. Instead of manually discovering active oracles, expiry, strike grid, candidate ranges, and mintability gates, users can inspect a creator's thesis and preview a preconfigured range.
-
-User value:
-
-- strategy context before wallet approval;
-- official quote and full preflight before following;
-- clearer `(lower, higher]` range semantics;
-- portfolio linkage between the DeepBook Predict position and the RangePilot strategy event;
-- creator attribution without moving custody away from the user's `PredictManager`.
-
-## Fee model
-
-Phase 3D confirms this MVP fee policy:
-
-| Fee | Paid by | Paid to | Stage | Source |
-|---|---|---|---|---|
-| DeepBook Predict mint cost | follower | DeepBook Predict Vault | `mint_range<DUSDC>` | withdrawn from `PredictManager` by protocol |
-| Creator fee | follower | strategy creator | wrapper follow transaction | separate fee `Coin<DUSDC>` or generic `Coin<T>` |
-| Platform fee | follower | RangePilot `ProtocolVault<T>` | wrapper follow transaction | separate fee `Coin<DUSDC>` or generic `Coin<T>` |
-
-Confirmed parameters:
-
-- `platform_fee_bps = 10`, which is `0.1%`.
-- `MAX_CREATOR_FEE_BPS = 3000`, which is `30%`.
-- `300 bps` would be `3%`.
-- Creator fee may be `0 <= creator_fee_bps <= 3000`.
-- The explicit fee base remains separate from the DeepBook Predict mint cost.
-
-Wrapper fee handling:
-
-1. frontend/SDK passes nonzero `fee_amount` explicitly;
-2. wrapper validates `fee_coin.value() >= fee_amount`;
-3. wrapper splits `fee_amount` using creator bps plus fixed platform bps;
-4. wrapper transfers the creator split to the creator;
-5. wrapper deposits the platform split into `ProtocolVault<T>`;
-6. wrapper returns any unused fee coin remainder to the follower.
-
-The wrapper must not compute fees from DeepBook Predict mint cost unless the protocol exposes that cost directly to the wrapper without reproducing pricing.
+The model is deprecated as the primary product direction because the Strategy's oracle, expiry, strikes, and quantity are public and copyable.
 
 ## ProtocolVault and AdminCap
 
-`ProtocolVault<T>` is a RangePilot wrapper object, not the DeepBook Predict Vault. It holds platform fee deposits only. `AdminCap` controls `ProtocolVault<T>` creation and platform fee withdrawal. The package initializer mints `AdminCap` to the publisher / transaction sender.
+`ProtocolVault<T>` is reusable fee treasury infrastructure, not the DeepBook Predict Vault. It holds protocol fees only. `AdminCap` controls vault creation and withdrawals. Normal user transactions should not require `AdminCap`.
 
-Normal follower transactions require the shared Strategy, DeepBook Predict objects, fee coin, and `ProtocolVault<T>` object. They do not require `AdminCap`.
-
-## Failure and rollback behavior
-
-The desired Route B follow is one Sui transaction. Creator transfer, ProtocolVault deposit, DeepBook Predict mint, and `StrategyFollowed` emission happen atomically. If `predict::mint_range<DUSDC>` aborts, Sui abort semantics roll back the entire transaction, including creator fee transfer and ProtocolVault deposit.
-
-This is why Route B can support paid strategy execution without a separate refund path for failed mints. The frontend must still run official quote + full mint preflight first to avoid avoidable wallet failures.
-
-## MVP on-chain surface
-
-Required on-chain MVP pieces:
-
-- shared `Strategy` object with creator, range, expiry, quantity, creator fee bps, fixed platform fee bps, metadata URI, active flag, and creation time;
-- permissionless strategy creation;
-- creator-only deactivation;
-- `AdminCap` object minted at package init;
-- `ProtocolVault<T>` object created by admin;
-- `StrategyCreated` event;
-- `StrategyFollowed` event emitted after successful wrapper call to DeepBook Predict `mint_range`;
-- `StrategyDeactivated` event;
-- `PlatformFeeDeposited` and `PlatformFeesWithdrawn` events;
-- wrapper-specific fee validation and active-strategy checks.
-
-The wrapper keeps on-chain metadata compact and uses `metadata_uri` only for Phase 3D. Long thesis/title/description, images, comments, rankings, and performance dashboards can live in off-chain metadata/indexer systems referenced by URI.
-
-## Later off-chain and analytics surface
-
-These do not need to be on-chain in the MVP:
-
-- creator ranking;
-- follower counts;
-- total volume;
-- strategy PnL aggregation;
-- long thesis content;
-- screenshots, thumbnails, and social previews;
-- creator dashboard analytics;
-- strategy search and tags;
-- historical performance charts;
-- ProtocolVault dashboard.
-
-These can be derived from RangePilot events, DeepBook Predict `RangeMinted` / `RangeRedeemed` events, public server read models, and direct onchain reads where wallet-critical state is required.
+For DeepVol MVP, `ProtocolVault` should receive Create Fee deposits. It should not custody Predict positions or payouts.
 
 ## DeepBook Predict dependency boundary
 
-RangePilot's business model works because DeepBook Predict already owns the market protocol:
+DeepVol's business model works because DeepBook Predict already owns the market protocol:
 
 - `Predict` is the official trading entrypoint.
 - `PredictManager` is the per-user account and position boundary.
-- `RangeKey` identifies the vertical range.
+- `MarketKey` identifies binary positions.
 - `OracleSVI` supplies live or settled market state.
 - `Vault` enforces liquidity, exposure, MTM, max payout, and risk constraints.
-- `predict::mint_range<DUSDC>` computes and enforces the official mint path.
+- `predict::mint<DUSDC>` and binary redeem entrypoints compute and enforce official behavior.
 
-RangePilot monetizes strategy routing and creator attribution while preserving this protocol boundary.
+DeepVol monetizes volatility receipt structuring and guidance while preserving this protocol boundary.

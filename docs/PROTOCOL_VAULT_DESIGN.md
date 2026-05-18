@@ -7,6 +7,12 @@ Source of truth relationship: Supplements wrapper architecture and publish readi
 
 # ProtocolVault Design
 
+## Current status after DeepVol pivot
+
+`ProtocolVault<T>` is reusable fee treasury infrastructure for DeepVol Create Fee. The validated RangePilot wrapper follow proved the vault can receive protocol fees atomically with an official DeepBook Predict call, but the creator-follow strategy model is no longer the primary product direction.
+
+For DeepVol MVP, `ProtocolVault` should receive the BTC MOVE Create Fee. It should not custody DeepBook Predict binary legs or payouts.
+
 ## Role
 
 `ProtocolVault<T>` is a RangePilot wrapper object, not the DeepBook Predict Vault. DeepBook Predict still owns pricing, liquidity, exposure, payout, settlement, and `PredictManager` range-position accounting.

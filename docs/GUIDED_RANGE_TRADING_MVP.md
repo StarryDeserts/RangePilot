@@ -7,6 +7,12 @@ Source of truth relationship: Engineering scaffold guide derived from validated 
 
 # Guided Range Trading MVP
 
+## Current status after DeepVol pivot
+
+This guided range trading scaffold is preserved as prior validation and debugging infrastructure. It is not the new MVP direction. DeepVol BTC MOVE is now the primary MVP, and formal UI design remains deferred until the DeepVol binary protocol path is validated.
+
+The range scaffold remains useful for wallet gating, quote/preflight discipline, direct manager readback patterns, and browser transaction ergonomics.
+
 Phase 2A turns the validated DeepBook Predict Testnet lifecycle into a minimal browser-wallet scaffold. It is intended to be usable for engineering validation, state display, wallet prompting, and real error visibility.
 
 Phase 2B fixes manual browser validation blockers around slow duplicate candidate scans and portfolio RangeKey recovery. See [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md) for the detailed scan/recovery checklist and remaining limitations.

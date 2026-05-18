@@ -7,6 +7,12 @@ Source of truth relationship: Records observed Testnet transaction results; Move
 
 # Wrapper Follow Testnet Validation
 
+## Current status after DeepVol pivot
+
+This document is preserved as historical validation evidence. It proves the RangePilot wrapper can atomically collect fees, deposit into `ProtocolVault`, call DeepBook Predict, and link product events with protocol events.
+
+It is not the new primary product direction. ADR-0003 pivots the project to DeepVol BTC MOVE because public creator Strategy parameters are copyable and high follow fees are easy to bypass.
+
 ## Summary
 
 Phase 3F validated the first real RangePilot Route B wrapper follow on Sui Testnet. The admin/creator created a shared Strategy, the follower address executed `follow_strategy_and_mint<DUSDC>` through the RangePilot wrapper after fresh official quote and full DeepBook Predict mint preflight gates, and post-state confirmed RangePilot fee custody plus DeepBook Predict position ownership.

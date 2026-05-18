@@ -9,7 +9,7 @@ Source of truth relationship: Decision record derived from user selection, offic
 
 ## Status
 
-Accepted
+Accepted for Route B wrapper architecture. Superseded by [ADR-0003](./0003-pivot-to-deepvol-btc-move.md) only for primary product direction; the wrapper remains validated prior infrastructure and a reusable pattern source.
 
 ## Date
 

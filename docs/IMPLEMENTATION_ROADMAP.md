@@ -1,122 +1,111 @@
 ---
-Purpose: Define the phased implementation roadmap for RangePilot.
+Purpose: Define the phased implementation roadmap for DeepVol BTC MOVE while preserving RangePilot validation history.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: Generated documentation; approved for current main branch.
-Source of truth relationship: Derived from local product/protocol source docs and official-derived Testnet integration references; implementation details remain subject to confirmation.
+Status: Updated for the DeepVol BTC MOVE foundation refactor.
+Source of truth relationship: Derived from DeepVol foundation docs, local protocol docs, and official-derived Testnet integration references; implementation details remain subject to confirmation.
 ---
 
 # Implementation Roadmap
 
-This roadmap has exactly seven phases, numbered 0-6. It prioritizes a real guided SUI range prediction flow before creator and LP layers.
+DeepVol BTC MOVE is the new primary product direction. The roadmap now prioritizes a real BTC MOVE volatility receipt path over the prior RangePilot creator-follow strategy product.
 
-## Phase 0: Documentation and workflow setup
+Prior RangePilot work remains important validation evidence:
 
-| Field | Content |
-|---|---|
-| Goal | Establish source-bounded docs, agent workflow, skill usage, protocol unknowns, and ADR baseline. |
-| Deliverables | Architecture index; source document guide; DeepBook Predict map; agent workflow; skill guide; roadmap; protocol notes; ADR; root `CLAUDE.md`. |
-| Non-goals | No app scaffolding, no chain integration, no fake protocol config, no source-doc rewrites. |
-| Acceptance criteria | Required docs exist; each starts with metadata block; unknowns are marked; git staging/commit/push follows explicit user approval; excluded files remain unstaged and untouched. |
-| Recommended skills | `agent-skills:documentation-and-adrs`, `superpowers:writing-plans`. |
-| Required docs | Product spec; protocol analysis; source documents; architecture index. |
-| Risks and fallback | Risk: docs invent concrete details. Fallback: replace invented details with `TBD` / `MUST CONFIRM BEFORE CODING`. |
+- PredictManager create/deposit was validated.
+- Range quote, mint, readback, and redeem were validated.
+- Browser range trading scaffold was built as an engineering validation surface.
+- Route B wrapper, ProtocolVault, publish, and first wrapper follow were validated on Testnet.
 
-## Phase 1: Protocol integration spike
+The prior creator-follow strategy model is not the primary product direction because public on-chain strategy parameters can be copied and used to bypass high follow fees.
+
+## Phase 0: DeepVol foundation docs and ADR
 
 | Field | Content |
 |---|---|
-| Goal | Prove RangePilot can create/load a Predict Account, deposit quote, preview or handle quote unavailability, mint one range position, and read it back. |
-| Deliverables | Minimal wallet app; confirmed Testnet config shell; public server discovery; transaction builder spike; one guided trade form; minimal portfolio read; integration findings. |
-| Non-goals | Full landing page, creator strategy system, AI composer, PLP supply/withdraw, full indexer, custom Move wrapper. |
-| Acceptance criteria | Confirmed Testnet config is used from official-derived docs; one network/config path can execute or clearly identify blocker; runtime market values are confirmed before coding; portfolio fallback documented if direct reads fail. |
-| Recommended skills | `sui-dev-skills`, `sui-transaction-building`, `sui-client`, `sui-bcs`, Context7 plugin. |
-| Required docs | Product spec; protocol analysis; architecture map; protocol integration notes; source documents; official contract info; entrypoint bindings plan. |
-| Risks and fallback | Risk: active market, response schemas, or generated-binding call shapes unavailable. Fallback: stop implementation and produce confirmed blocker list; use demo UI only if clearly labeled. |
+| Goal | Establish DeepVol BTC MOVE as the primary direction and define product scope, architecture, data model, binary integration needs, business model, and pivot ADR. |
+| Deliverables | DeepVol product direction; MVP scope; protocol architecture; data model; binary leg integration; business model; ADR-0003; updated index, roadmap, protocol notes, binding plan, and legacy status notes. |
+| Non-goals | No new Move package, no transaction execution, no binary mint, no publish, no formal UI rewrite, no deletion of prior validation docs. |
+| Acceptance criteria | BTC-only MVP is explicit; non-custodial receipt limitation is explicit; Create Fee is MVP-enforceable; Profit Fee and Creator Share are V2/future; binary entrypoints are source-confirmed or marked `MUST CONFIRM BEFORE CODING`. |
+| Required docs | DeepVol foundation docs; ADR-0003; protocol integration notes; entrypoint bindings plan. |
+| Risks and fallback | Risk: old RangePilot docs still read like current direction. Fallback: add status notes and index links without deleting historical validation records. |
 
-### Phase 1 subphases
+## Phase 1: Binary leg validation
 
-| Subphase | Focus | Exit condition |
+| Field | Content |
+|---|---|
+| Goal | Validate the DeepBook Predict binary leg path DeepVol depends on. |
+| Deliverables | Read-only/source confirmation of `MarketKey`; binary quote harness; full two-leg PTB devInspect; gated Testnet binary mint validation plan; binary readback helper; binary event parser; binary redeem validation plan. |
+| Non-goals | No custodial receipt, no profit fee, no creator marketplace, no production UI. |
+| Acceptance criteria | UP and DOWN quote preview pass for a runtime BTC oracle/expiry; full two-leg mint preflight passes; controlled binary mint validation is either completed with digest/evidence or blocked with precise cause; `predict_manager::position` readback strategy is proven. |
+| Required docs | DeepVol binary leg integration; official contract info; protocol integration notes; entrypoint bindings plan; PredictManager flow and validation docs. |
+| Risks and fallback | Risk: active BTC binary market changes or mintability fails after quote. Fallback: document runtime blocker and do not build production receipt flow until full binary preflight succeeds. |
+
+## Phase 2: DeepVol MoveReceipt / VolSeries contract design
+
+| Field | Content |
+|---|---|
+| Goal | Design and implement the minimal non-custodial DeepVol Move package around BTC MOVE series and receipts. |
+| Deliverables | `move/deepvol` package; `VolSeries`; `MoveReceipt`; Create Fee deposit into `ProtocolVault` or a DeepVol vault equivalent; receipt lifecycle events; Move tests. |
+| Non-goals | Custodial manager, tradable receipt, Profit Fee enforcement, secondary market, custom Predict pricing, custom settlement. |
+| Acceptance criteria | Move build/tests pass; receipt explicitly records linkage rather than custody; Create Fee is enforceable; Profit Fee is documented as unavailable in MVP. |
+| Required docs | DeepVol protocol architecture; DeepVol data model; DeepVol business model; ProtocolVault design; Move rules. |
+| Risks and fallback | Risk: trying to make receipt represent custody it does not hold. Fallback: keep non-custodial receipt language and field semantics strict. |
+
+## Phase 3: SDK builders and preflight gates
+
+| Field | Content |
+|---|---|
+| Goal | Add TypeScript types and builders for BTC MOVE preview, two-leg mint, receipt creation, and portfolio readback. |
+| Deliverables | `packages/types/src/deepVol.ts`; `packages/sdk/src/deepVol/`; `packages/config/src/deepVolTestnet.ts`; binary quote helpers; binary mint preflight; receipt transaction builder; binary position readback; event parsing. |
+| Non-goals | Private-key browser paths, mainnet, unaudited production launch, direct custom pricing. |
+| Acceptance criteria | Builders require runtime BTC oracle/expiry, successful UP and DOWN quote previews, full PTB preflight, fee coverage, and explicit package/config IDs before wallet prompt. |
+| Required docs | DeepVol binary leg integration; entrypoint bindings plan; protocol integration notes; Sui transaction-building guidance. |
+| Risks and fallback | Risk: quote success differs from mintability. Fallback: preserve full binary mint preflight gate, mirroring range mint lessons. |
+
+## Phase 4: Portfolio and guided settlement UX
+
+| Field | Content |
+|---|---|
+| Goal | Display BTC MOVE receipts and guide users through official DeepBook Predict binary redeem/settlement paths. |
+| Deliverables | DeepVol markets page; series page; portfolio page; receipt cards; manager binary readback; settlement status; guided redeem path; precise unavailable states. |
+| Non-goals | Full UI polish, creator marketplace, secondary market, custodial settlement, Profit Fee enforcement. |
+| Acceptance criteria | Users can see receipt metadata, current UP/DOWN quantities from `PredictManager`, expiry/settlement status, and guided redeem actions without treating receipt as custody truth. |
+| Required docs | DeepVol protocol architecture; DeepVol data model; binary leg integration; PredictManager docs; protocol integration notes. |
+| Risks and fallback | Risk: users misunderstand receipts as tradable claims. Fallback: UI copy must state non-custodial receipt limitation clearly. |
+
+## Phase 5: Demo polish
+
+| Field | Content |
+|---|---|
+| Goal | Prepare a coherent DeepVol demo that communicates BTC MOVE in under 60 seconds and proves the core protocol path. |
+| Deliverables | Landing narrative; BTC MOVE market screen; receipt creation flow; portfolio/settlement view; demo script; fallback screenshots; runbook. |
+| Non-goals | Broad market support, pro API, production-grade indexer, custodial receipt, secondary market. |
+| Acceptance criteria | Demo explains “Trade movement, not direction”; live or recorded evidence shows official DeepBook Predict binary composition and receipt metadata; limitations are not misrepresented. |
+| Required docs | DeepVol product direction; MVP scope; protocol architecture; binary validation artifacts; business model. |
+| Risks and fallback | Risk: live BTC market state changes before demo. Fallback: prepare clearly labeled screenshots or recorded successful flow; do not misrepresent stale data as live. |
+
+## Phase 6: V2 custodial / escrow and marketplace research
+
+| Field | Content |
+|---|---|
+| Goal | Evaluate whether DeepVol should evolve beyond non-custodial receipts. |
+| Deliverables | Custodial/escrow design ADR; Profit Fee enforceability analysis; tradable receipt feasibility; creator VolSeries marketplace model; custody risk review. |
+| Non-goals | Shipping custodial receipt before MVP validation, hidden custody, unvalidated settlement fee claims. |
+| Acceptance criteria | Decision record explains whether V2 custody and Profit Fee are worth the complexity and risk. |
+| Required docs | DeepVol protocol architecture; business model; data model; security review notes; future validation artifacts. |
+| Risks and fallback | Risk: V2 complexity undermines MVP. Fallback: keep non-custodial receipt MVP as the stable product baseline. |
+
+## Preserved RangePilot validation milestones
+
+These milestones are complete and remain useful as DeepVol implementation evidence.
+
+| Milestone | Status | DeepVol relevance |
 |---|---|---|
-| Phase 1A: Official config + public server discovery | Centralize official Testnet config in code; call public server status, predict state, oracles, quote assets, ask bounds, and vault summary endpoints; capture response schemas in docs. | Documented public server response shapes and active oracle candidates as a runtime snapshot; ask bounds and full strike-grid validation remain blockers before mint UI. Next step: Phase 1B Wallet + PredictManager create/deposit. |
-| Phase 1B: PredictManager create/deposit | Add wallet UI scaffold, DUSDC wallet balance read, local manager hint discovery, `create_manager` PTB, manager ID recovery, gated DUSDC deposit PTB, and manager summary readback. | Automated local signer validation succeeded for `create_manager`, event/object-change manager ID recovery, two 1 DUSDC deposits, and known-manager public server balance readback. Browser wallet manual validation, general owner discovery, and direct `balance<DUSDC>` helper remain pending before Phase 1C. |
-| Phase 1C: Range quote + first `mint_range<DUSDC>` | Confirm `range_key::new`, active market, strike grid, ask bounds, `predict::get_range_trade_amounts`, quote preview mapping, full mint preflight, source-level blocker analysis, and first `predict::mint_range<DUSDC>` transaction after Phase 1B blockers clear. | Phase 1C-debug completed the first gated Sui Testnet `mint_range<DUSDC>` after source-informed candidate generation found preflight-passing candidates. Digest: `3XoGAs2NgEMbkn59y9KrRGsRbicBvTN6po5gmTsoHARe`; `RangeMinted` event found. Future mints still require fresh runtime discovery and full preflight, and Phase 1D should focus on robust portfolio/range-position readback. |
-| Phase 1D-1: Portfolio readback | Confirm portfolio read strategy and active range quantity for the first minted range without executing write transactions. | Completed on 2026-05-17: `RangeMinted` event readback matched the known digest, `/ranges/minted` returned one matching record, and direct `predict_manager::range_position` devInspect returned quantity `1000` twice for the event-derived RangeKey. |
-| Phase 1D-2: `redeem_range` validation | Confirm active range display, redeem preview, one gated `predict::redeem_range<DUSDC>`, `RangeRedeemed` parsing, and post-redeem readback. | Completed on 2026-05-17: full redeem preflight passed for quantities `1`, `10`, `100`, `500`, and `1000`; one Testnet redeem of quantity `500` succeeded with digest `9MiZdKDwdZB2WDkv5JFJV7fj88YRvvcw6LYGxX5DeQWc`; direct `range_position` decreased from `1000` to `500`. Settled claim behavior, general portfolio enumeration, and browser wallet manual validation remain pending. |
+| Phase 1A public server discovery | Completed | Runtime market discovery and read-model boundary. |
+| Phase 1B PredictManager create/deposit | Completed | User manager and DUSDC balance setup for binary legs. |
+| Phase 1C range quote/mint | Completed | Full preflight lesson: quote success alone is insufficient. |
+| Phase 1D portfolio/readback/redeem | Completed | Direct manager readback and redeem gating patterns. |
+| Phase 2 guided range scaffold | Completed as engineering scaffold | UI and wallet-gating reference, not current MVP direction. |
+| Phase 3 Route B wrapper | Completed and validated | Reusable ProtocolVault, fee, wrapper, event-linkage patterns. |
 
-## Phase 2: Guided range trading MVP
-
-| Field | Content |
-|---|---|
-| Goal | Turn the protocol spike into a user-friendly SUI range prediction flow. |
-| Deliverables | Trade page; range builder; market/expiry selector from confirmed data; Predict Account status; deposit UX; quote preview; mint transaction; transaction drawer; error translator. |
-| Non-goals | Multi-asset support, advanced trading terminal, custom pricing, custom payout logic, complex secondary market. |
-| Acceptance criteria | User can understand `(lower, upper]` win condition, preview before action, mint through official DeepBook Predict path, and see success state. |
-| Recommended skills | `sui-dev-skills/sui-frontend`, `sui-transaction-building`, `sui-client`, Context7 plugin. |
-| Required docs | Product spec sections `Core User Flows`, `UX Design Principles`, `Transaction Flows`; architecture map; protocol notes; official contract info; entrypoint bindings plan; guided range trading MVP guide. |
-| Risks and fallback | Risk: quote preview shape unknown or unstable. Fallback: official dry-run strategy or explicit preview-unavailable state; do not calculate custom pricing. |
-
-### Phase 2 subphases
-
-| Subphase | Focus | Exit condition |
-|---|---|---|
-| Phase 2A: Guided range trading MVP scaffold | Add minimal browser-wallet `/trade` and `/portfolio` scaffolds around the validated create/deposit/mint/readback/redeem lifecycle, with non-secret persistence and full preflight gates. | Engineering scaffold exists and is documented in [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md). It is not final UI design; browser wallet manual validation identified scan/recovery fixes for Phase 2B. |
-| Phase 2B-fix: Browser scan and portfolio recovery | Deduplicate and bound `/trade` candidate scans, add progress/cancel/diagnostics and Advanced Diagnostics candidate import, recover `/portfolio` RangeKeys from manager-scoped localStorage and mint digests, and move manual RangeKey input to Advanced Debug. | Implemented as scaffold fixes and documented in [BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md](./BROWSER_WALLET_MANUAL_VALIDATION_FIXES.md). Browser wallet approval remains manual; final UI design remains deferred. |
-
-## Phase 3: Creator strategy wrapper architecture
-
-| Field | Content |
-|---|---|
-| Goal | Define and scaffold Route B: a thin RangePilot wrapper that owns creator strategy metadata, fee attribution, and follow events while internally calling DeepBook Predict `mint_range<DUSDC>`. |
-| Deliverables | Business model; wrapper contract architecture; creator strategy product flow; follow strategy transaction flow; strategy data model; ADR 0002; minimal `move/rangepilot` wrapper skeleton; guarded TypeScript types/SDK stubs; documented Move build result or blocker. |
-| Non-goals | Final creator UI, vault dashboard, leaderboard, AI composer, mainnet, package publish, custom pricing, custom oracle settlement, custom vault risk, custom payout, independent position NFTs. |
-| Acceptance criteria | Wrapper boundary is documented; `follow_strategy_and_mint` derives `RangeKey` from Strategy fields and calls DeepBook Predict `mint_range`; creator/platform fee is separate from PredictManager mint cost; wrapper package ID remains `TBD` until explicit publish approval; frontend still requires official quote plus full preflight before any wrapper wallet prompt. |
-| Recommended skills | `sui-dev-skills/move`, `sui-dev-skills/sui-ts-sdk`, `sui-transaction-building`, `superpowers:executing-plans`. |
-| Required docs | Business model; wrapper contract architecture; creator strategy product flow; follow strategy transaction flow; strategy data model; ADR 0002; official contract info; entrypoint bindings plan; protocol integration notes. |
-| Risks and fallback | Risk: future DeepBook Predict source or publish dependency shape may change after the local compile snapshot. Fallback: document the exact external dependency blocker without vendoring fake modules or editing ignored source snapshots. |
-
-### Phase 3 subphases
-
-| Subphase | Focus | Exit condition |
-|---|---|---|
-| Phase 3A: Business model and wrapper architecture | Define the creator/user/platform fee model, Route B DeepBook Predict boundary, and accepted ADR. | Docs and ADR state that RangePilot wrapper internally calls DeepBook Predict `mint_range<DUSDC>` and does not own pricing/oracle/vault/StrikeMatrix/payout/position custody. |
-| Phase 3B: Minimal wrapper skeleton and guarded SDK stubs | Add `move/rangepilot`, fee helpers, Strategy events, `follow_strategy_and_mint`, build scripts, optional TS types/stubs, and build/dependency documentation. | Local Move build and tests passed; TypeScript compiled; no publish or real transaction was executed. |
-| Phase 3C: Wrapper hardening and publish readiness | Switch formal Move dependencies to official DeepBookV3 Git plus Testnet dep-replacements, harden fee/strategy policy, expand tests, add SDK placeholders, and create publish-readiness docs. | Move build passes with official Git dependencies; Move tests pass with 11 tests; wrapper package ID remained unconfigured until publish; direct platform recipient routing was superseded in Phase 3D; no publish or real transaction was executed. |
-| Phase 3D: ProtocolVault fee model | Replace direct platform recipient routing with `ProtocolVault<T>` + `AdminCap`, fix platform fee at 10 bps, cap creator fees at 3000 bps, confirm metadata_uri-only/shared/permissionless/upgradeable policy, update SDK/config/docs, and design the first Testnet follow scenario without executing it. | Move build passes; Move tests pass with 18 tests; typecheck passes; wrapper package ID, ProtocolVault object ID, and AdminCap owner remained pending until the Phase 3E-postpublish setup; no follow transaction was executed. |
-| Phase 3E: Manual Testnet publish and ProtocolVault setup | Record the manually published wrapper package, verify package/AdminCap/UpgradeCap objects, create `ProtocolVault<DUSDC>`, and update config/docs with real IDs. | Wrapper package is published at `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697`; AdminCap and UpgradeCap are recorded; `ProtocolVault<DUSDC>` is created at `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992`. |
-| Phase 3F: First wrapper follow validation | Create the first shared Strategy, prepare follower PredictManager/DUSDC, run fresh official quote and full mint preflight, execute wrapper `follow_strategy_and_mint<DUSDC>`, and verify events plus state deltas. | Completed on Testnet: Strategy `0x8402c9475b75beddc0328ac60e0ac743f8e36223ab8fa066800f9b7317cac30a`; create digest `8yrzb1mfWUdrJZXBKvGC6Y8xFkppDTUmFuA4Gg979zJV`; follow digest `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB`; `StrategyFollowed`, `PlatformFeeDeposited`, and `RangeMinted` observed; ProtocolVault `0` → `1000`; creator DUSDC `+10000`; follower range_position `0` → `1000`. |
-
-## Phase 4: Portfolio and redeem/claim hardening
-
-| Field | Content |
-|---|---|
-| Goal | Let users monitor active/settled predictions and close or claim positions through official protocol paths. |
-| Deliverables | Portfolio page hardening; active/settled position cards; Predict Account balance; range position reads; redeem_range transaction; claim/settlement UX if same path or confirmed path supports it; history fallback. |
-| Non-goals | Full analytics, leaderboard, tax reporting, custom settlement, independent position NFTs. |
-| Acceptance criteria | Minted position appears in portfolio or documented fallback; user can redeem/claim only through confirmed official path; wallet-critical state uses direct reads where needed. |
-| Recommended skills | `sui-client`, `sui-transaction-building`, `sui-bcs`, `sui-dev-skills`. |
-| Required docs | Product spec `Portfolio Flow`; protocol analysis `PredictManager` and read surfaces; architecture map; protocol notes; official contract info; entrypoint bindings plan; portfolio readback validation; range redeem validation. |
-| Risks and fallback | Risk: table layout or manager discovery is hard to decode. Fallback: use Sui events/checkpoints for history while direct wallet-critical reads are confirmed. |
-
-## Phase 5: Vault / LP dashboard
-
-| Field | Content |
-|---|---|
-| Goal | Provide a basic LP dashboard that explains vault, PLP, utilization, MTM, max payout, and risk without reimplementing protocol logic. |
-| Deliverables | Vault page; metric cards; PLP position display if confirmed; optional supply/withdraw forms after signatures confirmed; risk explanations; unavailable metric states. |
-| Non-goals | Custom vault risk engine, StrikeMatrix reproduction, advanced LP premium analytics, unconfirmed PLP transactions. |
-| Acceptance criteria | Dashboard shows only confirmed official/read-derived metrics or clearly labeled unavailable/demo values; no custom risk calculations drive user decisions. |
-| Recommended skills | `sui-client`, `deepbook-trading`, `sui-dev-skills`, Context7 plugin. |
-| Required docs | Product spec `LP Flow`, `Vault Page`; protocol analysis `Vault` and `StrikeMatrix`; architecture map; protocol notes; official contract info; entrypoint bindings plan. |
-| Risks and fallback | Risk: vault metrics are hard to decode safely. Fallback: show minimal confirmed metrics and explanatory placeholders for unavailable metrics. |
-
-## Phase 6: Demo polish
-
-| Field | Content |
-|---|---|
-| Goal | Prepare a coherent hackathon demo that communicates product value in under 60 seconds and proves the core flow. |
-| Deliverables | Landing page; polished trade/portfolio/strategy/vault flows; demo script; fallback screenshots; error messages; share card if feasible; runbook. |
-| Non-goals | Broad protocol coverage, production-grade indexer, paid LP analytics, multi-chain support. |
-| Acceptance criteria | Demo can run end-to-end or has documented fallback; judges understand guided SUI range prediction, creator follow, and LP dashboard positioning. |
-| Recommended skills | `agent-skills:frontend-ui-engineering`, `agent-skills:shipping-and-launch`, verification skills. |
-| Required docs | Product spec `Demo Script`, `Hackathon Delivery Checklist`, `Final Positioning`; architecture index; roadmap. |
-| Risks and fallback | Risk: live chain state changes before demo. Fallback: prepare clearly labeled screenshots or recorded successful flow; do not misrepresent demo data as live protocol state. |
+Formal UI design remains deferred until the DeepVol binary protocol path is validated.
