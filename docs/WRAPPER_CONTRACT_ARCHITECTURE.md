@@ -1,7 +1,7 @@
 ---
 Purpose: Define the RangePilot Route B wrapper contract boundary for creator strategies that internally mint DeepBook Predict ranges.
 Audience: Move developers, SDK implementers, frontend developers, protocol integrators, reviewers, product leads, and AI agents.
-Status: Phase 3E-postpublish record; wrapper package is published on Testnet, ProtocolVault<DUSDC> is created, and first wrapper follow remains pending.
+Status: Phase 3F record; wrapper package, ProtocolVault<DUSDC>, and first wrapper follow are validated on Testnet.
 Source of truth relationship: Supplements official Sui DeepBook Predict docs, local validated entrypoint bindings, and RangePilot product docs; official docs and local source signatures remain authoritative for DeepBook Predict behavior.
 ---
 
@@ -90,7 +90,7 @@ subdir: packages/predict
 rev: predict-testnet-4-16
 ```
 
-Phase 3E-postpublish recorded the manually published wrapper package on Testnet and the created shared `ProtocolVault<DUSDC>`. `move/rangepilot/Published.toml` records the published package metadata; local third-party DeepBook source snapshots remain debugging/reference only and must stay ignored and uncommitted.
+Phase 3E-postpublish recorded the manually published wrapper package on Testnet and the created shared `ProtocolVault<DUSDC>`. Phase 3F validated the first wrapper follow digest `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB`, linking `StrategyFollowed`, `PlatformFeeDeposited`, and DeepBook Predict `RangeMinted` in one transaction. `move/rangepilot/Published.toml` records the published package metadata; local third-party DeepBook source snapshots remain debugging/reference only and must stay ignored and uncommitted.
 
 Confirmed source signature:
 
@@ -227,7 +227,7 @@ Wrapper surface:
 
 No public or entry permissionless `deposit_platform_fees` exists. Platform deposits happen through `follow_strategy_and_mint<T>` only.
 
-The wrapper package is published on Sui Testnet at `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697`. The publisher/AdminCap owner is `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`; the AdminCap object is `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7`; the UpgradeCap object is `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741`. The shared `ProtocolVault<DUSDC>` object is `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992`, created by transaction `5d8W8RtVWHxVjEhpjf6t3qfKzEFuDMdxHGXGJiR6DBe5`.
+The wrapper package is published on Sui Testnet at `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697`. The publisher/AdminCap owner is `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`; the AdminCap object is `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7`; the UpgradeCap object is `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741`. The shared `ProtocolVault<DUSDC>` object is `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992`, created by transaction `5d8W8RtVWHxVjEhpjf6t3qfKzEFuDMdxHGXGJiR6DBe5`. Phase 3F created Strategy `0x8402c9475b75beddc0328ac60e0ac743f8e36223ab8fa066800f9b7317cac30a` and validated wrapper follow digest `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB`.
 
 ## Events
 
@@ -294,7 +294,7 @@ Do not mirror DeepBook Predict pricing, oracle, or vault errors in wrapper code.
 | Follow-up | Status | Handling |
 |---|---|---|
 | Official DeepBookV3 dependency source | Resolved for Phase 3C: `move/rangepilot/Move.toml` uses official DeepBookV3 Git dependencies for `packages/predict` and `packages/deepbook` at `predict-testnet-4-16`, with Testnet dep-replacements binding deployed package IDs. | Keep local snapshots ignored and uncommitted. Do not switch formal dependencies back to local paths. |
-| ProtocolVault fee model | Resolved for Phase 3D: platform fee deposits into `ProtocolVault<T>` and `AdminCap` controls withdrawal. | `ProtocolVault<DUSDC>` is created on Testnet; do not withdraw during setup. |
+| ProtocolVault fee model | Resolved for Phase 3D and validated in Phase 3F: platform fee deposits into `ProtocolVault<T>` and `AdminCap` controls withdrawal. | `ProtocolVault<DUSDC>` is created on Testnet and received `1000` atomic DUSDC from wrapper follow digest `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB`; do not withdraw without explicit approval. |
 | DUSDC source dependency for published examples | `mint_range<T>` remains generic in the wrapper; the Testnet ProtocolVault uses the confirmed DUSDC type. | Keep wrapper generic and docs Testnet-specific. |
 | Wrapper package ID | `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697` | SDK stubs must use explicit package ID. |
 | ProtocolVault object ID | `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992` | SDK follow builders must require explicit protocol vault ID. |
@@ -303,7 +303,7 @@ Do not mirror DeepBook Predict pricing, oracle, or vault errors in wrapper code.
 
 ## Verification status
 
-Phase 3E pre-publish verification passed before the dependency publication blocker was reached:
+Phase 3F validated the first wrapper follow on Testnet; see [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md). Earlier Phase 3E pre-publish verification passed before the dependency publication blocker was reached:
 
 - `npm run typecheck`: passed.
 - `npm run build:web`: passed with the existing acceptable Vite chunk-size warning.

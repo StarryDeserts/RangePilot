@@ -75,6 +75,11 @@ export type CreateStrategyParams = RangePilotStrategyRangeKey & {
   metadataUri: string;
 };
 
+export type CreateStrategyTransactionOptions = CreateStrategyParams & {
+  wrapper?: RangePilotWrapperConfig;
+  wrapperPackageId?: DeepBookPredictObjectId | null;
+};
+
 export type FollowStrategyParams = {
   strategyId: StrategyObjectId;
   predictId: DeepBookPredictObjectId;

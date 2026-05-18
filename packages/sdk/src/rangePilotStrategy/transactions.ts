@@ -3,6 +3,7 @@ import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { RANGEPILOT_TESTNET } from "@rangepilot/config/rangePilotTestnet";
 import type {
   CreateProtocolVaultParams,
+  CreateStrategyTransactionOptions,
   FollowStrategyAndMintPlan,
   FollowStrategyParams,
   RangePilotWrapperConfig,
@@ -12,6 +13,8 @@ import { DeepBookPredictUnconfirmedBindingError } from "../deepbookPredict/error
 
 export const RANGE_PILOT_WRAPPER_TESTNET = RANGEPILOT_TESTNET;
 
+export type BuildCreateStrategyTransactionOptions = CreateStrategyTransactionOptions;
+
 export type BuildFollowStrategyAndMintTransactionOptions = FollowStrategyParams & {
   wrapper?: RangePilotWrapperConfig;
   wrapperPackageId?: string;
@@ -19,6 +22,30 @@ export type BuildFollowStrategyAndMintTransactionOptions = FollowStrategyParams 
   requireQuotePreviewPassed?: boolean;
   requireFullMintPreflightPassed?: boolean;
 };
+
+export function buildCreateStrategyTransaction(
+  params: BuildCreateStrategyTransactionOptions,
+): Transaction {
+  const wrapperPackageId = resolveWrapperPackageId(params);
+  const metadataUriBytes = [...new TextEncoder().encode(params.metadataUri)];
+  const tx = new Transaction();
+
+  tx.moveCall({
+    target: `${wrapperPackageId}::strategy::create_strategy`,
+    arguments: [
+      tx.pure.id(params.oracleId),
+      tx.pure.u64(normalizePositiveInteger(params.expiry, "Strategy expiry")),
+      tx.pure.u64(normalizePositiveInteger(params.lowerStrike, "Strategy lower strike")),
+      tx.pure.u64(normalizePositiveInteger(params.higherStrike, "Strategy higher strike")),
+      tx.pure.u64(normalizePositiveInteger(params.defaultQuantity, "Strategy default quantity")),
+      tx.pure.u64(String(params.creatorFeeBps)),
+      tx.pure.vector("u8", metadataUriBytes),
+      tx.object(SUI_CLOCK_OBJECT_ID),
+    ],
+  });
+
+  return tx;
+}
 
 export function buildFollowStrategyAndMintPlan(
   params: BuildFollowStrategyAndMintTransactionOptions,
@@ -132,7 +159,7 @@ function assertFollowSafetyGates(
 }
 
 function resolveWrapperPackageId(
-  params: BuildFollowStrategyAndMintTransactionOptions,
+  params: { wrapperPackageId?: string | null; wrapper?: RangePilotWrapperConfig },
 ): string {
   const packageId =
     params.wrapperPackageId ??

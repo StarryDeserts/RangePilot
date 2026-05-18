@@ -1,7 +1,7 @@
 ---
 Purpose: Specify the planned Route B follow_strategy_and_mint transaction flow for the RangePilot wrapper.
 Audience: Move developers, SDK implementers, frontend developers, protocol integrators, reviewers, and AI agents.
-Status: Phase 3E-postpublish record; wrapper package and ProtocolVault<DUSDC> are configured, and first wrapper follow remains pending.
+Status: Phase 3F record; wrapper package, ProtocolVault<DUSDC>, and first wrapper follow are validated on Testnet.
 Source of truth relationship: Supplements wrapper architecture and entrypoint binding docs; official DeepBook Predict docs and local source signatures remain authoritative for protocol entrypoints.
 ---
 
@@ -112,7 +112,7 @@ fee Coin<T> passed to wrapper
 → wrapper calls DeepBook Predict mint_range<T>
 ```
 
-The fee type may be generic in the skeleton. Product docs expect DUSDC for the Testnet user path, but concrete DUSDC publish examples still require successful publish/post-publish confirmation.
+The wrapper entrypoint remains generic over the fee coin type, and Phase 3F validated the Testnet user path with DUSDC.
 
 The wrapper must not compute fee from DeepBook Predict mint cost by reproducing pricing. The wrapper uses explicit fee amount only; quantity-based tokenomics remain a future product decision.
 
@@ -157,35 +157,28 @@ A successful follow transaction should produce at least:
 
 The recommended skeleton emits `StrategyFollowed` after `mint_range` succeeds so the event cannot exist without a successful protocol call.
 
-## First Testnet follow scenario, pending
+## First Testnet follow validation
 
-The first wrapper follow remains pending even though wrapper publish and `ProtocolVault<DUSDC>` setup are complete:
+Phase 3F completed the first wrapper follow after wrapper publish and `ProtocolVault<DUSDC>` setup:
 
-1. Wrapper package is published and configured.
-2. Publisher received AdminCap; AdminCap owner/publish address is disclosed.
-3. Admin created `ProtocolVault<DUSDC>`; ProtocolVault object ID is recorded in RangePilot config.
-4. Creator creates a shared permissionless Strategy with `creator_fee_bps <= 3000` and `metadata_uri`.
-5. Follower has a `PredictManager`.
-6. Follower manager has DUSDC balance for DeepBook Predict mint cost.
-7. Follower wallet has a separate DUSDC fee coin for RangePilot creator/platform fee base.
-8. Frontend/SDK runs official `get_range_trade_amounts` quote preview.
-9. Frontend/SDK runs full DeepBook Predict `mint_range<DUSDC>` preflight.
-10. SDK builds wrapper `follow_strategy_and_mint<DUSDC>` only after quote/preflight gates pass.
-11. Future explicit approval executes the wrapper follow transaction.
-14. Verify RangePilot `StrategyFollowed` event.
-15. Verify DeepBook Predict `RangeMinted` event in the same transaction.
-16. Verify follower `predict_manager::range_position` increased.
-17. Verify platform fee deposited into `ProtocolVault<DUSDC>`.
-18. Verify creator fee transferred to creator.
-19. Verify a failing DeepBook mint abort rolls back creator transfer and ProtocolVault deposit.
+| Evidence | Result |
+|---|---|
+| Validation report | [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) |
+| Strategy create digest | `8yrzb1mfWUdrJZXBKvGC6Y8xFkppDTUmFuA4Gg979zJV` |
+| Strategy object ID | `0x8402c9475b75beddc0328ac60e0ac743f8e36223ab8fa066800f9b7317cac30a` |
+| Follower | `0x4ff903b0dcc52dc8753787baf19b34b7425dfa64d187cc7c726b38413705fa75` |
+| Follower PredictManager | `0xd59be0646d948c9be6073edc0cfd253ce4cb00f4929f0bae71f451f50e5d1575` |
+| Official quote | Mint cost `35`, redeem value `25` atomic DUSDC |
+| Full DeepBook mint preflight | Passed before wrapper submission |
+| Wrapper follow preflight | Passed before wrapper submission |
+| Wrapper follow digest | `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB` |
+| Events observed | `PlatformFeeDeposited`, `RangeMinted`, `StrategyFollowed` |
+| Follower direct `range_position` | `0` → `1000` |
+| ProtocolVault<DUSDC> balance | `0` → `1000` atomic DUSDC |
+| Creator DUSDC balance | `500000000` → `500010000` atomic DUSDC |
+| Follower manager DUSDC balance | `1000000` → `999965` atomic DUSDC |
 
-Remaining forbidden actions before future first-follow approval:
-
-- Do not execute `follow_strategy_and_mint`.
-- Do not execute DeepBook Predict `mint_range`, `redeem_range`, or `supply`.
-- Do not execute `withdraw_platform_fees`.
-- Do not use mainnet.
-- Do not run validation scripts that submit non-approved transactions.
+Further follow transactions still require fresh official quote, full DeepBook mint preflight, wrapper preflight, explicit user approval, Testnet signer checks, and the same forbidden-action guardrails.
 
 ## Public server boundary
 

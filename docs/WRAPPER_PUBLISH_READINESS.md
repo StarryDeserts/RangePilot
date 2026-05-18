@@ -1,7 +1,7 @@
 ---
 Purpose: Track RangePilot wrapper contract readiness and Testnet post-publish setup.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and product leads.
-Status: Phase 3E-postpublish record; wrapper package is published on Testnet and ProtocolVault<DUSDC> is created.
+Status: Phase 3F record; wrapper package, ProtocolVault<DUSDC>, and first wrapper follow are validated on Testnet.
 Source of truth relationship: Supplements wrapper architecture and protocol integration docs; official DeepBook Predict docs and local Move source remain authoritative for protocol behavior.
 ---
 
@@ -9,7 +9,7 @@ Source of truth relationship: Supplements wrapper architecture and protocol inte
 
 ## Current status
 
-The RangePilot wrapper package is published on Sui Testnet, and post-publish setup created the first shared `ProtocolVault<DUSDC>`. Phase 3D replaced the direct platform-recipient fee model with `ProtocolVault<T>` + `AdminCap`, fixed platform fee policy at 10 bps, capped creator fees at 3000 bps, kept shared permissionless Strategies, and preserved Route B internal DeepBook Predict minting. The first real `follow_strategy_and_mint<DUSDC>` transaction remains pending for a future approved validation round with fresh official quote preview and full DeepBook Predict mint preflight.
+The RangePilot wrapper package is published on Sui Testnet, post-publish setup created the first shared `ProtocolVault<DUSDC>`, and Phase 3F validated the first real `follow_strategy_and_mint<DUSDC>` transaction after fresh official quote preview and full DeepBook Predict mint preflight. Phase 3D replaced the direct platform-recipient fee model with `ProtocolVault<T>` + `AdminCap`, fixed platform fee policy at 10 bps, capped creator fees at 3000 bps, kept shared permissionless Strategies, and preserved Route B internal DeepBook Predict minting.
 
 Current verification snapshot:
 
@@ -61,7 +61,6 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 
 ## What is not ready
 
-- No real `follow_strategy_and_mint<T>` transaction has been executed.
 - No final creator strategy UI is built.
 - No indexer schema links `StrategyFollowed` to DeepBook Predict `RangeMinted` in production.
 - No final platform withdrawal recipient policy is approved.
@@ -79,7 +78,7 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 | Whether strategy creation is permissionless | Confirmed: anyone can create a Strategy; curation is off-chain/frontend/indexer. |
 | Upgrade policy | Confirmed: Testnet/hackathon wrapper is upgradeable; upgrade authority must be disclosed. |
 | Wrapper package/vault config location | Confirmed: `packages/config/src/rangePilotTestnet.ts`. |
-| First Testnet `follow_strategy_and_mint` scenario | Confirmed as design-only in Phase 3D; actual execution remains future approval. |
+| First Testnet `follow_strategy_and_mint` scenario | Validated in Phase 3F with digest `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB` after quote and full mint preflight passed. |
 
 ## Recorded publish/post-publish values
 
@@ -90,7 +89,7 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 | Publisher / AdminCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
 | AdminCap object ID | `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7` |
 | UpgradeCap object ID | `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741` |
-| Actual first Testnet follow transaction | `TBD`; do not execute until a fresh quote/full preflight passes in a future approved round. |
+| Actual first Testnet follow transaction | `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB` |
 
 ## Post-publish config status
 
@@ -99,51 +98,55 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 - AdminCap object ID is recorded for admin operations; normal follower flows must not require AdminCap or UpgradeCap.
 - SDK wrapper config still keeps quote/preflight gates required.
 - Publish digest, package ID, cap IDs, vault creation digest, and ProtocolVault object ID are recorded in docs.
-- The next integration checklist entry is first wrapper follow validation.
+- The first wrapper follow validation is recorded in `docs/WRAPPER_FOLLOW_TESTNET_VALIDATION.md`.
 
 ## Testnet integration checklist
 
-- Select a live oracle/range at runtime; do not hardcode stale market state.
-- Run official `predict::get_range_trade_amounts` quote preview.
-- Require positive official mint cost.
-- Run full DeepBook Predict `mint_range<DUSDC>` devInspect preflight.
-- Build wrapper `follow_strategy_and_mint<DUSDC>` transaction only after quote and full preflight pass.
-- Include shared `ProtocolVault<DUSDC>` object as a wrapper input.
-- Execute one explicit user-approved Testnet follow transaction in a future round.
-- Confirm DeepBook Predict `RangeMinted` event and RangePilot `StrategyFollowed` event in the same transaction.
-- Confirm direct `predict_manager::range_position` readback for the followed RangeKey.
-- Confirm platform fee deposited into `ProtocolVault<DUSDC>`.
-- Confirm creator fee transferred to creator.
+Completed in Phase 3F:
+
+- Selected a live oracle/range at runtime; no stale market state was hardcoded.
+- Ran official `predict::get_range_trade_amounts` quote preview.
+- Required positive official mint cost.
+- Ran full DeepBook Predict `mint_range<DUSDC>` devInspect preflight.
+- Built wrapper `follow_strategy_and_mint<DUSDC>` only after quote and full preflight passed.
+- Included shared `ProtocolVault<DUSDC>` object as a wrapper input.
+- Executed one explicit user-approved Testnet follow transaction.
+- Confirmed DeepBook Predict `RangeMinted` event and RangePilot `StrategyFollowed` event in the same transaction.
+- Confirmed direct `predict_manager::range_position` readback for the followed RangeKey.
+- Confirmed platform fee deposited into `ProtocolVault<DUSDC>`.
+- Confirmed creator fee transferred to creator.
+
+Still required for future failure-path hardening:
+
 - Confirm a failing DeepBook mint abort rolls back creator transfer and ProtocolVault deposit.
 
-## First Testnet follow scenario, design-only
+## First Testnet follow result
 
-1. Wrapper package is published to Sui Testnet with upgradeability retained for the hackathon/Testnet stage.
-2. Wrapper package ID is recorded in `packages/config/src/rangePilotTestnet.ts`.
-3. Publisher received AdminCap; AdminCap owner/publish address is disclosed.
-4. Admin created `ProtocolVault<DUSDC>`; ProtocolVault object ID is recorded in RangePilot config.
-5. Creator creates a shared permissionless Strategy with `creator_fee_bps <= 3000` and `metadata_uri`.
-6. Follower has a `PredictManager`.
-7. Follower manager has DUSDC balance for DeepBook Predict mint cost.
-8. Follower wallet has a separate DUSDC fee coin for RangePilot creator/platform fee base.
-9. Frontend/SDK runs official `get_range_trade_amounts` quote preview.
-10. Frontend/SDK runs full DeepBook Predict `mint_range<DUSDC>` preflight.
-11. SDK builds wrapper `follow_strategy_and_mint<DUSDC>` only after quote/preflight gates pass.
-12. Future explicit approval executes the wrapper follow transaction.
-14. Verify RangePilot `StrategyFollowed` event.
-15. Verify DeepBook Predict `RangeMinted` event in the same transaction.
-16. Verify follower `predict_manager::range_position` increased.
-17. Verify platform fee deposited into `ProtocolVault<DUSDC>`.
-18. Verify creator fee transferred to creator.
-19. Verify a failing DeepBook mint abort rolls back creator transfer and ProtocolVault deposit.
+| Item | Value |
+|---|---|
+| Validation report | [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) |
+| Strategy create digest | `8yrzb1mfWUdrJZXBKvGC6Y8xFkppDTUmFuA4Gg979zJV` |
+| Strategy object ID | `0x8402c9475b75beddc0328ac60e0ac743f8e36223ab8fa066800f9b7317cac30a` |
+| Creator/admin | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
+| Follower | `0x4ff903b0dcc52dc8753787baf19b34b7425dfa64d187cc7c726b38413705fa75` |
+| Follower PredictManager | `0xd59be0646d948c9be6073edc0cfd253ce4cb00f4929f0bae71f451f50e5d1575` |
+| Range | Oracle `0xb79524498a9947307e192d8045772150dc47aade4f9e09bd4b6fe3236b9e3125`, expiry `1780646400000`, lower `76708000000000`, higher `77208000000000` |
+| Quantity | `1000` |
+| Quote | Mint cost `35`, redeem value `25` atomic DUSDC |
+| Wrapper follow digest | `997Yu78xbiM57fbJUsVk1eKURcbt8SXdi7Ypb1H74HEB` |
+| Events | `StrategyFollowed`, `PlatformFeeDeposited`, `RangeMinted` |
+| ProtocolVault balance | `0` → `1000` atomic DUSDC |
+| Creator DUSDC balance | `500000000` → `500010000` atomic DUSDC |
+| Follower range_position | `0` → `1000` |
 
-Phase 3E-postpublish authorization and remaining forbidden actions:
+Phase 3F authorization and remaining forbidden actions:
 
 - Manual `sui client publish` was completed outside this session and recorded here.
 - The approved `create_protocol_vault<DUSDC>` setup transaction executed once and succeeded.
-- Do not call `follow_strategy_and_mint` until a future approved first-follow validation round.
-- Do not call DeepBook Predict `mint_range`, `redeem_range`, or `supply` during wrapper setup.
-- Do not call `withdraw_platform_fees` during wrapper setup.
+- The approved first `follow_strategy_and_mint<DUSDC>` transaction executed once and succeeded.
+- Do not call additional `follow_strategy_and_mint` transactions without explicit approval and fresh gates.
+- Do not call direct top-level DeepBook Predict `mint_range`, `redeem_range`, or `supply` during wrapper work.
+- Do not call `withdraw_platform_fees` without explicit approval.
 - Do not use mainnet.
 - Do not run validation scripts that submit non-approved transactions.
 
