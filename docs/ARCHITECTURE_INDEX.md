@@ -7,7 +7,7 @@ Source of truth relationship: Indexes local source-of-truth documents, official-
 
 # Architecture Index
 
-DeepVol BTC MOVE is the new primary product direction. It is a Predict-native volatility derivatives layer on Sui that packages DeepBook Predict binary legs into BTC MOVE receipts so users can trade movement, not direction.
+DeepVol BTC MOVE is the new primary product direction. DeepVol is a Predict-native structured product layer on Sui: UP, DOWN, and RANGE are advanced primitives, while BTC MOVE Receipt is the primary composed product so users can trade movement, not direction.
 
 RangePilot's guided range trading and Route B creator-follow wrapper work remains preserved as validated prior infrastructure. The creator-follow strategy model is no longer the primary product direction because public on-chain strategy parameters can be copied and used to bypass a high follow fee.
 
@@ -18,7 +18,8 @@ RangePilot's guided range trading and Route B creator-follow wrapper work remain
 | [range_pilot_product_architecture_spec.md](./range_pilot_product_architecture_spec.md) | Original product, business, UX, MVP scope, engineering intent | Historical RangePilot positioning and prior guided prediction assumptions |
 | [deepbook_predict_模块架构解析.md](./deepbook_predict_模块架构解析.md) | Protocol architecture analysis and DeepBook Predict mental model | Mapping protocol objects, preserving pricing/oracle/vault/settlement invariants, understanding read/write surfaces |
 | [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md) | Official-derived contract/config/endpoint/entrypoint integration reference | Confirmed Testnet deployment config, public server endpoints, entrypoint planning, and official-reference conflict checks |
-| [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md) | Current product direction | DeepVol BTC MOVE positioning, BTC-first scope, and non-custodial receipt boundary |
+| [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md) | Current product direction | DeepVol structured-product positioning, BTC MOVE primary product, and non-custodial receipt boundary |
+| [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md) | Current product-layer model | Distinguishing Predict primitives from composed receipts and answering the manual UP + DOWN concern |
 | [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md) | Current MVP scope | Deciding what belongs in the BTC MOVE MVP and what stays future scope |
 | [ADR/0003-pivot-to-deepvol-btc-move.md](./ADR/0003-pivot-to-deepvol-btc-move.md) | Accepted pivot decision | Explaining why DeepVol supersedes creator-follow as the primary direction |
 
@@ -28,7 +29,8 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 
 | Document | Purpose | Category |
 |---|---|---|
-| [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md) | Defines DeepVol BTC MOVE, pivot rationale, BTC-first scope, and receipt limitations | Product / strategy |
+| [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md) | Defines DeepVol structured-product direction, pivot rationale, BTC-first scope, and receipt limitations | Product / strategy |
+| [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md) | Explains primitives vs composed receipts, manual UP + DOWN, and productization value | Product / strategy |
 | [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md) | Defines BTC-only MVP inclusions, exclusions, runtime assumptions, and future structure | Product / engineering |
 | [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md) | Defines VolSeries, MoveReceipt, ProtocolVault, PredictManager, transaction/readback/settlement paths | Protocol / architecture |
 | [DEEPVOL_DATA_MODEL.md](./DEEPVOL_DATA_MODEL.md) | Proposes VolSeries, MoveReceipt, and receipt lifecycle event fields | Move / SDK / product |
@@ -84,8 +86,9 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 1. [../CLAUDE.md](../CLAUDE.md)
 2. [ARCHITECTURE_INDEX.md](./ARCHITECTURE_INDEX.md)
 3. [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md)
-4. [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md)
-5. [ADR/0003-pivot-to-deepvol-btc-move.md](./ADR/0003-pivot-to-deepvol-btc-move.md)
+4. [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md)
+5. [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md)
+6. [ADR/0003-pivot-to-deepvol-btc-move.md](./ADR/0003-pivot-to-deepvol-btc-move.md)
 
 ### Before DeepVol protocol work
 
@@ -113,10 +116,11 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 ### Before UI/product work
 
 1. [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md)
-2. [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md)
-3. [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md)
-4. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)
-5. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) only as prior scaffold/reference, not current MVP direction
+2. [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md)
+3. [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md)
+4. [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md)
+5. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)
+6. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) only as prior scaffold/reference, not current MVP direction
 
 ### Before agent-led implementation rounds
 
@@ -131,7 +135,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 
 | Category | Primary docs |
 |---|---|
-| DeepVol product | DeepVol product direction, MVP scope, protocol architecture, data model, business model, ADR-0003 |
+| DeepVol product | DeepVol product direction, primitives and receipts, MVP scope, protocol architecture, data model, business model, ADR-0003 |
 | Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info, binary leg integration, wrapper contract architecture |
 | Protocol reference | Official contract info, entrypoint bindings plan, public server discovery, response shapes |
 | SDK / PTB | Binary leg integration, official contract info, PredictManager flow, PredictManager validation, range validation docs, entrypoint bindings plan, protocol integration notes |
@@ -144,7 +148,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 
 | Task type | Required docs before work |
 |---|---|
-| DeepVol BTC MOVE product work | DeepVol product direction, MVP scope, business model, ADR-0003 |
+| DeepVol BTC MOVE product work | DeepVol product direction, primitives and receipts, MVP scope, business model, ADR-0003 |
 | DeepVol Move/data model work | DeepVol protocol architecture, data model, binary leg integration, ProtocolVault design, official contract info, entrypoint bindings plan |
 | DeepVol binary quote/mint/redeem validation | Binary leg integration, official contract info, protocol integration notes, entrypoint bindings plan, PredictManager flow, range quote units and decoding |
 | DeepVol SDK transaction builders | Binary leg integration, official contract info, entrypoint bindings plan, protocol integration notes, Sui transaction-building docs/skills |

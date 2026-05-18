@@ -8,13 +8,21 @@ Status: Foundation architecture for the DeepVol refactor.
 
 ## Overview
 
-DeepVol is a Predict-native volatility derivatives layer on Sui. The MVP packages two DeepBook Predict binary legs into a non-custodial BTC MOVE Receipt:
+DeepVol is a Predict-native structured product layer on Sui. It has an advanced primitives layer (`UP`, `DOWN`, `RANGE`) and a composed receipt layer where BTC MOVE Receipt is the primary MVP product.
+
+The MVP packages two DeepBook Predict binary legs into a non-custodial BTC MOVE Receipt:
 
 ```text
 Long UP above upper strike + Long DOWN below lower strike
 ```
 
 DeepBook Predict remains the protocol authority for prices, mint costs, balances, positions, redemption, and settlement. DeepVol adds series metadata, receipt metadata, fee routing, portfolio aggregation, and guided settlement.
+
+## Product layer boundary
+
+DeepVol should not become a generic Predict UI. Primitive UP, DOWN, and RANGE trades are available as advanced building blocks, but the MVP product is the composed BTC MOVE Receipt.
+
+Advanced users can manually buy UP + DOWN directly through DeepBook Predict. DeepVol's value is not exclusivity; it is standardized series selection, atomic multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and simpler risk display.
 
 ## Core components
 

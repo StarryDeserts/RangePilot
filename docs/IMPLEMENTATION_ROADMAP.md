@@ -7,7 +7,7 @@ Source of truth relationship: Derived from DeepVol foundation docs, local protoc
 
 # Implementation Roadmap
 
-DeepVol BTC MOVE is the new primary product direction. The roadmap now prioritizes a real BTC MOVE volatility receipt path over the prior RangePilot creator-follow strategy product.
+DeepVol BTC MOVE is the new primary product direction. DeepVol is a Predict-native structured product layer: UP, DOWN, and RANGE are advanced primitives, and BTC MOVE Receipt is the primary composed product. The roadmap now prioritizes a real BTC MOVE volatility receipt path over the prior RangePilot creator-follow strategy product.
 
 Prior RangePilot work remains important validation evidence:
 
@@ -23,7 +23,7 @@ The prior creator-follow strategy model is not the primary product direction bec
 | Field | Content |
 |---|---|
 | Goal | Establish DeepVol BTC MOVE as the primary direction and define product scope, architecture, data model, binary integration needs, business model, and pivot ADR. |
-| Deliverables | DeepVol product direction; MVP scope; protocol architecture; data model; binary leg integration; business model; ADR-0003; updated index, roadmap, protocol notes, binding plan, and legacy status notes. |
+| Deliverables | DeepVol product direction; primitives-and-receipts clarification; MVP scope; protocol architecture; data model; binary leg integration; business model; ADR-0003; updated index, roadmap, protocol notes, binding plan, and legacy status notes. |
 | Non-goals | No new Move package, no transaction execution, no binary mint, no publish, no formal UI rewrite, no deletion of prior validation docs. |
 | Acceptance criteria | BTC-only MVP is explicit; non-custodial receipt limitation is explicit; Create Fee is MVP-enforceable; Profit Fee and Creator Share are V2/future; binary entrypoints are source-confirmed or marked `MUST CONFIRM BEFORE CODING`. |
 | Required docs | DeepVol foundation docs; ADR-0003; protocol integration notes; entrypoint bindings plan. |
@@ -33,8 +33,8 @@ The prior creator-follow strategy model is not the primary product direction bec
 
 | Field | Content |
 |---|---|
-| Goal | Validate the DeepBook Predict binary leg path DeepVol depends on. |
-| Deliverables | Read-only/source confirmation of `MarketKey`; binary quote harness; full two-leg PTB devInspect; gated Testnet binary mint validation plan; binary readback helper; binary event parser; binary redeem validation plan. |
+| Goal | Validate the DeepBook Predict binary leg path DeepVol depends on without submitting write transactions in the first harness round. |
+| Deliverables | Read-only/source confirmation of `MarketKey`; binary quote harness; read-only BTC UP/DOWN pair selection; binary position readback helper; full two-leg PTB devInspect; gated Testnet binary mint validation plan; binary event parser; binary redeem validation plan. |
 | Non-goals | No custodial receipt, no profit fee, no creator marketplace, no production UI. |
 | Acceptance criteria | UP and DOWN quote preview pass for a runtime BTC oracle/expiry; full two-leg mint preflight passes; controlled binary mint validation is either completed with digest/evidence or blocked with precise cause; `predict_manager::position` readback strategy is proven. |
 | Required docs | DeepVol binary leg integration; official contract info; protocol integration notes; entrypoint bindings plan; PredictManager flow and validation docs. |

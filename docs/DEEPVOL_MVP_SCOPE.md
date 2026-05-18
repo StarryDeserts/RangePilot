@@ -8,7 +8,9 @@ Status: Foundation MVP scope for the DeepVol refactor.
 
 ## MVP thesis
 
-DeepVol MVP should prove one real BTC MOVE path on DeepBook Predict Testnet before expanding markets or fee models.
+DeepVol MVP should prove one real BTC MOVE Receipt path on DeepBook Predict Testnet before expanding markets or fee models.
+
+DeepVol is a Predict-native structured product layer. BTC MOVE Receipt is the primary MVP product; UP, DOWN, and RANGE are advanced primitives, not the main MVP product surface.
 
 The first product is:
 
@@ -22,7 +24,8 @@ The user buys exposure to BTC movement rather than choosing direction.
 
 The MVP includes:
 
-- BTC MOVE only.
+- BTC MOVE Receipt only as the primary composed product.
+- Advanced UP / DOWN / RANGE primitive surfaces only for validation, diagnostics, or future composer groundwork.
 - One active BTC oracle / expiry selected at runtime.
 - `VolSeries` object for BTC MOVE series metadata.
 - `MoveReceipt` object for non-custodial receipt metadata and Predict position linkage.
@@ -39,6 +42,8 @@ The MVP includes:
 
 The MVP excludes:
 
+- Primitive UP / DOWN / RANGE as the main fee surface.
+- Protocol fees on primitive trades; primitive surfaces should be advanced/debug-only in MVP.
 - SUI MOVE.
 - DEEP MOVE.
 - ETH MOVE.
@@ -63,8 +68,10 @@ The first implementation should prefer runtime discovery over hardcoded market a
 ## Implementation phases
 
 1. Confirm binary leg entrypoints and source-level semantics.
-2. Validate BTC binary quote preview for both UP and DOWN legs.
-3. Validate a two-leg binary mint PTB in devInspect and then in a controlled transaction round.
+2. Clarify the primitives-vs-receipts product layer.
+3. Add a read-only BTC binary leg validation harness for quote, MarketKey construction, readback, and devInspect-only preflight.
+4. Validate BTC binary quote preview for both UP and DOWN legs.
+5. Validate a two-leg binary mint PTB in devInspect and then in a controlled transaction round.
 4. Design `VolSeries` and non-custodial `MoveReceipt` Move structs.
 5. Add SDK builders and full preflight gates.
 6. Add portfolio readback and guided settlement UI.

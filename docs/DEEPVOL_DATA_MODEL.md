@@ -10,7 +10,7 @@ Status: Proposed MVP model; not yet implemented.
 
 The MVP data model is non-custodial. A `MoveReceipt` records metadata and linkage to DeepBook Predict positions, but the underlying UP and DOWN binary legs remain in the user's `PredictManager`.
 
-Receipt does not own the Predict legs in MVP. It records linkage to positions held in the user's `PredictManager`.
+Receipt does not own the Predict legs in MVP. It records linkage to positions held in the user's `PredictManager`, supports portfolio aggregation, and records fee-accounting metadata for the BTC MOVE structured product.
 
 ## Proposed structs
 
@@ -25,7 +25,7 @@ The exact field types should be finalized during the Move implementation round a
 
 ## VolSeries
 
-`VolSeries` represents a BTC MOVE product series.
+`VolSeries` represents a BTC MOVE product series, not a raw UP, DOWN, or RANGE primitive screen.
 
 MVP fields should include:
 

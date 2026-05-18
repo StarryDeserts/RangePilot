@@ -16,9 +16,11 @@ DeepVol moves the product from copying a creator's public range to structuring a
 
 ## What DeepVol is
 
-DeepVol is a Predict-native volatility derivatives layer on Sui. It packages DeepBook Predict binary legs into BTC MOVE receipts. Users trade movement, not direction.
+DeepVol is a Predict-native structured product layer on Sui. Its primary MVP product is BTC MOVE Receipt, and its advanced primitives are UP, DOWN, and RANGE. See [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md) for the product-layer model.
 
-The core product is a BTC MOVE Receipt:
+DeepVol is not just a Predict frontend. It packages selected official DeepBook Predict primitives into standardized receipt products. Users trade movement, not direction.
+
+The core MVP product is a BTC MOVE Receipt:
 
 ```text
 Long UP above upper strike
@@ -88,11 +90,21 @@ DeepVol adds the product abstraction around the official Predict primitives:
 
 - BTC MOVE series metadata;
 - paired UP and DOWN binary leg selection;
+- atomic multi-leg PTB construction;
 - premium and Create Fee presentation;
 - non-custodial `MoveReceipt` minting;
 - `ProtocolVault` fee deposit;
 - portfolio aggregation around receipts plus `PredictManager` readback;
-- guided settlement and redeem UX.
+- guided settlement and redeem UX;
+- simpler risk display for a structured product instead of separate raw legs.
+
+## Can users manually buy UP + DOWN?
+
+Yes. Advanced users can manually buy UP + DOWN through DeepBook Predict to create similar exposure.
+
+DeepVol's value is not exclusivity. The value is productization: standardized BTC MOVE series, one-click atomic multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and clearer risk presentation.
+
+Primitive UP, DOWN, and RANGE trades should remain advanced primitives in the MVP. They should not be the primary protocol fee source.
 
 ## MVP scope
 

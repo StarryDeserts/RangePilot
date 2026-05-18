@@ -12,11 +12,13 @@ Public onchain strategy params can be copied. Therefore upfront creator follow f
 
 The RangePilot wrapper proved fee collection and wrapper-mediated Predict calls are technically possible, but it does not prevent a user from copying public Strategy parameters and directly minting against DeepBook Predict.
 
-DeepVol's model is stronger because it sells a product abstraction: BTC MOVE exposure packaged from Predict binary legs, with receipt metadata, portfolio aggregation, and settlement guidance.
+DeepVol's model is stronger because it sells a product abstraction: BTC MOVE exposure packaged from Predict binary legs, with receipt metadata, portfolio aggregation, fee accounting, risk display, and settlement guidance.
+
+Advanced users can manually buy UP + DOWN through DeepBook Predict. DeepVol does not monetize exclusive access to an uncopyable payoff; it monetizes standardized receipt creation and productized multi-leg execution.
 
 ## MVP fee: Create Fee
 
-Create Fee is the MVP enforceable fee.
+Create Fee is the MVP enforceable fee. Primitive UP, DOWN, and RANGE trades are not the primary MVP monetization surface; they should have no DeepVol protocol fee in MVP or remain advanced/debug-only.
 
 Suggested MVP value:
 

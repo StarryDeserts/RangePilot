@@ -29,6 +29,8 @@
     "investigate:range-quote-units": "node scripts/investigate-range-quote-units.mjs",
     "investigate:binary-quote": "node scripts/investigate-binary-quote.mjs",
     "investigate:ask-bounds": "node scripts/investigate-ask-bounds.mjs",
+    "validate:deepvol-binary-read": "node scripts/validate-deepvol-binary-legs.mjs --mode read",
+    "validate:deepvol-binary-preflight": "node scripts/validate-deepvol-binary-legs.mjs --mode preflight",
     "move:build:rangepilot": "sui move build --path move/rangepilot",
     "move:test:rangepilot": "sui move test --path move/rangepilot",
     "dev:web": "npm --workspace apps/web run dev",

@@ -8,6 +8,8 @@ Status: Source-confirmed entrypoints; binary mint/redeem still require dedicated
 
 ## Why this matters
 
+DeepVol is a Predict-native structured product layer. UP, DOWN, and RANGE are advanced primitives; BTC MOVE Receipt is the primary composed MVP product.
+
 DeepVol BTC MOVE depends on composing two DeepBook Predict binary legs:
 
 ```text
@@ -18,7 +20,9 @@ Long DOWN below lower strike
 BTC MOVE exposure
 ```
 
-Range mint has been validated end-to-end through the existing RangePilot wrapper work. Binary mint is now DeepVol-critical and still needs a dedicated validation round before production DeepVol coding.
+Advanced users can manually buy UP + DOWN through DeepBook Predict. DeepVol's value is not exclusivity; it is standardized series selection, atomic multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and simpler risk display.
+
+Range mint has been validated end-to-end through the existing RangePilot wrapper work. Binary quote/read/preflight is now DeepVol-critical and still needs dedicated validation before production DeepVol coding.
 
 ## Source-confirmed binary key construction
 
@@ -68,6 +72,37 @@ DeepVol should preview both legs before mint:
 2. `predict::get_trade_amounts` for the UP key.
 3. `market_key::down(oracle_id, expiry, lower_strike)`.
 4. `predict::get_trade_amounts` for the DOWN key.
+
+## Current read-only/preflight validation harness
+
+This round adds `scripts/validate-deepvol-binary-legs.mjs` with two modes:
+
+- `npm run validate:deepvol-binary-read` discovers active BTC oracle candidates, constructs UP/DOWN `MarketKey` values with official constructors, quotes both legs with `predict::get_trade_amounts`, and optionally reads `predict_manager::position` when `--sender` and `--manager` are supplied.
+- `npm run validate:deepvol-binary-preflight` first runs read-mode selection, then requires explicit `--sender` and `--manager` before building a two-leg `predict::mint<DUSDC>` PTB for `devInspect` only.
+
+Safety properties:
+
+- no private key is loaded;
+- `.env.local` is not read;
+- no write transaction is signed or submitted;
+- live binary mint/redeem remains not executed in this round.
+
+Latest harness result from 2026-05-18:
+
+| Field | Result |
+|---|---|
+| Selected BTC oracle | `0xc746336e790db7e93a34b684fa3768f43a7c3171d0262d0f2c71dc0a2ab5fe22` |
+| Selected expiry | `1779436800000` |
+| Lower / upper strikes | Read mode selected `76310000000000 / 76418000000000`; preflight reran at runtime and selected `76306000000000 / 76409000000000`. |
+| UP MarketKey construction | `market_key::up(oracle, 1779436800000, 76418000000000)` in read mode; `market_key::up(oracle, 1779436800000, 76409000000000)` in preflight mode. |
+| DOWN MarketKey construction | `market_key::down(oracle, 1779436800000, 76310000000000)` in read mode; `market_key::down(oracle, 1779436800000, 76306000000000)` in preflight mode. |
+| UP quote result | Read mode `mint=495`, `redeem=475`, `quantity=1000`; preflight rerun `mint=498`, `redeem=478`, `quantity=1000`. |
+| DOWN quote result | Read mode `mint=510`, `redeem=490`, `quantity=1000`; preflight rerun `mint=507`, `redeem=487`, `quantity=1000`. |
+| Binary readback result | With sender `0x4ff903b0dcc52dc8753787baf19b34b7425dfa64d187cc7c726b38413705fa75` and manager `0xd59be0646d948c9be6073edc0cfd253ce4cb00f4929f0bae71f451f50e5d1575`, UP position `0`, DOWN position `0`. |
+| Two-leg PTB preflight result | Passed with explicit sender/manager through `client.devInspectTransactionBlock`; no signing or execution. |
+| Blockers | Live binary mint/redeem not executed in this round. Future wallet approval still needs fresh runtime quote, manager balance, fee coverage, and full two-leg preflight. |
+
+Quote success does not imply mintability. The full two-leg PTB still requires fresh `devInspect` before any future wallet approval.
 
 ## Binary mint entrypoint
 
@@ -166,11 +201,12 @@ Before any production DeepVol mint flow:
 4. Preview UP leg with `predict::get_trade_amounts`.
 5. Preview DOWN leg with `predict::get_trade_amounts`.
 6. Ensure both mint costs are nonzero.
-7. Ensure manager DUSDC balance covers total premium.
-8. Ensure fee coin covers Create Fee.
-9. DevInspect the full two-leg PTB before wallet approval.
-10. After mint, read back both quantities through `predict_manager::position`.
-11. Verify expected `PositionMinted` events or direct position increases.
+7. Ensure quote success is not treated as mintability proof.
+8. Ensure manager DUSDC balance covers total premium.
+9. Ensure fee coin covers Create Fee.
+10. DevInspect the full two-leg PTB before wallet approval.
+11. After mint, read back both quantities through `predict_manager::position`.
+12. Verify expected `PositionMinted` events or direct position increases.
 
 ## Comparison with validated range flow
 
@@ -183,7 +219,9 @@ Validated prior work:
 
 DeepVol-specific remaining work:
 
-- Binary mint PTB validation.
+- Record this harness round's actual read output and blockers.
+- Run two-leg binary mint PTB `devInspect` with explicit sender/manager inputs.
+- Complete controlled live binary mint validation in a later explicitly approved round.
 - Binary redeem validation.
 - Binary event parsing in SDK.
 - Binary direct readback helper in SDK.

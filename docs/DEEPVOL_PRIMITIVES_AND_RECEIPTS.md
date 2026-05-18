@@ -1,0 +1,114 @@
+---
+Purpose: Explain DeepVol's Predict primitives layer and composed receipt products.
+Audience: Product maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
+Status: Product-layer clarification for DeepVol BTC MOVE and future structured products.
+---
+
+# DeepVol Primitives and Receipts
+
+## Product layers
+
+DeepVol is a Predict-native structured product layer. It uses official DeepBook Predict primitives and packages selected combinations into product receipts.
+
+DeepVol exposes two product layers:
+
+1. Predict primitives:
+   - UP
+   - DOWN
+   - RANGE
+
+2. Composed receipts:
+   - BTC MOVE = UP + DOWN
+
+This framing keeps DeepVol from becoming a generic Predict UI. The primary product is the composed receipt layer, while primitives remain available for advanced validation, education, and future composer workflows.
+
+## Predict primitives
+
+UP, DOWN, and RANGE are official DeepBook Predict primitives. DeepVol should expose them only as advanced primitives in the MVP, not as the main product or the main fee source.
+
+Primitive responsibilities remain with DeepBook Predict:
+
+- quote and pricing;
+- market and oracle lifecycle;
+- vault exposure and risk;
+- mint, redeem, and settlement behavior;
+- `PredictManager` position accounting.
+
+DeepVol must not reimplement those responsibilities.
+
+## Composed receipts
+
+Composed receipts are productized multi-leg strategies built from Predict primitives. They add standardization, portfolio metadata, fee accounting, and guided settlement around official Predict positions.
+
+The MVP composed receipt is BTC MOVE:
+
+```text
+BTC MOVE Receipt = UP upper binary leg + DOWN lower binary leg
+```
+
+The receipt records the product series, selected oracle, expiry, strikes, premium, fee, and MarketKey linkage. In MVP, it does not custody the underlying Predict legs.
+
+## Primary MVP product: BTC MOVE Receipt
+
+BTC MOVE Receipt is the primary MVP product.
+
+A user buys movement exposure rather than choosing direction:
+
+- the UP leg covers a move above the upper strike;
+- the DOWN leg covers a move below the lower strike;
+- the receipt aggregates those legs into one product-level portfolio item.
+
+The MVP should keep BTC MOVE front-and-center. UP, DOWN, and RANGE should be treated as advanced primitives, diagnostics, or future composer building blocks.
+
+## Can users manually buy UP + DOWN themselves?
+
+Yes. Advanced users can manually buy UP + DOWN through DeepBook Predict and create similar exposure themselves.
+
+DeepVol's value is not exclusivity. DeepVol does not rely on hiding a payoff structure that cannot be copied.
+
+DeepVol's value is productization: turning a multi-leg Predict strategy into a one-click, atomic, trackable, displayable, and guided receipt product.
+
+## Why DeepVol still adds value
+
+DeepVol adds value through:
+
+- one-click multi-leg execution;
+- atomic PTB construction;
+- standardized BTC MOVE series;
+- MoveReceipt portfolio aggregation;
+- unified settlement guidance;
+- risk visualization;
+- fee accounting.
+
+Advanced users can construct the raw legs themselves, but most users should not need to manually choose two binary markets, coordinate quantities, inspect both quotes, manage post-mint readback, and track settlement separately.
+
+## Fee model boundary
+
+Primitive UP, DOWN, and RANGE trades are not the primary MVP monetization surface. In MVP, primitive surfaces should have no DeepVol protocol fee or should remain advanced/debug-only.
+
+BTC MOVE Receipt is the MVP monetization surface:
+
+```text
+Create Fee = 0.30% of premium
+```
+
+The premium is the total official DeepBook Predict mint cost for the UP and DOWN legs. The Create Fee goes to `ProtocolVault` during receipt creation.
+
+## Future structured products
+
+Future products can reuse the same product-layer model:
+
+- custom receipt composer;
+- BTC STAY / range-bound product;
+- other MOVE underlyings after runtime market validation;
+- curated or creator-authored VolSeries after the enforcement and distribution model is clearer.
+
+These future products should keep the same boundary: DeepBook Predict owns primitive pricing and settlement; DeepVol owns structured product packaging, receipt metadata, fee accounting, and UX.
+
+## MVP receipt boundary
+
+The MVP `MoveReceipt` is non-custodial. It records linkage to positions held in the user's `PredictManager`; it does not own the UP or DOWN legs.
+
+Portfolio truth for active quantities must come from DeepBook Predict readback, especially `predict_manager::position` for each binary `MarketKey`.
+
+Because users can redeem directly through DeepBook Predict, Profit Fee and custodial receipt semantics are V2 features, not MVP assumptions.
