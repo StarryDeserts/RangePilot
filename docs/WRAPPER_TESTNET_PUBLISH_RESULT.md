@@ -1,105 +1,92 @@
 ---
 Purpose: Record the RangePilot wrapper Testnet publish and ProtocolVault setup result.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and product leads.
-Status: Phase 3E Testnet publish blocker record; no wrapper package was published.
-Source of truth relationship: Records observed Testnet publish diagnostics; Move source, Sui CLI output, and Sui object reads remain authoritative for on-chain state.
+Status: Phase 3E-postpublish record; wrapper package is published on Testnet and ProtocolVault<DUSDC> is created.
+Source of truth relationship: Records observed Testnet publish and setup facts; Move source, Sui CLI output, and Sui object reads remain authoritative for on-chain state.
 ---
 
 # Wrapper Testnet Publish Result
 
 ## Summary
 
-Phase 3E attempted the controlled Testnet publish path after the pre-publish repository checks passed, but the publish did not execute because Sui CLI package publication diagnostics rejected `deepbook_predict` as an unpublished dependency.
+The RangePilot wrapper package was manually published to Sui Testnet on 2026-05-18 after the earlier controlled publish path was blocked by dependency publication metadata. Post-publish setup created the first shared `ProtocolVault<DUSDC>` using the published wrapper package and confirmed `AdminCap`.
 
-No RangePilot wrapper package was published, no `AdminCap` or `UpgradeCap` was created, and no `ProtocolVault<DUSDC>` was created.
+No `follow_strategy_and_mint`, DeepBook Predict `mint_range`, DeepBook Predict `redeem_range`, `predict::supply`, `withdraw_platform_fees`, or mainnet transaction was executed during this setup round.
 
 ## Network and publisher
 
 | Item | Value |
 |---|---|
 | Network | Testnet |
-| Active environment | `testnet` |
-| Sui CLI version | `sui 1.71.1-2f5992f189cd-dirty` |
-| Intended publisher address | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
-| Intended AdminCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
-| Available gas at pre-publish gate | One Testnet SUI gas coin with approximately `8.16 SUI` |
+| Active environment before vault creation | `testnet` |
+| Publisher / AdminCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
+| Published modules | `errors`, `fees`, `strategy` |
+| DUSDC type | `0xe95040085976bfd54a1a07225cd46c8a2b4e8e2b6732f140a0fc49850ba73e1a::dusdc::DUSDC` |
 
 ## Publish result
 
 | Item | Value |
 |---|---|
-| Publish executed | No |
-| Publish digest | `TBD`; no publish transaction was executed. |
-| Wrapper package ID | `TBD`; no package was published. |
-| AdminCap object ID | `TBD`; no package init ran. |
-| AdminCap owner | `TBD`; no `AdminCap` exists for this wrapper package. |
-| UpgradeCap object ID | `TBD`; no package was published. |
-| UpgradeCap owner | `TBD`; no `UpgradeCap` exists for this wrapper package. |
-| Sanitized blocker | `sui client publish move/rangepilot --dry-run --gas-budget 200000000 --json` reports: `The package has unpublished dependencies ... Unpublished dependencies: deepbook_predict`. |
+| Publish date | 2026-05-18 |
+| Publish digest | `7kSkeGzzTo3BcVCwC3qZdLh2bZdBpDP2hvMxkG8oB7TV` |
+| Wrapper package ID | `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697` |
+| AdminCap object ID | `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7` |
+| AdminCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
+| UpgradeCap object ID | `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741` |
+| UpgradeCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
+| Package object read | Exists on Testnet as immutable package object. |
+| AdminCap object read | Exists on Testnet and is address-owned by the publisher/admin address. |
+| UpgradeCap object read | Exists on Testnet and is address-owned by the publisher/admin address. |
 
 ## ProtocolVault<DUSDC> setup
 
 | Item | Value |
 |---|---|
-| DUSDC type | `0xe95040085976bfd54a1a07225cd46c8a2b4e8e2b6732f140a0fc49850ba73e1a::dusdc::DUSDC` |
-| ProtocolVault creation executed | No |
-| ProtocolVault creation digest | `TBD`; vault creation was not attempted after publish was blocked. |
-| ProtocolVault<DUSDC> object ID | `TBD`; no vault exists yet. |
+| ProtocolVault creation executed | Yes |
+| ProtocolVault creation digest | `5d8W8RtVWHxVjEhpjf6t3qfKzEFuDMdxHGXGJiR6DBe5` |
+| ProtocolVault<DUSDC> object ID | `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992` |
+| ProtocolVault owner | Shared object on Testnet. |
+| Initial fee balance | Zero immediately after creation. |
 
 ## Config updates
 
-`packages/config/src/rangePilotTestnet.ts` remains intentionally unset:
+`packages/config/src/rangePilotTestnet.ts` records the post-publish setup values:
 
-- `RANGEPILOT_WRAPPER_PACKAGE_ID = null`
-- `RANGEPILOT_PROTOCOL_VAULT_ID = null`
-- `RANGEPILOT_ADMIN_CAP_ID = null`
+- `RANGEPILOT_WRAPPER_PACKAGE_ID = "0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697"`
+- `RANGEPILOT_PROTOCOL_VAULT_ID = "0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992"`
+- `RANGEPILOT_ADMIN_CAP_ID = "0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7"`
 
-The SDK/follower flow must continue to block until real Testnet wrapper package and `ProtocolVault<DUSDC>` IDs are recorded.
+`AdminCap` and `UpgradeCap` are admin-only operational objects. Normal follower `follow_strategy_and_mint` transaction builders must not require `AdminCap` or `UpgradeCap`.
 
 ## Commands used
 
-Pre-publish repository checks passed before the publish attempt:
-
-```bash
-npm run typecheck
-npm run build:web
-npm run move:build:rangepilot
-npm run move:test:rangepilot
-```
-
-The publish investigation used no-transaction commands before deciding not to publish:
-
-```bash
-sui client publish move/rangepilot --dry-run --gas-budget 200000000 --json
-sui move build --path move/rangepilot --build-env testnet --dump-bytecode-as-base64
-```
-
-Observed blocker:
+Safe setup commands included object reads, the approved Testnet `create_protocol_vault<DUSDC>` call, repository verification, and git guardrails. The only write transaction in this setup round was:
 
 ```text
-The package has unpublished dependencies. If you want to publish with unpublished dependencies, please publish them one by one, or (not recommended) pass the `--with-unpublished-dependencies` flag.
- Unpublished dependencies: deepbook_predict
+0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697::strategy::create_protocol_vault<0xe95040085976bfd54a1a07225cd46c8a2b4e8e2b6732f140a0fc49850ba73e1a::dusdc::DUSDC>
 ```
 
-## Verification
+## Verification status
 
-- `npm run typecheck`: passed at pre-publish gate.
-- `npm run build:web`: passed at pre-publish gate with the existing acceptable Vite chunk-size warning.
-- `npm run move:build:rangepilot`: passed at pre-publish gate.
-- `npm run move:test:rangepilot`: passed at pre-publish gate with 18 RangePilot tests.
-- Public object read confirmed the configured DeepBook Predict package ID exists on Testnet as an immutable package object.
-- No RangePilot wrapper package object exists because publish did not execute.
+Repository verification for the post-publish config/docs update must be rerun before final commit:
+
+- `npm run typecheck`
+- `npm run build:web`
+- `npm run move:build:rangepilot`
+- `npm run move:test:rangepilot`
+
+Object checks already confirmed the wrapper package, AdminCap, UpgradeCap, and ProtocolVault objects exist on Testnet.
 
 ## Security and non-actions
 
-- No private keys, mnemonics, signatures, or raw transaction bytes were printed or committed.
+- No wallet recovery phrases, private keys, signatures, or raw transaction bytes were printed or committed.
 - `.env.local`, `.env*`, `.local/`, `.claude/`, `.trace/`, `.traces/`, `deepbookv3-predict-package/`, and `deepbookv3-predict-testnet-4-16/` were not read or staged.
+- No `sui client publish` command was run in this post-publish setup round.
 - No `follow_strategy_and_mint` transaction was executed.
 - No DeepBook Predict `mint_range`, `redeem_range`, or `supply` transaction was executed.
 - No `withdraw_platform_fees` transaction was executed.
 - No mainnet transaction was executed.
-- `create_protocol_vault<DUSDC>` was not attempted because publish was blocked.
 
 ## Next step
 
-Resolve the Sui Move package publication metadata blocker for the official DeepBook Predict Git dependency without vendoring local snapshots or publishing DeepBook Predict as a RangePilot dependency. After a no-transaction publish dry-run no longer reports `deepbook_predict` as unpublished, rerun the controlled Testnet publish and then create `ProtocolVault<DUSDC>`.
+Run the first wrapper follow validation in a future approved round: create or select a shared Strategy, run fresh official quote preview and full DeepBook Predict `mint_range<DUSDC>` preflight, build the wrapper `follow_strategy_and_mint<DUSDC>` transaction only after both gates pass, and verify RangePilot `StrategyFollowed` plus DeepBook Predict `RangeMinted` events in the same transaction.

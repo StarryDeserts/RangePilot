@@ -142,15 +142,16 @@ Phase 3D supersedes the direct platform-recipient model with RangePilot `Protoco
 
 ## Phase 3E note
 
-Phase 3E pre-publish verification passed, and the intended Testnet publisher/AdminCap owner address was confirmed as `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`. The controlled publish did not execute because Sui CLI publish and bytecode-dump diagnostics still classify `deepbook_predict` as an unpublished dependency. No wrapper package, AdminCap, UpgradeCap, or `ProtocolVault<DUSDC>` was created, so Route B remains accepted but unpublished.
+Phase 3E pre-publish verification passed, and the intended Testnet publisher/AdminCap owner address was confirmed as `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`. The controlled publish path was blocked by Sui CLI dependency publication metadata, and that blocker was recorded before any publish transaction was run.
+
+## Phase 3E-postpublish note
+
+The wrapper package was later manually published to Sui Testnet with digest `7kSkeGzzTo3BcVCwC3qZdLh2bZdBpDP2hvMxkG8oB7TV`. The wrapper package ID is `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697`; AdminCap is `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7`; UpgradeCap is `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741`. Post-publish setup created shared `ProtocolVault<DUSDC>` `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992` with digest `5d8W8RtVWHxVjEhpjf6t3qfKzEFuDMdxHGXGJiR6DBe5`. Route B is now published on Testnet, but the first wrapper follow remains pending and still requires fresh official quote preview plus full DeepBook Predict mint preflight. Production upgrade/immutability policy remains a future decision.
 
 ## Follow-up requirements
 
-- Keep `move/rangepilot` compiling against official DeepBookV3 Git dependencies plus Testnet dep-replacements; current verification passes `npm run move:build:rangepilot` and `npm run move:test:rangepilot` with 18 tests.
-- Resolve the `deepbook_predict` dependency publication metadata blocker without vendoring local snapshots or publishing DeepBook Predict as a RangePilot dependency.
-- Retry wrapper publish only after a no-transaction publish dry-run no longer reports `deepbook_predict` as unpublished.
-- Create `ProtocolVault<DUSDC>` only after wrapper publish succeeds.
-- Record wrapper package ID, ProtocolVault object ID, and actual AdminCap owner after publish/post-publish setup.
-- Keep SDK transaction builders default-blocked without wrapper package ID, ProtocolVault object ID, quote-preview gate, and full mint-preflight gate.
+- Keep `move/rangepilot` compiling and passing tests after post-publish source-state changes.
+- Keep wrapper package ID, ProtocolVault object ID, and actual AdminCap owner recorded in config/docs.
+- Keep SDK transaction builders blocked without wrapper package ID, ProtocolVault object ID, quote-preview gate, and full mint-preflight gate.
 - Re-run official quote and full preflight before every future wrapper follow transaction.
 - Add indexing plan to link `StrategyFollowed` with DeepBook Predict `RangeMinted` in the same transaction.

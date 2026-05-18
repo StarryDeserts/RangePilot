@@ -47,8 +47,8 @@ Do not edit the product or protocol-analysis source docs for normal implementati
 | [BROWSER_WALLET_TESTNET_VALIDATION.md](./BROWSER_WALLET_TESTNET_VALIDATION.md) | Manual browser-wallet Testnet create/deposit/mint/portfolio/redeem validation notes | Product / SDK / Frontend / Validation |
 | [BUSINESS_MODEL.md](./BUSINESS_MODEL.md) | Creator strategy business model, fee separation, and DeepBook Predict dependency boundary | Product / business |
 | [WRAPPER_CONTRACT_ARCHITECTURE.md](./WRAPPER_CONTRACT_ARCHITECTURE.md) | Route B wrapper contract architecture and DeepBook Predict boundary | Move / protocol / product |
-| [WRAPPER_PUBLISH_READINESS.md](./WRAPPER_PUBLISH_READINESS.md) | Wrapper publish-readiness checklist, dependency policy, ProtocolVault policy, and Phase 3E publish blocker | Move / protocol / product |
-| [WRAPPER_TESTNET_PUBLISH_RESULT.md](./WRAPPER_TESTNET_PUBLISH_RESULT.md) | Phase 3E Testnet publish attempt and dependency publication metadata blocker record | Move / protocol / validation |
+| [WRAPPER_PUBLISH_READINESS.md](./WRAPPER_PUBLISH_READINESS.md) | Wrapper publish-readiness checklist, deployment values, ProtocolVault policy, and first-follow gates | Move / protocol / product |
+| [WRAPPER_TESTNET_PUBLISH_RESULT.md](./WRAPPER_TESTNET_PUBLISH_RESULT.md) | Phase 3E-postpublish Testnet wrapper deployment and ProtocolVault setup record | Move / protocol / validation |
 | [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) | RangePilot ProtocolVault and AdminCap fee custody design | Move / protocol / product |
 | [CREATOR_STRATEGY_PRODUCT_FLOW.md](./CREATOR_STRATEGY_PRODUCT_FLOW.md) | Creator strategy discovery, preview, follow, portfolio-linking, and creator analytics flow | Product |
 | [FOLLOW_STRATEGY_TRANSACTION_FLOW.md](./FOLLOW_STRATEGY_TRANSACTION_FLOW.md) | Route B follow transaction inputs, validation order, atomic fee/mint behavior, and preflight rules | Move / SDK / protocol |

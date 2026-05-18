@@ -1,7 +1,7 @@
 ---
-Purpose: Track RangePilot wrapper contract readiness before any Testnet publish.
+Purpose: Track RangePilot wrapper contract readiness and Testnet post-publish setup.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and product leads.
-Status: Phase 3E Testnet publish attempt blocked by dependency publication metadata; wrapper package is not published.
+Status: Phase 3E-postpublish record; wrapper package is published on Testnet and ProtocolVault<DUSDC> is created.
 Source of truth relationship: Supplements wrapper architecture and protocol integration docs; official DeepBook Predict docs and local Move source remain authoritative for protocol behavior.
 ---
 
@@ -9,7 +9,7 @@ Source of truth relationship: Supplements wrapper architecture and protocol inte
 
 ## Current status
 
-The RangePilot wrapper package remains unpublished. Phase 3D replaced the direct platform-recipient fee model with `ProtocolVault<T>` + `AdminCap`, fixed platform fee policy at 10 bps, capped creator fees at 3000 bps, kept shared permissionless Strategies, and preserved Route B internal DeepBook Predict minting. Phase 3E pre-publish checks passed, but the controlled Testnet publish path is blocked because Sui CLI publish/dump diagnostics still classify `deepbook_predict` as an unpublished dependency.
+The RangePilot wrapper package is published on Sui Testnet, and post-publish setup created the first shared `ProtocolVault<DUSDC>`. Phase 3D replaced the direct platform-recipient fee model with `ProtocolVault<T>` + `AdminCap`, fixed platform fee policy at 10 bps, capped creator fees at 3000 bps, kept shared permissionless Strategies, and preserved Route B internal DeepBook Predict minting. The first real `follow_strategy_and_mint<DUSDC>` transaction remains pending for a future approved validation round with fresh official quote preview and full DeepBook Predict mint preflight.
 
 Current verification snapshot:
 
@@ -25,12 +25,16 @@ Current verification snapshot:
 | Item | Value |
 |---|---|
 | Wrapper package path | `move/rangepilot` |
-| Wrapper package ID | `TBD` until publish. |
-| ProtocolVault object ID | `TBD` until post-publish `create_protocol_vault<DUSDC>`. |
-| AdminCap owner / publish address | `TBD` until publish; must be disclosed before first follow. |
-| Formal DeepBook Predict dependency | Official DeepBookV3 Git repo, `packages/predict`, `rev = "predict-testnet-4-16"`. |
-| Formal DeepBook dependency | Official DeepBookV3 Git repo, `packages/deepbook`, `rev = "predict-testnet-4-16"`. |
-| Testnet binding | `Move.toml` uses `dep-replacements.testnet` for deployed DeepBook Predict and DeepBook package IDs, but Sui CLI `publish`/bytecode dump still reports `deepbook_predict` as unpublished. |
+| Wrapper package ID | `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697` |
+| ProtocolVault<DUSDC> object ID | `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992` |
+| Publisher / AdminCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
+| AdminCap object ID | `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7` |
+| UpgradeCap object ID | `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741` |
+| Publish digest | `7kSkeGzzTo3BcVCwC3qZdLh2bZdBpDP2hvMxkG8oB7TV` |
+| ProtocolVault creation digest | `5d8W8RtVWHxVjEhpjf6t3qfKzEFuDMdxHGXGJiR6DBe5` |
+| Formal DeepBook Predict dependency | Keep local third-party snapshots ignored and uncommitted; dependency source state is governed by `move/rangepilot/Move.toml` and `Move.lock`. |
+| Formal DeepBook dependency | Keep local third-party snapshots ignored and uncommitted; dependency source state is governed by `move/rangepilot/Move.toml` and `Move.lock`. |
+| Testnet binding | Wrapper package and `ProtocolVault<DUSDC>` are now configured in `packages/config/src/rangePilotTestnet.ts`; published package metadata is recorded in `move/rangepilot/Published.toml`. |
 | Local source snapshot | `deepbookv3-predict-testnet-4-16/` is source-level debugging/reference only and must not be committed. |
 
 The wrapper must not switch its formal Move dependency back to `../../deepbookv3-predict-testnet-4-16/packages/predict` or any `deepbookv3-predict-package` path.
@@ -53,13 +57,10 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 - `follow_strategy_and_mint<T>` derives `RangeKey` from stored Strategy fields and internally calls DeepBook Predict `predict::mint_range<T>`.
 - `StrategyFollowed` is emitted after `predict::mint_range<T>` returns.
 - SDK transaction builder blocks unless explicit wrapper package ID, protocol vault ID, quote-preview gate, and full mint-preflight gate are supplied.
-- Type/config placeholders keep wrapper package ID, protocol vault ID, and admin cap ID unset until publish/post-publish setup.
+- `packages/config/src/rangePilotTestnet.ts` records the wrapper package ID, shared `ProtocolVault<DUSDC>` object ID, and admin-only `AdminCap` ID.
 
 ## What is not ready
 
-- Wrapper package is not published because Phase 3E publish is blocked by Sui CLI dependency publication metadata for `deepbook_predict`.
-- No `ProtocolVault<DUSDC>` object exists yet.
-- Intended AdminCap owner / publish address was confirmed as `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`, but no final AdminCap exists until publish succeeds.
 - No real `follow_strategy_and_mint<T>` transaction has been executed.
 - No final creator strategy UI is built.
 - No indexer schema links `StrategyFollowed` to DeepBook Predict `RangeMinted` in production.
@@ -80,41 +81,25 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 | Wrapper package/vault config location | Confirmed: `packages/config/src/rangePilotTestnet.ts`. |
 | First Testnet `follow_strategy_and_mint` scenario | Confirmed as design-only in Phase 3D; actual execution remains future approval. |
 
-## Pending publish/post-publish values
+## Recorded publish/post-publish values
 
 | Item | Status |
 |---|---|
-| Actual wrapper package ID | `TBD`; Phase 3E publish blocked before execution. |
-| Actual ProtocolVault object ID | `TBD`; `create_protocol_vault<DUSDC>` was not attempted because publish was blocked. |
-| Intended AdminCap owner / publish address | Confirmed intended publisher/admin address: `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`; no actual AdminCap exists yet. |
-| Actual first Testnet follow transaction | `TBD`; do not execute until wrapper package/vault setup succeeds and a fresh quote/full preflight passes. |
-| Actual publish approval | Phase 3E publish was approved, but blocked before execution by dependency publication metadata. |
+| Actual wrapper package ID | `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697` |
+| Actual ProtocolVault<DUSDC> object ID | `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992` |
+| Publisher / AdminCap owner | `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5` |
+| AdminCap object ID | `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7` |
+| UpgradeCap object ID | `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741` |
+| Actual first Testnet follow transaction | `TBD`; do not execute until a fresh quote/full preflight passes in a future approved round. |
 
-## Publish checklist
+## Post-publish config status
 
-- Resolve Sui CLI `deepbook_predict` unpublished-dependency blocker for publish/bytecode dump.
-- Confirm Sui CLI version and `Move.toml` environment syntax.
-- Re-run `npm run move:build:rangepilot`.
-- Re-run `npm run move:test:rangepilot`.
-- Re-run `npm run typecheck`.
-- Re-run `npm run build:web`.
-- Confirm `Move.lock` pins DeepBook Predict and DeepBook to Git sources, not local snapshot paths.
-- Confirm no `.env*`, `.local/`, `.claude/`, `.traces/`, or DeepBook source snapshot paths are staged.
-- Confirm wrapper package will be published to Testnet only.
-- Confirm upgrade authority disclosure text.
-- Confirm AdminCap custody plan and publish address.
-- Confirm post-publish `ProtocolVault<DUSDC>` creation transaction plan.
-- Get explicit publish approval.
-- Publish only to Testnet.
-
-## Post-publish config checklist
-
-- Record wrapper package ID in `packages/config/src/rangePilotTestnet.ts`.
-- Record `ProtocolVault<DUSDC>` object ID in `packages/config/src/rangePilotTestnet.ts` after admin creates it.
-- Record AdminCap object ID only for admin operations; do not expose it in follower frontend flows unless a future admin task requires it.
-- Update SDK wrapper config while keeping quote/preflight gates required.
-- Update docs with publish digest/package ID and ProtocolVault object ID.
-- Add a small post-publish integration checklist entry for first wrapper follow.
+- Wrapper package ID is recorded in `packages/config/src/rangePilotTestnet.ts`.
+- `ProtocolVault<DUSDC>` object ID is recorded in `packages/config/src/rangePilotTestnet.ts`.
+- AdminCap object ID is recorded for admin operations; normal follower flows must not require AdminCap or UpgradeCap.
+- SDK wrapper config still keeps quote/preflight gates required.
+- Publish digest, package ID, cap IDs, vault creation digest, and ProtocolVault object ID are recorded in docs.
+- The next integration checklist entry is first wrapper follow validation.
 
 ## Testnet integration checklist
 
@@ -133,19 +118,18 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 
 ## First Testnet follow scenario, design-only
 
-1. Obtain explicit future publish approval.
-2. Publish the wrapper package to Sui Testnet with upgradeability retained for the hackathon/Testnet stage.
-3. Record the wrapper package ID in `packages/config/src/rangePilotTestnet.ts`.
-4. Publisher receives AdminCap; disclose AdminCap owner/publish address.
-5. Admin creates `ProtocolVault<DUSDC>`; record ProtocolVault object ID in RangePilot config.
-6. Creator creates a shared permissionless Strategy with `creator_fee_bps <= 3000` and `metadata_uri`.
-7. Follower has a `PredictManager`.
-8. Follower manager has DUSDC balance for DeepBook Predict mint cost.
-9. Follower wallet has a separate DUSDC fee coin for RangePilot creator/platform fee base.
-10. Frontend/SDK runs official `get_range_trade_amounts` quote preview.
-11. Frontend/SDK runs full DeepBook Predict `mint_range<DUSDC>` preflight.
-12. SDK builds wrapper `follow_strategy_and_mint<DUSDC>` only after quote/preflight gates pass.
-13. Future explicit approval executes the wrapper follow transaction.
+1. Wrapper package is published to Sui Testnet with upgradeability retained for the hackathon/Testnet stage.
+2. Wrapper package ID is recorded in `packages/config/src/rangePilotTestnet.ts`.
+3. Publisher received AdminCap; AdminCap owner/publish address is disclosed.
+4. Admin created `ProtocolVault<DUSDC>`; ProtocolVault object ID is recorded in RangePilot config.
+5. Creator creates a shared permissionless Strategy with `creator_fee_bps <= 3000` and `metadata_uri`.
+6. Follower has a `PredictManager`.
+7. Follower manager has DUSDC balance for DeepBook Predict mint cost.
+8. Follower wallet has a separate DUSDC fee coin for RangePilot creator/platform fee base.
+9. Frontend/SDK runs official `get_range_trade_amounts` quote preview.
+10. Frontend/SDK runs full DeepBook Predict `mint_range<DUSDC>` preflight.
+11. SDK builds wrapper `follow_strategy_and_mint<DUSDC>` only after quote/preflight gates pass.
+12. Future explicit approval executes the wrapper follow transaction.
 14. Verify RangePilot `StrategyFollowed` event.
 15. Verify DeepBook Predict `RangeMinted` event in the same transaction.
 16. Verify follower `predict_manager::range_position` increased.
@@ -153,13 +137,13 @@ The wrapper must not switch its formal Move dependency back to `../../deepbookv3
 18. Verify creator fee transferred to creator.
 19. Verify a failing DeepBook mint abort rolls back creator transfer and ProtocolVault deposit.
 
-Phase 3E authorization and remaining forbidden actions:
+Phase 3E-postpublish authorization and remaining forbidden actions:
 
-- Controlled `sui client publish` and `create_protocol_vault<DUSDC>` were approved for Phase 3E, but publish was blocked before execution.
-- Do not run `create_protocol_vault<DUSDC>` until publish succeeds.
-- Do not call `follow_strategy_and_mint` in Phase 3E.
-- Do not call DeepBook Predict `mint_range`, `redeem_range`, or `supply` in Phase 3E.
-- Do not call `withdraw_platform_fees` in Phase 3E.
+- Manual `sui client publish` was completed outside this session and recorded here.
+- The approved `create_protocol_vault<DUSDC>` setup transaction executed once and succeeded.
+- Do not call `follow_strategy_and_mint` until a future approved first-follow validation round.
+- Do not call DeepBook Predict `mint_range`, `redeem_range`, or `supply` during wrapper setup.
+- Do not call `withdraw_platform_fees` during wrapper setup.
 - Do not use mainnet.
 - Do not run validation scripts that submit non-approved transactions.
 
@@ -169,7 +153,7 @@ Before publish, rollback is just a git revert or follow-up commit. After Testnet
 
 ## Security checklist
 
-- Do not print or commit private keys, mnemonics, signatures, or raw transaction bytes.
+- Do not print or commit wallet recovery phrases, private keys, signatures, or raw transaction bytes.
 - Do not read `.env.local` for wrapper readiness work.
 - Do not commit `.env*`, `.local/`, `.claude/`, `.traces/`, `deepbookv3-predict-package/`, or `deepbookv3-predict-testnet-4-16/`.
 - Do not execute real transactions without explicit approval.

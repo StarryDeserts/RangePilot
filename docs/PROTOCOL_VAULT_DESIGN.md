@@ -1,7 +1,7 @@
 ---
 Purpose: Define RangePilot ProtocolVault and AdminCap fee custody for the creator strategy wrapper.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and product leads.
-Status: Phase 3E publish attempt blocked by dependency publication metadata; no ProtocolVault object exists.
+Status: Phase 3E-postpublish record; ProtocolVault<DUSDC> is created on Sui Testnet and first wrapper follow remains pending.
 Source of truth relationship: Supplements wrapper architecture and publish readiness docs; Move source remains authoritative for implemented entrypoints.
 ---
 
@@ -57,11 +57,11 @@ Admin-controlled operations:
 - create `ProtocolVault<T>` after wrapper publish;
 - withdraw platform fees from `ProtocolVault<T>` to a recipient chosen by the admin operation.
 
-Phase 3E intended publisher/AdminCap owner address was `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`, but publish was blocked before execution, so no actual `AdminCap` exists yet. The admin cap ID is a post-publish operational value, not a frontend follower-flow input unless a future explicit admin workflow requires it.
+The publisher/AdminCap owner address is `0xc558e37d20405a9751c81124ac8d167e2b2d368b834319adafa549449e0715f5`. The AdminCap object is `0xbd825bd9f0ea1846314a02977430e691054e56752d8cf30b483cf211fec880f7`; the UpgradeCap object is `0xd313b4281ea0a9a0918ab7f35651fe8915477d748ec123cb0950197e34c2a741`. AdminCap is a post-publish operational value, not a frontend follower-flow input unless a future explicit admin workflow requires it.
 
 ## Current deployment state and non-goals
 
-Phase 3E pre-publish checks passed, but Sui CLI publish and bytecode-dump diagnostics still classify `deepbook_predict` as an unpublished dependency. The wrapper package was not published, no `AdminCap` or `UpgradeCap` was created, and no real `ProtocolVault<DUSDC>` object exists.
+The wrapper package is published on Sui Testnet at `0xe0b877a06541d184b8c3bec46b81ccca2de38495979c25a658f98923407bf697`. The first shared `ProtocolVault<DUSDC>` object is `0x9430cc42b879c8f70a855230aecf7042e3efcadb41924cb6ff6c66c8e167d992`, created by transaction `5d8W8RtVWHxVjEhpjf6t3qfKzEFuDMdxHGXGJiR6DBe5`. Its initial balance is zero immediately after creation.
 
 Current non-goals:
 
@@ -75,21 +75,19 @@ Current non-goals:
 
 ## First Testnet follow scenario
 
-This scenario remains pending until the Phase 3E dependency publication metadata blocker is resolved and wrapper publish plus `ProtocolVault<DUSDC>` setup succeed:
+This scenario remains pending even though wrapper publish and `ProtocolVault<DUSDC>` setup are complete:
 
-1. Resolve Sui CLI `deepbook_predict` unpublished-dependency diagnostics without vendoring local snapshots or publishing DeepBook Predict as a RangePilot dependency.
-2. Retry the controlled wrapper package publish to Sui Testnet with upgradeability retained for the hackathon/Testnet stage.
-3. Record the wrapper package ID in `packages/config/src/rangePilotTestnet.ts`.
-4. Publisher receives `AdminCap`; disclose AdminCap owner/publish address.
-5. Admin creates `ProtocolVault<DUSDC>`; record ProtocolVault object ID in RangePilot config.
-6. Creator creates a shared permissionless Strategy with `creator_fee_bps <= 3000` and `metadata_uri`.
-7. Follower has a `PredictManager`.
-8. Follower manager has DUSDC balance for DeepBook Predict mint cost.
-9. Follower wallet has a separate DUSDC fee coin for RangePilot creator/platform fee base.
-10. Frontend/SDK runs official `get_range_trade_amounts` quote preview.
-11. Frontend/SDK runs full DeepBook Predict `mint_range<DUSDC>` preflight.
-12. SDK builds wrapper `follow_strategy_and_mint<DUSDC>` only after quote/preflight gates pass.
-13. Future explicit approval executes the wrapper follow transaction.
+1. Wrapper package is published and configured.
+2. Publisher received `AdminCap`; AdminCap owner/publish address is disclosed.
+3. Admin created `ProtocolVault<DUSDC>`; ProtocolVault object ID is recorded in RangePilot config.
+4. Creator creates a shared permissionless Strategy with `creator_fee_bps <= 3000` and `metadata_uri`.
+5. Follower has a `PredictManager`.
+6. Follower manager has DUSDC balance for DeepBook Predict mint cost.
+7. Follower wallet has a separate DUSDC fee coin for RangePilot creator/platform fee base.
+8. Frontend/SDK runs official `get_range_trade_amounts` quote preview.
+9. Frontend/SDK runs full DeepBook Predict `mint_range<DUSDC>` preflight.
+10. SDK builds wrapper `follow_strategy_and_mint<DUSDC>` only after quote/preflight gates pass.
+11. Future explicit approval executes the wrapper follow transaction.
 14. Verify RangePilot `StrategyFollowed` event.
 15. Verify DeepBook Predict `RangeMinted` event in the same transaction.
 16. Verify follower `predict_manager::range_position` increased.
@@ -97,10 +95,10 @@ This scenario remains pending until the Phase 3E dependency publication metadata
 18. Verify creator fee transferred to creator.
 19. Verify a failing DeepBook mint abort rolls back creator transfer and ProtocolVault deposit.
 
-Remaining forbidden actions before publish/setup succeeds:
+Remaining forbidden actions before future first-follow approval:
 
 - do not execute `follow_strategy_and_mint`;
-- do not execute DeepBook Predict `mint_range`, `redeem_range`, or `supply`;
+- do not execute DeepBook Predict `mint_range`, `redeem_range`, or `supply` during wrapper setup;
 - do not execute `withdraw_platform_fees`;
 - do not use mainnet;
 - do not run validation scripts that submit non-approved transactions.
