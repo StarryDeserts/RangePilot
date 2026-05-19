@@ -1,7 +1,7 @@
 ---
 Purpose: Document the DeepVol Route B VolSeries, ProtocolVault, and MoveReceipt contract.
 Audience: Move developers, SDK implementers, protocol integrators, reviewers, and AI agents.
-Status: DeepVol-4 Testnet reference; package and DUSDC ProtocolVault are published/configured, first buy_move_receipt remains pending.
+Status: DeepVol-5 Testnet reference; package, DUSDC ProtocolVault, first BTC VolSeries, and first buy_move_receipt<DUSDC> are validated.
 ---
 
 # DeepVol MoveReceipt Contract
@@ -20,7 +20,7 @@ VolSeries-defined BTC MOVE series
 
 The receipt remains non-custodial because the underlying DeepBook Predict positions stay in the user's `PredictManager`. It is protocol-enforced because the public receipt creation path now mints both Predict legs inside `receipt::buy_move_receipt<Quote>` before the receipt is created.
 
-DeepVol-4 records the manual Testnet package publish and creates the shared `ProtocolVault<DUSDC>`. The first deployed `receipt::buy_move_receipt<DUSDC>` validation remains pending and must use fresh quote, fee coin, and full preflight gates.
+DeepVol-4 records the manual Testnet package publish and creates the shared `ProtocolVault<DUSDC>`. DeepVol-5 validates the first deployed `receipt::buy_move_receipt<DUSDC>` transaction with fresh quote, fee coin, full preflight gates, internal UP/DOWN Predict mints, receipt readback, and ProtocolVault fee accounting; see [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
 
 ## Package boundary
 
@@ -198,10 +198,10 @@ Current deployment state:
 - DeepVol package ID is configured.
 - DeepVol `ProtocolVault<DUSDC>` ID is configured.
 - DeepVol `AdminCap` and `UpgradeCap` IDs are documented as admin-only objects.
-- No real `VolSeries` object has been created unless separately verified.
-- No real `MoveReceipt` object has been minted.
-- No deployed `receipt::buy_move_receipt<DUSDC>` transaction has been executed yet.
-- No DeepBook Predict mint/redeem was executed in DeepVol-4.
-- No DeepVol withdrawal was executed in DeepVol-4.
+- DeepVol-5 created real VolSeries `0x57878763c144cabe06c86d7e02f168d6b42481d779434d8efc8146a10c1ba885` with digest `JCHonGTMEikMBtxWkZpUbhDWNZjMCoSDJNbRuVBHTLUk`.
+- DeepVol-5 minted real MoveReceipt `0x6eac478ef6300281093a2301a52b4ee7b272d6b1a76be9e16e63fa43171f6a0f` with buy digest `GVyMBH9kB6nTSuWoULFZ5ir3yhFnRC8LNoRz9EEDQXbd`.
+- DeepVol-5 verified internal DeepBook Predict UP and DOWN mints, UP/DOWN position deltas of `10000`, manager DUSDC premium delta `10029`, and ProtocolVault Create Fee delta `30`.
+- No DeepBook Predict redeem was executed in DeepVol-5.
+- No DeepVol withdrawal was executed in DeepVol-5.
 
-The next phase is first deployed `buy_move_receipt<DUSDC>` validation with fresh runtime market discovery, quote previews, fee coin preparation, full preflight, wallet approval, and post-transaction receipt/position/event checks.
+The next phase is wallet-gated DeepVol receipt UX and guided settlement work using the validated deployed `buy_move_receipt<DUSDC>` path with fresh runtime market discovery, quote previews, fee coin preparation, full preflight, wallet approval, and post-transaction receipt/position/event checks.

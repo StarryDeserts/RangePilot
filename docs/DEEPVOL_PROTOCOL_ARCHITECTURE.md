@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol BTC MOVE protocol architecture and custody boundaries.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: DeepVol-4 Route B architecture; package and DUSDC ProtocolVault are published/configured on Testnet, first buy_move_receipt remains pending.
+Status: DeepVol-5 Route B architecture; package, DUSDC ProtocolVault, first BTC VolSeries, and first buy_move_receipt<DUSDC> are validated on Testnet.
 ---
 
 # DeepVol Protocol Architecture
@@ -81,7 +81,7 @@ The local Route B contract path is:
 7. Submit one Sui transaction that calls `receipt::buy_move_receipt<Quote>`.
 8. Inside the entrypoint, DeepVol derives both keys, quotes both legs, calls `predict::mint<Quote>` twice, deposits Create Fee into `ProtocolVault<Quote>`, and mints the receipt.
 
-The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. DeepVol-3B translated that primitive into Route B Move code. DeepVol-4 then records the manual Testnet package publish and creates the shared DUSDC ProtocolVault; concrete deployment IDs are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md). DeepVol-4 still does not create real series/receipts, route Create Fee through `buy_move_receipt`, execute Predict mint/redeem, or execute a real DeepVol Route B receipt transaction.
+The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. DeepVol-3B translated that primitive into Route B Move code. DeepVol-4 then records the manual Testnet package publish and creates the shared DUSDC ProtocolVault; concrete deployment IDs are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md). DeepVol-5 validates the first deployed BTC `VolSeries` and `buy_move_receipt<DUSDC>` path with buy digest `GVyMBH9kB6nTSuWoULFZ5ir3yhFnRC8LNoRz9EEDQXbd`; concrete receipt, event, position, balance, and fee-vault evidence is recorded in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
 
 ## Premium and fee accounting
 
@@ -152,4 +152,4 @@ apps/web/src/pages/DeepVolSeriesPage.tsx
 apps/web/src/pages/DeepVolPortfolioPage.tsx
 ```
 
-The package, admin cap, upgrade cap, and DUSDC ProtocolVault IDs are now configured after DeepVol-4. The full `buy_move_receipt<DUSDC>` transaction path remains unexecuted until the next validation phase.
+The package, admin cap, upgrade cap, and DUSDC ProtocolVault IDs are configured after DeepVol-4. DeepVol-5 validates the deployed `buy_move_receipt<DUSDC>` transaction path for one runtime-selected BTC series. The next implementation phase is wallet-gated receipt UX, portfolio readback, and guided settlement/redeem around the validated non-custodial receipt boundary.

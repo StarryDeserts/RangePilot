@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepVol Testnet publish and ProtocolVault setup result.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and product leads.
-Status: DeepVol-4 record; package and ProtocolVault<DUSDC> are published/configured on Testnet, first buy_move_receipt remains pending.
+Status: DeepVol-4 record; package and ProtocolVault<DUSDC> are published/configured on Testnet. DeepVol-5 receipt validation is recorded separately.
 Source of truth relationship: Records observed Testnet publish and setup facts; Move source, Sui CLI output, and Sui object reads remain authoritative for on-chain state.
 ---
 
@@ -12,6 +12,8 @@ Source of truth relationship: Records observed Testnet publish and setup facts; 
 The DeepVol Route B package was manually published to Sui Testnet on 2026-05-19. DeepVol-4 verified the published package, AdminCap, and UpgradeCap, then created exactly one shared `ProtocolVault<DUSDC>` using the published `deepvol::vault::create_protocol_vault<DUSDC>` entrypoint.
 
 This setup records deployment IDs for the non-custodial but protocol-enforced BTC MOVE receipt path. No `buy_move_receipt`, Predict mint/redeem, withdraw, publish, mainnet, or UI transaction was executed in DeepVol-4.
+
+DeepVol-5 later validated the first deployed `buy_move_receipt<DUSDC>` path with fresh BTC market selection, VolSeries digest `JCHonGTMEikMBtxWkZpUbhDWNZjMCoSDJNbRuVBHTLUk`, buy digest `GVyMBH9kB6nTSuWoULFZ5ir3yhFnRC8LNoRz9EEDQXbd`, receipt `0x6eac478ef6300281093a2301a52b4ee7b272d6b1a76be9e16e63fa43171f6a0f`, and ProtocolVault balance delta `30`; see [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
 
 ## Network and publisher
 
@@ -95,6 +97,10 @@ Repository verification for this config/docs update must pass before final commi
 - No mainnet transaction was executed.
 - `move/deepvol/Move.toml` was not modified, restored, or staged.
 
+## DeepVol-5 follow-up
+
+The first deployed `buy_move_receipt<DUSDC>` path has now been validated in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md). The validation created VolSeries `0x57878763c144cabe06c86d7e02f168d6b42481d779434d8efc8146a10c1ba885`, minted receipt `0x6eac478ef6300281093a2301a52b4ee7b272d6b1a76be9e16e63fa43171f6a0f`, increased UP and DOWN binary positions by `10000`, recorded actual premium `10029`, and deposited Create Fee `30` into the configured `ProtocolVault<DUSDC>`.
+
 ## Next step
 
-Validate the first deployed `buy_move_receipt<DUSDC>` path with fresh BTC oracle/expiry/strike discovery, UP and DOWN quote previews, manager balance checks, fee coin preparation, full transaction preflight, wallet approval, and post-transaction receipt, position, event, and fee-vault verification.
+Build the wallet-gated DeepVol receipt UX using the validated deployed path while preserving fresh BTC oracle/expiry/strike discovery, UP and DOWN quote previews, manager balance checks, fee coin preparation, full transaction preflight, wallet approval, post-transaction receipt/position/event/fee-vault verification, and explicit non-custodial receipt copy.

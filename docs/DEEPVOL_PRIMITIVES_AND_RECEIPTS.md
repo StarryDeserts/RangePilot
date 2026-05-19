@@ -94,7 +94,7 @@ BTC MOVE Receipt is the MVP monetization surface:
 Create Fee = 0.30% of premium
 ```
 
-The premium basis is the total immediate DeepBook Predict quote for the UP and DOWN legs. The Create Fee goes to DeepVol `ProtocolVault<Quote>` during receipt creation.
+The premium basis is the actual quote-asset balance delta from the user's `PredictManager` across both internal binary mints. DeepVol still quotes both legs immediately before minting as an early cap and fee-coin coverage check; the final Create Fee goes to DeepVol `ProtocolVault<Quote>` during receipt creation.
 
 ## Future structured products
 

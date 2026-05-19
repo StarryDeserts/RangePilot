@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol BTC MOVE business model and fee enforceability boundary.
 Audience: Project maintainers, business reviewers, Move developers, SDK implementers, frontend developers, and AI agents.
-Status: DeepVol-3B Route B business model reference.
+Status: DeepVol-5 Route B business model reference.
 ---
 
 # DeepVol Business Model

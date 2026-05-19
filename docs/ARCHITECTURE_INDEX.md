@@ -1,7 +1,7 @@
 ---
 Purpose: Navigation index for RangePilot and DeepVol architecture documentation.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol BTC MOVE and DeepVol-4 Testnet package/vault setup.
+Status: Updated for DeepVol BTC MOVE and DeepVol-5 first deployed receipt validation.
 Source of truth relationship: Indexes local source-of-truth documents, official-derived protocol references, generated companion docs, and pivot ADRs; does not replace source docs.
 ---
 
@@ -37,6 +37,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md) | Records source-confirmed binary entrypoints, MarketKey construction, events, and validation blockers | Protocol / SDK / PTB |
 | [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md) | Records the controlled Testnet binary mint validation and gas-budget diagnosis | Protocol / SDK / validation |
 | [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md) | Records the DeepVol Testnet package publish, AdminCap/UpgradeCap, and shared ProtocolVault<DUSDC> setup | Move / protocol / validation |
+| [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md) | Records the first deployed BTC VolSeries and buy_move_receipt<DUSDC> execution, receipt, mints, and fee accounting | Move / protocol / validation |
 | [DEEPVOL_MOVE_RECEIPT_CONTRACT.md](./DEEPVOL_MOVE_RECEIPT_CONTRACT.md) | Documents the Route B VolSeries, ProtocolVault, and protocol-enforced non-custodial MoveReceipt contract | Move / protocol / SDK |
 | [DEEPVOL_CONTRACT_BUILD_VALIDATION.md](./DEEPVOL_CONTRACT_BUILD_VALIDATION.md) | Records local DeepVol Route B contract build/test validation scope and non-actions | Move / validation |
 | [DEEPVOL_BUSINESS_MODEL.md](./DEEPVOL_BUSINESS_MODEL.md) | Defines Create Fee MVP model and V2-only Profit Fee / Creator Share | Product / business |
@@ -103,12 +104,13 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 5. [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md)
 6. [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md)
 7. [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md)
-8. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md)
-6. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
-7. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
-8. [RANGE_QUOTE_UNITS_AND_DECODING.md](./RANGE_QUOTE_UNITS_AND_DECODING.md) for prior binary quote investigation
-9. [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) for prior wrapper composition evidence
-10. [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) for reusable fee treasury design
+8. [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md)
+9. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md)
+10. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
+11. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
+12. [RANGE_QUOTE_UNITS_AND_DECODING.md](./RANGE_QUOTE_UNITS_AND_DECODING.md) for prior binary quote investigation
+13. [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) for prior wrapper composition evidence
+14. [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) for reusable fee treasury design
 
 ### Before DeepBook Predict work
 
@@ -157,9 +159,9 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | Task type | Required docs before work |
 |---|---|
 | DeepVol BTC MOVE product work | DeepVol product direction, primitives and receipts, MVP scope, business model, ADR-0003 |
-| DeepVol Move/data model work | DeepVol protocol architecture, data model, MoveReceipt contract, contract build validation, Testnet publish result, binary leg integration, official contract info, entrypoint bindings plan |
-| DeepVol binary quote/mint/redeem validation | Binary leg integration, official contract info, protocol integration notes, entrypoint bindings plan, PredictManager flow, range quote units and decoding |
-| DeepVol SDK transaction builders | Binary leg integration, official contract info, entrypoint bindings plan, protocol integration notes, Sui transaction-building docs/skills |
+| DeepVol Move/data model work | DeepVol protocol architecture, data model, MoveReceipt contract, contract build validation, Testnet publish result, buy receipt validation, binary leg integration, official contract info, entrypoint bindings plan |
+| DeepVol binary quote/mint/redeem validation | Binary leg integration, buy receipt validation, official contract info, protocol integration notes, entrypoint bindings plan, PredictManager flow, range quote units and decoding |
+| DeepVol SDK transaction builders | Binary leg integration, buy receipt validation, official contract info, entrypoint bindings plan, protocol integration notes, Sui transaction-building docs/skills |
 | DeepVol portfolio/settlement UX | DeepVol protocol architecture, data model, binary leg integration, PredictManager validation, protocol integration notes |
 | Prior guided range UI maintenance | Guided range trading MVP, range mint validation, portfolio readback validation, range redeem validation, browser wallet fixes |
 | Prior wrapper/follow maintenance | Wrapper contract architecture, wrapper publish result, wrapper follow validation, ProtocolVault design, follow strategy transaction flow, strategy data model, ADR-0002 |
