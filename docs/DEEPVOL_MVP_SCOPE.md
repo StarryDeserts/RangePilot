@@ -57,7 +57,7 @@ The MVP excludes:
 - Pro API.
 - Full UI polish.
 
-These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; receipt contract work remains future scope until the same fresh gates are translated into the DeepVol receipt flow.
+These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; DeepVol-3 adds the local-only `VolSeries` / non-custodial `MoveReceipt` skeleton, while on-chain receipt creation and atomic binary mint composition remain future scope until the same fresh gates are translated into the DeepVol receipt flow.
 
 ## Runtime assumptions
 
@@ -73,20 +73,26 @@ The first implementation should prefer runtime discovery over hardcoded market a
 4. Validate BTC binary quote preview for both UP and DOWN legs.
 5. Validate a two-leg binary mint PTB in devInspect.
 6. Run a controlled binary mint round and document the result. The 2026-05-19 round diagnosed the old `InsufficientGas in command 3` as a too-low `100000000` MIST gas budget and validated one real two-leg mint at `200000000` MIST.
-7. Design `VolSeries` and non-custodial `MoveReceipt` Move structs around the proven binary mint path.
-8. Add SDK builders and full preflight gates.
-9. Add portfolio readback and guided settlement UI.
-10. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
+7. Add DeepVol-3 local skeleton for `VolSeries`, non-custodial `MoveReceipt`, Create Fee calculation/recording, TypeScript stubs, and docs without publishing or executing transactions.
+8. Add DeepVol-4 atomic PTB or wrapper work for binary mint + fee routing + receipt creation after manual package publish and fresh gates.
+9. Add SDK builders and full preflight gates.
+10. Add portfolio readback and guided settlement UI.
+11. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
 
 ## Future code organization
 
-This round should not create these modules yet, but the future implementation can use:
+DeepVol-3 adds the local contract and TypeScript stub paths:
 
 ```text
 move/deepvol/
 packages/types/src/deepVol.ts
 packages/sdk/src/deepVol/
 packages/config/src/deepVolTestnet.ts
+```
+
+Future UI work can add:
+
+```text
 apps/web/src/pages/DeepVolMarketsPage.tsx
 apps/web/src/pages/DeepVolSeriesPage.tsx
 apps/web/src/pages/DeepVolPortfolioPage.tsx

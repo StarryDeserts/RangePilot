@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./deepbookPredict": "./src/deepbookPredict.ts",
-    "./rangePilotStrategy": "./src/rangePilotStrategy.ts"
+    "./rangePilotStrategy": "./src/rangePilotStrategy.ts",
+    "./deepVol": "./src/deepVol.ts"
   }
 }

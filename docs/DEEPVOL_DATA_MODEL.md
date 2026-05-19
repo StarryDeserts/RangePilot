@@ -1,7 +1,7 @@
 ---
-Purpose: Define the proposed DeepVol BTC MOVE data model before implementation.
+Purpose: Define the DeepVol BTC MOVE data model and local skeleton fields.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Proposed MVP model; not yet implemented.
+Status: Aligned with the DeepVol-3 local MoveReceipt skeleton.
 ---
 
 # DeepVol Data Model
@@ -12,16 +12,16 @@ The MVP data model is non-custodial. A `MoveReceipt` records metadata and linkag
 
 Receipt does not own the Predict legs in MVP. It records linkage to positions held in the user's `PredictManager`, supports portfolio aggregation, and records fee-accounting metadata for the BTC MOVE structured product.
 
-## Proposed structs
+## Local skeleton structs
 
 ```move
 public struct VolSeries has key { /* fields documented below */ }
-public struct MoveReceipt has key, store { /* fields documented below */ }
+public struct MoveReceipt has key { /* fields documented below */ }
 public struct MoveReceiptCreated has copy, drop { /* fields documented below */ }
-public struct MoveReceiptSettled has copy, drop { /* fields documented below */ }
+public struct MoveReceiptMarkedSettled has copy, drop { /* fields documented below */ }
 ```
 
-The exact field types should be finalized during the Move implementation round after binary mint and readback validation.
+DeepVol-3 implements these fields in `move/deepvol` for local build/test only. The package has not been published and the config keeps deployment IDs null.
 
 ## VolSeries
 
@@ -33,15 +33,14 @@ MVP fields should include:
 |---|---|
 | `id` | Sui object identity. |
 | `creator` | Address that created or configured the series. |
-| `underlying_symbol` or `oracle_id` | BTC series identifier. Use `oracle_id` when binding to a concrete Predict oracle. |
+| `oracle_id` | Concrete DeepBook Predict oracle ID. |
 | `expiry` | Predict expiry timestamp for the selected series. |
 | `lower_strike` | Strike for the DOWN leg. |
 | `upper_strike` | Strike for the UP leg. |
-| `quote_asset` | Quote asset metadata or type witness policy for DUSDC MVP. |
-| `active` | Whether new receipts can be created for the series. |
 | `metadata_uri` | UI/indexer metadata for the BTC MOVE series. |
-| `create_fee_bps` | Create Fee in basis points of premium. Suggested MVP value: 30 bps. |
-| `created_at` | Timestamp when the series was created. |
+| `create_fee_bps` | Create Fee in basis points of premium. Default MVP value: 30 bps; max: 100 bps. |
+| `active` | Whether new receipts can be created for the series. |
+| `created_at_ms` | Timestamp when the series was created. |
 
 ## MoveReceipt
 
@@ -54,18 +53,18 @@ MVP fields should include:
 | `id` | Sui object identity. |
 | `owner` | Receipt owner. |
 | `series_id` | Linked `VolSeries` ID. |
-| `predict_manager` | User's `PredictManager` that holds the binary legs. |
+| `predict_manager_id` | User's `PredictManager` that holds the binary legs. |
 | `oracle_id` | DeepBook Predict oracle used for both legs. |
 | `expiry` | Expiry used for both legs. |
 | `lower_strike` | DOWN leg strike. |
 | `upper_strike` | UP leg strike. |
-| `up_market_key` | Binary UP `MarketKey` or fields needed to reconstruct it. |
-| `down_market_key` | Binary DOWN `MarketKey` or fields needed to reconstruct it. |
-| `quantity` or `premium_model` | Chosen sizing representation. Must match the binary mint validation model. |
+| `up_strike` | UP leg strike, derived from `upper_strike`. |
+| `down_strike` | DOWN leg strike, derived from `lower_strike`. |
+| `quantity` | Quantity recorded for both binary legs. |
 | `premium_paid` | Total premium paid for both Predict legs. |
-| `create_fee_paid` | Create Fee deposited into `ProtocolVault`. |
-| `created_at` | Timestamp when the receipt was minted. |
-| `settlement_status` | MVP status for portfolio guidance, not payout custody. |
+| `create_fee_paid` | Create Fee calculated/recorded in DeepVol-3; ProtocolVault deposit is future work. |
+| `created_at_ms` | Timestamp when the receipt was minted. |
+| `status` | Local receipt status: `0` active, `1` settled, `2` cancelled/reserved. |
 
 ## MoveReceiptCreated
 
@@ -78,18 +77,21 @@ Suggested fields:
 | `receipt_id` | Created receipt object ID. |
 | `series_id` | Linked series ID. |
 | `owner` | Receipt owner. |
-| `predict_manager` | Manager holding the binary positions. |
+| `predict_manager_id` | Manager holding the binary positions. |
 | `oracle_id` | Predict oracle. |
 | `expiry` | Expiry. |
 | `lower_strike` | DOWN leg strike. |
 | `upper_strike` | UP leg strike. |
+| `up_strike` | Derived UP leg strike. |
+| `down_strike` | Derived DOWN leg strike. |
 | `quantity` | Mint quantity if the sizing model is quantity-based. |
 | `premium_paid` | Total premium paid. |
-| `create_fee_paid` | Fee deposited to `ProtocolVault`. |
+| `create_fee_paid` | Fee calculated/recorded for future vault routing. |
+| `timestamp_ms` | Creation timestamp. |
 
-## MoveReceiptSettled
+## MoveReceiptMarkedSettled
 
-`MoveReceiptSettled` is for a guided DeepVol-mediated settlement path.
+`MoveReceiptMarkedSettled` is the DeepVol-3 local skeleton event for an owner-only status update. It is not proof of binary redeem or payout.
 
 Suggested fields:
 
@@ -97,13 +99,9 @@ Suggested fields:
 |---|---|
 | `receipt_id` | Settled receipt object ID. |
 | `owner` | Receipt owner. |
-| `series_id` | Linked series ID. |
-| `up_quantity_redeemed` | UP leg quantity redeemed through the guided path. |
-| `down_quantity_redeemed` | DOWN leg quantity redeemed through the guided path. |
-| `payout` | Payout observed through the guided path, if available. |
-| `settled_at` | Settlement timestamp. |
+| `timestamp_ms` | Settlement-marker timestamp. |
 
-Because MVP receipts are non-custodial, this event can only prove guided-path settlement. It cannot prove that the user did not redeem directly through DeepBook Predict.
+Because MVP receipts are non-custodial, this event can only prove the local receipt status marker changed. It cannot prove that the user redeemed or did not redeem directly through DeepBook Predict.
 
 ## Settlement status
 

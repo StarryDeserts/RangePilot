@@ -76,7 +76,7 @@ The intended MVP transaction path is:
 7. Deposit Create Fee into `ProtocolVault`.
 8. Mint `MoveReceipt` recording the series and binary leg metadata.
 
-The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. Create Fee routing and `MoveReceipt` minting have not been executed yet, so the exact DeepVol wrapper design remains future implementation work.
+The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. DeepVol-3 adds a local-only `move/deepvol` skeleton for `VolSeries`, `MoveReceipt`, events, and Create Fee calculation/recording, but it does not publish the package, create real series/receipts, route fees, or call DeepBook Predict. Create Fee routing and atomic `MoveReceipt` minting remain future implementation work.
 
 ### Portfolio readback path
 
@@ -121,14 +121,21 @@ This is future scope and should not block the BTC MOVE MVP.
 
 ## Future code organization
 
-This round is docs-first and should not implement these modules yet. A later implementation can use:
+DeepVol-3 now includes local-only skeleton code and stubs:
 
 ```text
 move/deepvol/
 packages/types/src/deepVol.ts
 packages/sdk/src/deepVol/
 packages/config/src/deepVolTestnet.ts
+```
+
+Future UI and on-chain composition work can add:
+
+```text
 apps/web/src/pages/DeepVolMarketsPage.tsx
 apps/web/src/pages/DeepVolSeriesPage.tsx
 apps/web/src/pages/DeepVolPortfolioPage.tsx
 ```
+
+The full transaction path remains future work until the user manually publishes DeepVol and supplies real package/vault IDs.

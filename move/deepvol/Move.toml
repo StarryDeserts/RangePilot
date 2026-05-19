@@ -1,0 +1,7 @@
+[package]
+name = "deepvol"
+edition = "2024"
+version = "0.0.1"
+
+[addresses]
+deepvol = "0x0"

@@ -34,6 +34,8 @@
     "validate:deepvol-binary-mint": "node scripts/validate-deepvol-binary-legs.mjs --mode mint --sender 0x4ff903b0dcc52dc8753787baf19b34b7425dfa64d187cc7c726b38413705fa75 --manager 0xd59be0646d948c9be6073edc0cfd253ce4cb00f4929f0bae71f451f50e5d1575",
     "move:build:rangepilot": "sui move build --path move/rangepilot",
     "move:test:rangepilot": "sui move test --path move/rangepilot",
+    "move:build:deepvol": "sui move build --path move/deepvol",
+    "move:test:deepvol": "sui move test --path move/deepvol",
     "dev:web": "npm --workspace apps/web run dev",
     "build:web": "npm --workspace apps/web run build"
   },

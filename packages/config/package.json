@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./deepbookPredictTestnet": "./src/deepbookPredictTestnet.ts",
-    "./rangePilotTestnet": "./src/rangePilotTestnet.ts"
+    "./rangePilotTestnet": "./src/rangePilotTestnet.ts",
+    "./deepVolTestnet": "./src/deepVolTestnet.ts"
   }
 }

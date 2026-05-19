@@ -32,13 +32,13 @@ The premium is the total official DeepBook Predict mint cost for both binary leg
 premium = UP leg mint cost + DOWN leg mint cost
 ```
 
-The Create Fee should be charged during the wrapper-mediated receipt creation path and deposited into `ProtocolVault`.
+The Create Fee should be charged during the future wrapper-mediated or atomic receipt creation path and deposited into `ProtocolVault` or a DeepVol vault equivalent. DeepVol-3 only calculates and records the fee value in the local receipt skeleton; it does not transfer coins or deposit into a vault.
 
 ## ProtocolVault destination
 
 `ProtocolVault` is reusable fee treasury infrastructure from the RangePilot wrapper work. In DeepVol MVP, it receives Create Fee deposits.
 
-The vault does not custody DeepBook Predict positions or payouts. It only holds DeepVol protocol fees.
+The vault does not custody DeepBook Predict positions or payouts. It only holds DeepVol protocol fees. DeepVol-3 keeps `protocolVaultId` as `null` in config until manual publish and future fee-routing work provide real deployment values.
 
 ## Profit Fee is V2 only
 

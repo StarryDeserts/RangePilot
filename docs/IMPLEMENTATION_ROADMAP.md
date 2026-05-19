@@ -40,25 +40,25 @@ The prior creator-follow strategy model is not the primary product direction bec
 | Required docs | DeepVol binary leg integration; official contract info; protocol integration notes; entrypoint bindings plan; PredictManager flow and validation docs. |
 | Risks and fallback | Risk: active BTC binary market changes or mintability fails after quote. Fallback: document runtime blocker and do not build production receipt flow until full binary preflight succeeds. |
 
-## Phase 2: DeepVol MoveReceipt / VolSeries contract design
+## Phase 2: DeepVol MoveReceipt / VolSeries local skeleton
 
 | Field | Content |
 |---|---|
-| Goal | Design and implement the minimal non-custodial DeepVol Move package around BTC MOVE series and receipts. |
-| Deliverables | `move/deepvol` package; `VolSeries`; `MoveReceipt`; Create Fee deposit into `ProtocolVault` or a DeepVol vault equivalent; receipt lifecycle events; Move tests. |
-| Non-goals | Custodial manager, tradable receipt, Profit Fee enforcement, secondary market, custom Predict pricing, custom settlement. |
-| Acceptance criteria | Move build/tests pass; receipt explicitly records linkage rather than custody; Create Fee is enforceable; Profit Fee is documented as unavailable in MVP. |
-| Required docs | DeepVol protocol architecture; DeepVol data model; DeepVol business model; ProtocolVault design; Move rules. |
-| Risks and fallback | Risk: trying to make receipt represent custody it does not hold. Fallback: keep non-custodial receipt language and field semantics strict. |
+| Goal | Design and implement the minimal local-only non-custodial DeepVol Move package around BTC MOVE series and receipt metadata. |
+| Deliverables | `move/deepvol` package; `VolSeries`; `MoveReceipt`; Create Fee calculation/recording; receipt lifecycle events; Move tests; TypeScript type/config/SDK stubs with null deployment IDs. |
+| Non-goals | Package publish, real `VolSeries` creation, real `MoveReceipt` minting, binary mint/redeem execution, ProtocolVault deposit, custodial manager, tradable receipt, Profit Fee enforcement, secondary market, custom Predict pricing, custom settlement. |
+| Acceptance criteria | Move build/tests pass locally; receipt explicitly records linkage rather than custody; Create Fee is calculated and recorded only; package/config IDs remain null until manual publish. |
+| Required docs | DeepVol protocol architecture; DeepVol data model; DeepVol MoveReceipt contract; DeepVol contract build validation; DeepVol business model; ProtocolVault design; Move rules. |
+| Risks and fallback | Risk: trying to make receipt represent custody it does not hold or implying deployment before manual publish. Fallback: keep non-custodial receipt language, null config, and local-only status strict. |
 
-## Phase 3: SDK builders and preflight gates
+## Phase 3: Atomic PTB, publish readiness, and preflight gates
 
 | Field | Content |
 |---|---|
-| Goal | Add TypeScript types and builders for BTC MOVE preview, two-leg mint, receipt creation, and portfolio readback. |
-| Deliverables | `packages/types/src/deepVol.ts`; `packages/sdk/src/deepVol/`; `packages/config/src/deepVolTestnet.ts`; binary quote helpers; binary mint preflight; receipt transaction builder; binary position readback; event parsing. |
+| Goal | Turn the local skeleton into a publish-ready and wallet-gated BTC MOVE flow after manual deployment values exist. |
+| Deliverables | Manual publish readiness review; real DeepVol package/config values after user publish; binary quote helpers; binary mint preflight; receipt transaction builder wired to deployed package; Create Fee coin routing into a ProtocolVault or DeepVol vault equivalent; binary position readback; event parsing. |
 | Non-goals | Private-key browser paths, mainnet, unaudited production launch, direct custom pricing. |
-| Acceptance criteria | Builders require runtime BTC oracle/expiry, successful UP and DOWN quote previews, full PTB preflight, fee coverage, and explicit package/config IDs before wallet prompt. |
+| Acceptance criteria | Builders require runtime BTC oracle/expiry, successful UP and DOWN quote previews, full PTB preflight, fee coverage, explicit package/config IDs, and binary mint validation gates before wallet prompt. |
 | Required docs | DeepVol binary leg integration; entrypoint bindings plan; protocol integration notes; Sui transaction-building guidance. |
 | Risks and fallback | Risk: quote success differs from mintability. Fallback: preserve full binary mint preflight gate, mirroring range mint lessons. |
 
