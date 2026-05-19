@@ -2,6 +2,8 @@ node_modules/
 predict/
 deepbook/
 apps/web/dist/
+apps/deepvol-web/dist/
+frontend-monorepo/
 .claude/
 .playwright-mcp/
 .env.local

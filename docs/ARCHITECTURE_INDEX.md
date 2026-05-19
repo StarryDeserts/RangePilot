@@ -1,7 +1,7 @@
 ---
 Purpose: Navigation index for RangePilot and DeepVol architecture documentation.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol BTC MOVE and DeepVol-5 first deployed receipt validation.
+Status: Updated for DeepVol BTC MOVE and DeepVol-6 frontend scaffold.
 Source of truth relationship: Indexes local source-of-truth documents, official-derived protocol references, generated companion docs, and pivot ADRs; does not replace source docs.
 ---
 
@@ -38,6 +38,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md) | Records the controlled Testnet binary mint validation and gas-budget diagnosis | Protocol / SDK / validation |
 | [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md) | Records the DeepVol Testnet package publish, AdminCap/UpgradeCap, and shared ProtocolVault<DUSDC> setup | Move / protocol / validation |
 | [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md) | Records the first deployed BTC VolSeries and buy_move_receipt<DUSDC> execution, receipt, mints, and fee accounting | Move / protocol / validation |
+| [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md) | Defines the `apps/deepvol-web` wallet-gated frontend scaffold, UX boundaries, and browser blocker policy | Frontend / product / SDK |
 | [DEEPVOL_MOVE_RECEIPT_CONTRACT.md](./DEEPVOL_MOVE_RECEIPT_CONTRACT.md) | Documents the Route B VolSeries, ProtocolVault, and protocol-enforced non-custodial MoveReceipt contract | Move / protocol / SDK |
 | [DEEPVOL_CONTRACT_BUILD_VALIDATION.md](./DEEPVOL_CONTRACT_BUILD_VALIDATION.md) | Records local DeepVol Route B contract build/test validation scope and non-actions | Move / validation |
 | [DEEPVOL_BUSINESS_MODEL.md](./DEEPVOL_BUSINESS_MODEL.md) | Defines Create Fee MVP model and V2-only Profit Fee / Creator Share | Product / business |
@@ -105,12 +106,13 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 6. [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md)
 7. [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md)
 8. [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md)
-9. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md)
-10. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
-11. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
-12. [RANGE_QUOTE_UNITS_AND_DECODING.md](./RANGE_QUOTE_UNITS_AND_DECODING.md) for prior binary quote investigation
-13. [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) for prior wrapper composition evidence
-14. [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) for reusable fee treasury design
+9. [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md)
+10. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md)
+11. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
+12. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
+13. [RANGE_QUOTE_UNITS_AND_DECODING.md](./RANGE_QUOTE_UNITS_AND_DECODING.md) for prior binary quote investigation
+14. [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) for prior wrapper composition evidence
+15. [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) for reusable fee treasury design
 
 ### Before DeepBook Predict work
 
@@ -129,8 +131,9 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 2. [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md)
 3. [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md)
 4. [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md)
-5. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)
-6. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) only as prior scaffold/reference, not current MVP direction
+5. [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md)
+6. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)
+7. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) only as prior scaffold/reference, not current MVP direction
 
 ### Before agent-led implementation rounds
 
@@ -145,12 +148,12 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 
 | Category | Primary docs |
 |---|---|
-| DeepVol product | DeepVol product direction, primitives and receipts, MVP scope, protocol architecture, data model, business model, ADR-0003 |
+| DeepVol product | DeepVol product direction, primitives and receipts, MVP scope, frontend MVP, protocol architecture, data model, business model, ADR-0003 |
 | Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info, binary leg integration, wrapper contract architecture |
 | Protocol reference | Official contract info, entrypoint bindings plan, public server discovery, response shapes |
 | SDK / PTB | Binary leg integration, official contract info, PredictManager flow, PredictManager validation, range validation docs, entrypoint bindings plan, protocol integration notes |
 | Prior RangePilot validation | Guided range trading MVP, range mint/redeem validation, wrapper architecture, wrapper publish result, wrapper follow validation, ProtocolVault design |
-| Engineering | Implementation roadmap, protocol integration notes, DeepVol protocol architecture, DeepVol data model |
+| Engineering | Implementation roadmap, protocol integration notes, DeepVol frontend MVP, DeepVol protocol architecture, DeepVol data model |
 | Agent workflow | Root `CLAUDE.md`, agent workflow, skill usage guide, source documents |
 | ADR | ADR-0001, ADR-0002, ADR-0003 |
 
@@ -158,11 +161,11 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 
 | Task type | Required docs before work |
 |---|---|
-| DeepVol BTC MOVE product work | DeepVol product direction, primitives and receipts, MVP scope, business model, ADR-0003 |
+| DeepVol BTC MOVE product work | DeepVol product direction, primitives and receipts, MVP scope, frontend MVP, business model, ADR-0003 |
 | DeepVol Move/data model work | DeepVol protocol architecture, data model, MoveReceipt contract, contract build validation, Testnet publish result, buy receipt validation, binary leg integration, official contract info, entrypoint bindings plan |
 | DeepVol binary quote/mint/redeem validation | Binary leg integration, buy receipt validation, official contract info, protocol integration notes, entrypoint bindings plan, PredictManager flow, range quote units and decoding |
 | DeepVol SDK transaction builders | Binary leg integration, buy receipt validation, official contract info, entrypoint bindings plan, protocol integration notes, Sui transaction-building docs/skills |
-| DeepVol portfolio/settlement UX | DeepVol protocol architecture, data model, binary leg integration, PredictManager validation, protocol integration notes |
+| DeepVol portfolio/settlement UX | DeepVol frontend MVP, DeepVol protocol architecture, data model, binary leg integration, PredictManager validation, protocol integration notes |
 | Prior guided range UI maintenance | Guided range trading MVP, range mint validation, portfolio readback validation, range redeem validation, browser wallet fixes |
 | Prior wrapper/follow maintenance | Wrapper contract architecture, wrapper publish result, wrapper follow validation, ProtocolVault design, follow strategy transaction flow, strategy data model, ADR-0002 |
 | New ADR | Agent workflow, source documents, existing ADRs |
@@ -170,6 +173,8 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | Any git operation | Agent workflow, root `CLAUDE.md` |
 
 ## Local source snapshot note
+
+`frontend-monorepo/` is local Balancer v3 frontend source for UI/UX reference only. It is ignored and must not be staged or committed; use it for interaction and layout ideas, not as copied project source.
 
 `deepbookv3-predict-package/predict` is a non-committed local DeepBook Predict source snapshot used for Phase 1C-debug source-level diagnostics. `deepbookv3-predict-testnet-4-16/` is the full non-committed local DeepBookV3 Testnet source snapshot used for source-level debugging/reference. These snapshots may be read and cited by relative path when explicitly needed, but they must not be staged or committed. The formal RangePilot wrapper dependency source is the official DeepBookV3 Git repository with Testnet dep-replacements, not a local snapshot path; official docs remain the deployment/config source of truth.
 

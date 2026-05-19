@@ -144,12 +144,12 @@ packages/sdk/src/deepVol/
 packages/config/src/deepVolTestnet.ts
 ```
 
-Future UI work can add:
+DeepVol frontend work now starts from the separate scaffold:
 
 ```text
-apps/web/src/pages/DeepVolMarketsPage.tsx
-apps/web/src/pages/DeepVolSeriesPage.tsx
-apps/web/src/pages/DeepVolPortfolioPage.tsx
+apps/deepvol-web/
 ```
 
-The package, admin cap, upgrade cap, and DUSDC ProtocolVault IDs are configured after DeepVol-4. DeepVol-5 validates the deployed `buy_move_receipt<DUSDC>` transaction path for one runtime-selected BTC series. The next implementation phase is wallet-gated receipt UX, portfolio readback, and guided settlement/redeem around the validated non-custodial receipt boundary.
+`apps/web/` remains the prior RangePilot validation UI and should not become the primary DeepVol UX through incremental page patches.
+
+The package, admin cap, upgrade cap, and DUSDC ProtocolVault IDs are configured after DeepVol-4. DeepVol-5 validates the deployed `buy_move_receipt<DUSDC>` transaction path for one runtime-selected BTC series. DeepVol-6 adds the `apps/deepvol-web/` wallet-gated scaffold for receipt UX, portfolio readback, and future guided settlement/redeem around the validated non-custodial receipt boundary.

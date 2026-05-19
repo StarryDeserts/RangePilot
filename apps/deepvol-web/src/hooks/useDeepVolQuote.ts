@@ -1,0 +1,345 @@
+import { useMemo } from "react";
+import { useSuiClient } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
+import type { VolSeries } from "@rangepilot/types/deepVol";
+import { DEEPBOOK_PREDICT_TESTNET } from "@rangepilot/config/deepbookPredictTestnet";
+import {
+  devInspectBinaryQuote,
+  getDusdcCoins,
+} from "@rangepilot/sdk/deepbookPredict";
+import { useDeepVolConfig } from "./useDeepVolConfig";
+import { useSuiWallet } from "./useSuiWallet";
+import {
+  calculateCreateFeeAtomic,
+  computeMaxPremiumPaidAtomic,
+  decodeAsciiVector,
+  normalizePositiveIntegerInput,
+} from "../lib/format";
+
+type QuoteStatus = "idle" | "loading" | "ready" | "blocked" | "error";
+
+type ParsedMoveObject = {
+  data?: {
+    content?: {
+      dataType?: string;
+      fields?: Record<string, unknown>;
+    };
+  };
+};
+
+type CoinSelection = {
+  coinObjectId: string;
+  balanceAtomic: string;
+};
+
+export type DeepVolPreflightState = {
+  binaryMintPassed: boolean;
+  buyReceiptPassed: boolean;
+  message: string;
+};
+
+export type DeepVolQuoteState = {
+  status: QuoteStatus;
+  series: VolSeries | null;
+  quantity: string;
+  upQuoteAtomic: string | null;
+  downQuoteAtomic: string | null;
+  expectedPremiumAtomic: string | null;
+  createFeeAtomic: string | null;
+  maxPremiumPaidAtomic: string | null;
+  feeCoin: CoinSelection | null;
+  quotedAtMs: number | null;
+  preflight: DeepVolPreflightState;
+  blockers: string[];
+  warnings: string[];
+  error: string | null;
+  isLoading: boolean;
+};
+
+type UseDeepVolQuoteParams = {
+  quantityInput: string;
+  predictManagerId: string | null;
+};
+
+export function useDeepVolQuote({
+  quantityInput,
+  predictManagerId,
+}: UseDeepVolQuoteParams): DeepVolQuoteState {
+  const client = useSuiClient();
+  const wallet = useSuiWallet();
+  const config = useDeepVolConfig();
+  const quantity = normalizePositiveIntegerInput(quantityInput);
+  const baseBlockers = useMemo(() => {
+    const blockers: string[] = [];
+
+    if (!wallet.isConnected) {
+      blockers.push("Connect a Sui wallet before DeepVol can prepare wallet-specific quotes.");
+    }
+
+    if (wallet.isConnected && !wallet.isTestnet) {
+      blockers.push("Switch the connected wallet to Sui Testnet.");
+    }
+
+    if (!quantity) {
+      blockers.push("Enter a positive integer quantity.");
+    }
+
+    if (!predictManagerId) {
+      blockers.push("Enter or store a PredictManager ID before preparing buy_move_receipt.");
+    }
+
+    if (!config.isPackageConfigured || !config.isProtocolVaultConfigured || !config.isDusdcConfigured) {
+      blockers.push("DeepVol Testnet package, ProtocolVault, or DUSDC config is incomplete.");
+    }
+
+    return blockers;
+  }, [config.isDusdcConfigured, config.isPackageConfigured, config.isProtocolVaultConfigured, predictManagerId, quantity, wallet.isConnected, wallet.isTestnet]);
+
+  const query = useQuery({
+    queryKey: [
+      "deepvol-quote",
+      wallet.address,
+      wallet.isTestnet,
+      config.configuredSeriesId,
+      quantity,
+      predictManagerId,
+    ],
+    enabled: Boolean(config.configuredSeriesId && quantity),
+    queryFn: async () => {
+      const series = await readVolSeries(client, config.configuredSeriesId);
+      const blockers = [...baseBlockers];
+      const warnings: string[] = [];
+
+      if (!series.active) {
+        blockers.push("Configured BTC MOVE VolSeries is inactive.");
+      }
+
+      if (BigInt(series.lowerStrike) >= BigInt(series.upperStrike)) {
+        blockers.push("Configured BTC MOVE VolSeries has invalid strike ordering.");
+      }
+
+      if (!wallet.address || !wallet.isTestnet || !quantity) {
+        return buildState({
+          status: blockers.length > 0 ? "blocked" : "idle",
+          series,
+          quantity: quantityInput,
+          blockers,
+          warnings,
+        });
+      }
+
+      let upQuoteAtomic: string | null = null;
+      let downQuoteAtomic: string | null = null;
+      let expectedPremiumAtomic: string | null = null;
+      let createFeeAtomic: string | null = null;
+      let maxPremiumPaidAtomic: string | null = null;
+      let feeCoin: CoinSelection | null = null;
+
+      try {
+        const [upQuote, downQuote] = await Promise.all([
+          devInspectBinaryQuote({
+            client,
+            sender: wallet.address,
+            oracleId: series.oracleId,
+            oracleObjectId: series.oracleId,
+            expiry: series.expiry,
+            strike: series.upperStrike,
+            direction: "up",
+            quantity,
+            config: DEEPBOOK_PREDICT_TESTNET,
+          }),
+          devInspectBinaryQuote({
+            client,
+            sender: wallet.address,
+            oracleId: series.oracleId,
+            oracleObjectId: series.oracleId,
+            expiry: series.expiry,
+            strike: series.lowerStrike,
+            direction: "down",
+            quantity,
+            config: DEEPBOOK_PREDICT_TESTNET,
+          }),
+        ]);
+
+        upQuoteAtomic = upQuote.mintCostAtomic;
+        downQuoteAtomic = downQuote.mintCostAtomic;
+        expectedPremiumAtomic = (BigInt(upQuoteAtomic) + BigInt(downQuoteAtomic)).toString();
+        createFeeAtomic = calculateCreateFeeAtomic(expectedPremiumAtomic, series.createFeeBps);
+        maxPremiumPaidAtomic = computeMaxPremiumPaidAtomic(expectedPremiumAtomic);
+
+        if (BigInt(upQuoteAtomic) <= 0n || BigInt(downQuoteAtomic) <= 0n) {
+          blockers.push("Fresh UP and DOWN quotes must both be positive.");
+        }
+
+        if (BigInt(createFeeAtomic) <= 0n) {
+          warnings.push("Create Fee rounds to zero for the selected quantity; use a larger quantity for fee visibility.");
+        }
+
+        const coins = await getDusdcCoins(client, wallet.address, DEEPBOOK_PREDICT_TESTNET);
+        const requiredFee = BigInt(createFeeAtomic);
+        const selectedCoin = coins.find((coin) => BigInt(coin.balanceAtomic) >= requiredFee);
+
+        if (selectedCoin) {
+          feeCoin = {
+            coinObjectId: selectedCoin.coinObjectId,
+            balanceAtomic: selectedCoin.balanceAtomic,
+          };
+        } else {
+          blockers.push("No sender-owned Coin<DUSDC> can cover the quoted Create Fee as a whole fee coin.");
+        }
+      } catch (error) {
+        return buildState({
+          status: "error",
+          series,
+          quantity,
+          blockers,
+          warnings,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
+      blockers.push("Browser direct binary mint preflight is not implemented in this scaffold, so wallet submission remains disabled.");
+      blockers.push("Browser buy_move_receipt<DUSDC> preflight is not implemented in this scaffold, so wallet submission remains disabled.");
+
+      return buildState({
+        status: blockers.length > 0 ? "blocked" : "ready",
+        series,
+        quantity,
+        upQuoteAtomic,
+        downQuoteAtomic,
+        expectedPremiumAtomic,
+        createFeeAtomic,
+        maxPremiumPaidAtomic,
+        feeCoin,
+        blockers,
+        warnings,
+        quotedAtMs: Date.now(),
+      });
+    },
+  });
+
+  if (query.isLoading) {
+    return buildState({
+      status: "loading",
+      quantity: quantity ?? quantityInput,
+      blockers: baseBlockers,
+      warnings: [],
+    });
+  }
+
+  if (query.isError) {
+    return buildState({
+      status: "error",
+      quantity: quantity ?? quantityInput,
+      blockers: baseBlockers,
+      warnings: [],
+      error: query.error instanceof Error ? query.error.message : String(query.error),
+    });
+  }
+
+  return query.data ?? buildState({
+    status: baseBlockers.length > 0 ? "blocked" : "idle",
+    quantity: quantity ?? quantityInput,
+    blockers: baseBlockers,
+    warnings: [],
+  });
+}
+
+async function readVolSeries(
+  client: {
+    getObject(input: {
+      id: string;
+      options?: { showContent?: boolean; showOwner?: boolean };
+    }): Promise<unknown>;
+  },
+  seriesId: string,
+): Promise<VolSeries> {
+  const response = await client.getObject({
+    id: seriesId,
+    options: { showContent: true, showOwner: true },
+  });
+  const fields = (response as ParsedMoveObject).data?.content?.fields;
+
+  if (!fields) {
+    throw new Error("Configured VolSeries object content is unavailable from Sui Testnet.");
+  }
+
+  const oracleId = readIdField(fields.oracle_id ?? fields.oracleId);
+  const expiry = readScalarField(fields.expiry);
+  const lowerStrike = readScalarField(fields.lower_strike ?? fields.lowerStrike);
+  const upperStrike = readScalarField(fields.upper_strike ?? fields.upperStrike);
+  const createFeeBps = Number(readScalarField(fields.create_fee_bps ?? fields.createFeeBps));
+  const active = Boolean(fields.active);
+
+  if (!oracleId || !expiry || !lowerStrike || !upperStrike || !Number.isFinite(createFeeBps)) {
+    throw new Error("Configured VolSeries is missing oracle, expiry, strike, or Create Fee fields.");
+  }
+
+  return {
+    seriesId,
+    creator: String(fields.creator ?? ""),
+    oracleId,
+    expiry,
+    lowerStrike,
+    upperStrike,
+    metadataUri: decodeAsciiVector(fields.metadata_uri ?? fields.metadataUri) ?? "",
+    createFeeBps,
+    active,
+    createdAtMs: readScalarField(fields.created_at_ms ?? fields.createdAtMs) ?? "",
+  };
+}
+
+function buildState(params: Partial<DeepVolQuoteState> & {
+  status: QuoteStatus;
+  quantity: string;
+  blockers: string[];
+  warnings: string[];
+}): DeepVolQuoteState {
+  return {
+    series: null,
+    upQuoteAtomic: null,
+    downQuoteAtomic: null,
+    expectedPremiumAtomic: null,
+    createFeeAtomic: null,
+    maxPremiumPaidAtomic: null,
+    feeCoin: null,
+    quotedAtMs: null,
+    preflight: {
+      binaryMintPassed: false,
+      buyReceiptPassed: false,
+      message: "Full browser preflight must pass before wallet submission is enabled.",
+    },
+    error: null,
+    isLoading: params.status === "loading",
+    ...params,
+  };
+}
+
+function readScalarField(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
+    return String(value);
+  }
+
+  if (typeof value === "object" && "fields" in value) {
+    return readScalarField((value as { fields?: unknown }).fields);
+  }
+
+  return null;
+}
+
+function readIdField(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "object" && value !== null) {
+    const record = value as Record<string, unknown>;
+    return readIdField(record.id ?? record.bytes ?? record.fields);
+  }
+
+  return null;
+}

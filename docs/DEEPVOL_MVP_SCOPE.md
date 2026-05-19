@@ -1,7 +1,7 @@
 ---
 Purpose: Define the first DeepVol BTC MOVE MVP boundary.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-5 first receipt validation.
+Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-6 frontend scaffold.
 ---
 
 # DeepVol MVP Scope
@@ -37,6 +37,7 @@ The MVP includes:
 - Charge Create Fee through a separate `fee_coin<Quote>`.
 - Deposit Create Fee into DeepVol `ProtocolVault<Quote>`.
 - Portfolio readback that combines `MoveReceipt` metadata with `PredictManager` binary position readback.
+- A DeepVol-first wallet-gated frontend scaffold under `apps/deepvol-web/`.
 - Guided redeem / settlement path that directs users through the official DeepBook Predict binary redeem flow.
 
 ## Explicitly out of MVP
@@ -78,8 +79,9 @@ The first implementation should prefer runtime discovery over hardcoded market a
 8. Upgrade to DeepVol-3B Route B contract code: DeepVol derives both binary legs from `VolSeries`, calls Predict mint twice inside `buy_move_receipt<Quote>`, and deposits Create Fee into a DeepVol-owned vault.
 9. Record DeepVol-4 manual Testnet publish/configuration and create the shared `ProtocolVault<DUSDC>`.
 10. Validate fresh quote, fee coin, full preflight, execution, and post-state gates around the deployed `buy_move_receipt<DUSDC>` path. DeepVol-5 completed this for one runtime-selected BTC series with buy digest `GVyMBH9kB6nTSuWoULFZ5ir3yhFnRC8LNoRz9EEDQXbd`.
-11. Add portfolio readback and guided settlement UI.
-12. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
+11. Add the DeepVol-6 wallet-gated frontend scaffold under `apps/deepvol-web/`, separate from the prior RangePilot `apps/web` validation UI.
+12. Add completed browser-safe portfolio readback and guided settlement UI.
+13. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
 
 ## Code organization
 
@@ -92,10 +94,10 @@ packages/sdk/src/deepVol/
 packages/config/src/deepVolTestnet.ts
 ```
 
-Future UI work can add:
+DeepVol frontend scaffold:
 
 ```text
-apps/web/src/pages/DeepVolMarketsPage.tsx
-apps/web/src/pages/DeepVolSeriesPage.tsx
-apps/web/src/pages/DeepVolPortfolioPage.tsx
+apps/deepvol-web/
 ```
+
+`apps/web/` remains the prior RangePilot validation UI. Future DeepVol UX work should build from `apps/deepvol-web/`, not by patching DeepVol pages into the old scaffold.

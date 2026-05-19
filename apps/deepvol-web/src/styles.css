@@ -1,0 +1,390 @@
+:root {
+  color: #e6f1ff;
+  background: #06111f;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --background-base: #06111f;
+  --background-surface: rgba(10, 26, 47, 0.88);
+  --background-elevated: rgba(14, 38, 68, 0.94);
+  --border-base: rgba(119, 189, 255, 0.22);
+  --border-strong: rgba(99, 179, 255, 0.46);
+  --font-muted: #9db6d4;
+  --blue-primary: #38a7ff;
+  --blue-soft: #8bd2ff;
+  --blue-deep: #123e71;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --shadow-card: 0 24px 70px rgba(0, 37, 92, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(56, 167, 255, 0.22), transparent 34rem),
+    radial-gradient(circle at bottom right, rgba(26, 74, 138, 0.45), transparent 30rem),
+    var(--background-base);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.appShell {
+  min-height: 100vh;
+}
+
+.topNav {
+  display: grid;
+  grid-template-columns: auto 1fr minmax(18rem, 24rem);
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.25rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--border-base);
+  background: rgba(6, 17, 31, 0.82);
+  backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--blue-primary), #2459ff);
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 16px 40px rgba(56, 167, 255, 0.35);
+}
+
+.brand small {
+  display: block;
+  color: var(--font-muted);
+  margin-top: 0.15rem;
+}
+
+.navLinks {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.navLinks a,
+.primaryLink,
+.secondaryButton,
+.primaryButton {
+  border: 1px solid var(--border-base);
+  border-radius: 999px;
+  padding: 0.72rem 1rem;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e6f1ff;
+}
+
+.primaryLink,
+.primaryButton {
+  display: inline-flex;
+  justify-content: center;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--blue-primary), #246bff);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  cursor: pointer;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.walletPanel {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: end;
+}
+
+.walletConnect :global(button) {
+  border-radius: 999px;
+}
+
+.compactDetails,
+.detailsGrid {
+  margin: 0;
+}
+
+.compactDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.9rem;
+  font-size: 0.78rem;
+  color: var(--font-muted);
+}
+
+.compactDetails div,
+.detailsGrid div {
+  min-width: 0;
+}
+
+dt {
+  color: var(--font-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.2rem;
+}
+
+dd {
+  margin: 0;
+}
+
+.shellMain {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.pageGrid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.twoColumn {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.card,
+.introPanel,
+.noticeBanner,
+.warningBanner,
+.advancedDetails {
+  border: 1px solid var(--border-base);
+  border-radius: 1.4rem;
+  background: var(--background-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card,
+.introPanel,
+.advancedDetails {
+  padding: 1.35rem;
+}
+
+.cardGlow {
+  background:
+    linear-gradient(145deg, rgba(56, 167, 255, 0.2), rgba(8, 22, 39, 0.92)),
+    var(--background-surface);
+}
+
+.noticeBanner,
+.warningBanner {
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.25rem;
+}
+
+.warningBanner,
+.warningText {
+  color: var(--warning);
+}
+
+.errorText {
+  color: var(--danger);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  line-height: 0.95;
+}
+
+h2 {
+  font-size: 1.45rem;
+}
+
+p {
+  color: #c6d9f2;
+  line-height: 1.65;
+}
+
+.heroCopy {
+  font-size: 1.15rem;
+}
+
+.eyebrow {
+  color: var(--blue-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.pill,
+.statusBadge {
+  border: 1px solid var(--border-base);
+  border-radius: 999px;
+  padding: 0.4rem 0.65rem;
+  color: var(--blue-soft);
+  background: rgba(56, 167, 255, 0.08);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.successBadge {
+  color: var(--success);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.blockedBadge {
+  color: var(--warning);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.fieldLabel {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  color: var(--font-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  border: 1px solid var(--border-base);
+  border-radius: 0.95rem;
+  padding: 0.85rem 1rem;
+  color: #e6f1ff;
+  background: rgba(3, 12, 24, 0.68);
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 4px rgba(56, 167, 255, 0.12);
+}
+
+.buySetupCard,
+.transactionCard,
+.advancedDetails {
+  height: fit-content;
+}
+
+.advancedDetails {
+  grid-column: 1 / -1;
+}
+
+.advancedDetails summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--blue-soft);
+}
+
+.advancedContent {
+  padding-top: 1rem;
+}
+
+.blockerList,
+.warningList,
+.transactionStatus {
+  border: 1px solid var(--border-base);
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: rgba(3, 12, 24, 0.45);
+}
+
+.blockerList {
+  border-color: rgba(251, 191, 36, 0.32);
+}
+
+.blockerList ul,
+.warningList ul {
+  margin: 0.7rem 0 0;
+  padding-left: 1.2rem;
+  color: #d6e7fb;
+}
+
+.mono {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.wrapText {
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  color: var(--font-muted);
+}
+
+.notFoundCard {
+  max-width: 42rem;
+}
+
+@media (max-width: 900px) {
+  .topNav,
+  .twoColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .walletPanel {
+    justify-items: start;
+  }
+
+  .detailsGrid,
+  .compactDetails {
+    grid-template-columns: 1fr;
+  }
+}

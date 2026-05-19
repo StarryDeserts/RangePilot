@@ -12,17 +12,26 @@
       "@rangepilot/config/deepbookPredictTestnet": [
         "packages/config/src/deepbookPredictTestnet.ts"
       ],
+      "@rangepilot/config/deepVolTestnet": [
+        "packages/config/src/deepVolTestnet.ts"
+      ],
       "@rangepilot/config/rangePilotTestnet": [
         "packages/config/src/rangePilotTestnet.ts"
       ],
       "@rangepilot/types/deepbookPredict": [
         "packages/types/src/deepbookPredict.ts"
       ],
+      "@rangepilot/types/deepVol": [
+        "packages/types/src/deepVol.ts"
+      ],
       "@rangepilot/types/rangePilotStrategy": [
         "packages/types/src/rangePilotStrategy.ts"
       ],
       "@rangepilot/sdk/deepbookPredict": [
         "packages/sdk/src/deepbookPredict/index.ts"
+      ],
+      "@rangepilot/sdk/deepVol": [
+        "packages/sdk/src/deepVol/index.ts"
       ],
       "@rangepilot/sdk/rangePilotStrategy": [
         "packages/sdk/src/rangePilotStrategy/index.ts"

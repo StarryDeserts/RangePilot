@@ -215,6 +215,12 @@ Future executions still require fresh runtime oracle, expiry, strike, quote, man
 - No second `create_series` transaction was submitted in the validation run.
 - No second `buy_move_receipt<DUSDC>` transaction was submitted in the validation run.
 
+## DeepVol-6 frontend scaffold note
+
+DeepVol-6 uses the validated VolSeries and receipt in this document as reference artifacts for the new `apps/deepvol-web/` wallet-gated frontend scaffold. The historical quote values recorded above are validation evidence only; they are not live offers and must not be displayed as current quotes.
+
+The frontend must refresh quote, fee coin, gas, and preflight state at runtime before enabling wallet approval. If browser-safe full preflight is unavailable, the buy button must remain disabled with the exact blocker shown.
+
 ## Next step
 
-Build the wallet-gated DeepVol receipt UX using this validated deployed path while preserving fresh quote, full preflight, fee coin, gas, and explicit non-custodial receipt copy before wallet approval.
+Finish browser-safe quote/preflight/readback helpers or polish the transaction step UX from the `apps/deepvol-web/` scaffold, depending on which blockers remain after verification.

@@ -1,7 +1,7 @@
 ---
 Purpose: Define the phased implementation roadmap for DeepVol BTC MOVE while preserving RangePilot validation history.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: Updated for DeepVol-5 first deployed receipt validation.
+Status: Updated for DeepVol-6 wallet-gated frontend scaffold.
 Source of truth relationship: Derived from DeepVol foundation docs, local protocol docs, and official-derived Testnet integration references; implementation details remain subject to confirmation.
 ---
 
@@ -67,11 +67,11 @@ The prior creator-follow strategy model is not the primary product direction bec
 
 | Field | Content |
 |---|---|
-| Goal | Display BTC MOVE receipts and guide users through official DeepBook Predict binary redeem/settlement paths. |
-| Deliverables | DeepVol markets page; series page; portfolio page; receipt cards; manager binary readback; settlement status; guided redeem path; precise unavailable states. |
-| Non-goals | Full UI polish, creator marketplace, secondary market, custodial settlement, Profit Fee enforcement. |
-| Acceptance criteria | Users can see receipt metadata, current UP/DOWN quantities from `PredictManager`, expiry/settlement status, and guided redeem actions without treating receipt as custody truth. |
-| Required docs | DeepVol protocol architecture; DeepVol data model; binary leg integration; PredictManager docs; protocol integration notes. |
+| Goal | Establish the DeepVol-first wallet-gated frontend scaffold before settlement UX. |
+| Deliverables | New `apps/deepvol-web` Vite app; BTC MOVE markets route; buy route; portfolio route; wallet status; Testnet guard; quote/preflight panels; transaction gating card; local/reference receipt readback; explicit blocker states. |
+| Non-goals | Full UI polish, creator marketplace, secondary market, custodial settlement, Profit Fee enforcement, automatic execution, mainnet, redeem/withdraw actions. |
+| Acceptance criteria | Users can connect a Testnet wallet, inspect the validated BTC MOVE VolSeries, see quote/preflight state, understand why the buy button is disabled until all gates pass, and view local/reference receipt readback without treating the receipt as custody truth. |
+| Required docs | DeepVol frontend MVP; DeepVol protocol architecture; DeepVol data model; binary leg integration; PredictManager docs; protocol integration notes. |
 | Risks and fallback | Risk: users misunderstand receipts as tradable claims. Fallback: UI copy must state non-custodial receipt limitation clearly. |
 
 ## Phase 5: Demo polish
@@ -79,7 +79,7 @@ The prior creator-follow strategy model is not the primary product direction bec
 | Field | Content |
 |---|---|
 | Goal | Prepare a coherent DeepVol demo that communicates BTC MOVE in under 60 seconds and proves the core protocol path. |
-| Deliverables | Landing narrative; BTC MOVE market screen; receipt creation flow; portfolio/settlement view; demo script; fallback screenshots; runbook. |
+| Deliverables | Landing narrative; polished `apps/deepvol-web` BTC MOVE market screen; completed browser-safe receipt creation preflight; portfolio/settlement view; demo script; fallback screenshots; runbook. |
 | Non-goals | Broad market support, pro API, production-grade indexer, custodial receipt, secondary market. |
 | Acceptance criteria | Demo explains “Trade movement, not direction”; live or recorded evidence shows official DeepBook Predict binary composition and receipt metadata; limitations are not misrepresented. |
 | Required docs | DeepVol product direction; MVP scope; protocol architecture; binary validation artifacts; business model. |
@@ -109,4 +109,4 @@ These milestones are complete and remain useful as DeepVol implementation eviden
 | Phase 2 guided range scaffold | Completed as engineering scaffold | UI and wallet-gating reference, not current MVP direction. |
 | Phase 3 Route B wrapper | Completed and validated | Reusable fee vault, wrapper, event-linkage, and post-state verification patterns. |
 
-Formal UI design can now build on the validated deployed DeepVol receipt and fee path, but wallet-gated UX work must preserve fresh quote, preflight, readback, and non-custodial receipt limitations.
+Formal UI design should now build from `apps/deepvol-web`, not by extending the prior RangePilot `apps/web` scaffold. Wallet-gated UX work must preserve fresh quote, preflight, readback, and non-custodial receipt limitations.
