@@ -57,7 +57,7 @@ The MVP excludes:
 - Pro API.
 - Full UI polish.
 
-These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round was blocked before submission by CLI dry-run `InsufficientGas in command 3`, so receipt contract work remains future scope.
+These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; receipt contract work remains future scope until the same fresh gates are translated into the DeepVol receipt flow.
 
 ## Runtime assumptions
 
@@ -72,12 +72,11 @@ The first implementation should prefer runtime discovery over hardcoded market a
 3. Add a read-only BTC binary leg validation harness for quote, MarketKey construction, readback, and devInspect-only preflight.
 4. Validate BTC binary quote preview for both UP and DOWN legs.
 5. Validate a two-leg binary mint PTB in devInspect.
-6. Run a controlled binary mint round and document the result. The 2026-05-19 round was blocked before submission by CLI dry-run `InsufficientGas in command 3`.
-7. Diagnose the mint dry-run blocker before attempting another real binary mint.
-8. Design `VolSeries` and non-custodial `MoveReceipt` Move structs after the underlying binary mint path is proven or explicitly re-scoped.
-9. Add SDK builders and full preflight gates.
-10. Add portfolio readback and guided settlement UI.
-11. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
+6. Run a controlled binary mint round and document the result. The 2026-05-19 round diagnosed the old `InsufficientGas in command 3` as a too-low `100000000` MIST gas budget and validated one real two-leg mint at `200000000` MIST.
+7. Design `VolSeries` and non-custodial `MoveReceipt` Move structs around the proven binary mint path.
+8. Add SDK builders and full preflight gates.
+9. Add portfolio readback and guided settlement UI.
+10. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
 
 ## Future code organization
 

@@ -26,8 +26,13 @@ const readModeQuantities = ["1000", "10000", "100000"];
 const maxCandidatesPerOracle = 18;
 const mintGasBudgetMist = "100000000";
 const minimumGasBalanceMist = 100000000n;
+const maxDryRunGasBudgetMist = 500000000n;
+const maxRealMintGasBudgetMist = 500000000n;
+const defaultDiagnosticGasBudgetsMist = ["100000000", "200000000", "500000000"];
+const realMintGasReserveMist = 50000000n;
 const maxMintTotalPremiumAtomic = 10000n;
 const expectedCliEnv = "testnet";
+let realMintSubmittedThisProcess = false;
 const dusdcCoinType = config.quoteAssets.DUSDC.coinType;
 const forbiddenPreflightMoveCalls = [
   "predict::mint_range",
@@ -96,6 +101,7 @@ async function main() {
     readResult,
     sender: options.sender ?? null,
     managerId: options.manager ?? null,
+    options,
   });
 }
 
@@ -182,8 +188,19 @@ async function runPreflightMode({ client, server, readResult, sender, managerId 
   console.log("No write transactions submitted.");
 }
 
-async function runMintMode({ client, server, readResult, sender, managerId }) {
+async function runMintMode({ client, server, readResult, sender, managerId, options }) {
   const blockers = [];
+  const executeRealMint = optionEnabled(options, "execute-real-mint");
+  const requestedGasBudgetMist = parsePositiveMistBudget(
+    options["gas-budget"] ?? mintGasBudgetMist,
+    "gas budget",
+    executeRealMint ? maxRealMintGasBudgetMist : maxDryRunGasBudgetMist,
+  );
+  const diagnosticGasBudgets = parseGasBudgetList(
+    options["diagnostic-gas-budgets"],
+    defaultDiagnosticGasBudgetsMist,
+    maxDryRunGasBudgetMist,
+  );
   const normalizedSender = sender ? normalizeAddress(sender) : null;
   const normalizedControlledSender = normalizeAddress(controlledSender);
   const normalizedManagerId = managerId ? normalizeAddress(managerId) : null;
@@ -216,6 +233,7 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
   let chainOwner = null;
   let managerBalance = null;
   let gasBalance = null;
+  let gasCoins = [];
 
   if (sender && managerId) {
     managerSummary = await tryRead("manager summary", () => server.getManagerSummary(managerId));
@@ -247,6 +265,17 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
     } else if (BigInt(gasBalance.totalBalance) < minimumGasBalanceMist) {
       blockers.push(`SUI gas balance ${gasBalance.totalBalance} MIST is below required ${minimumGasBalanceMist.toString()} MIST.`);
     }
+
+    gasCoins = await readSuiGasCoins({ client, owner: sender });
+
+    if (executeRealMint) {
+      const requiredGas = BigInt(requestedGasBudgetMist) + realMintGasReserveMist;
+      const coveringCoin = gasCoins.find((coin) => BigInt(coin.balance) >= requiredGas);
+
+      if (!coveringCoin) {
+        blockers.push(`No SUI gas coin covers gas budget ${requestedGasBudgetMist} plus reserve ${realMintGasReserveMist.toString()} MIST.`);
+      }
+    }
   }
 
   console.log("\nControlled two-leg binary mint gates");
@@ -259,6 +288,10 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
   console.log(`manager object owner: ${formatOwnerReadback(chainOwner)}`);
   console.log(`manager DUSDC balance: ${managerBalance?.status === "success" ? managerBalance.balance : "unavailable"}`);
   console.log(`sender SUI gas balance: ${gasBalance?.status === "success" ? gasBalance.totalBalance : "unavailable"}`);
+  console.log(`requested gas budget: ${requestedGasBudgetMist}`);
+  console.log(`diagnostic gas budgets: ${diagnosticGasBudgets.join(",")}`);
+  console.log(`real execution intent: ${executeRealMint ? "enabled by --execute-real-mint" : "disabled"}`);
+  printGasCoinSummary(gasCoins);
 
   if (readResult.pair) {
     printSelectedPair(readResult.pair);
@@ -299,6 +332,7 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
   });
   setTransactionSender(transactionBlock, sender);
   assertExpectedTwoLegMintTransaction(transactionBlock);
+  printTwoLegCommandMap(transactionBlock);
 
   const preflightResult = await client.devInspectTransactionBlock({
     sender,
@@ -316,12 +350,134 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
     return;
   }
 
+  let sdkDryRun;
+  try {
+    const result = await dryRunTwoLegMintWithSdk({
+      tx: transactionBlock,
+      client,
+      sender,
+      gasBudgetMist: requestedGasBudgetMist,
+    });
+    sdkDryRun = { status: "success", ...result, error: null };
+  } catch (error) {
+    const message = sanitizeCliError(error);
+    explainCommandIndex(transactionBlock, message);
+    sdkDryRun = { status: "blocked", gasBudgetMist: requestedGasBudgetMist, error: message, gasUsed: null };
+  }
+
+  console.log(`SDK dry-run: ${sdkDryRun.status === "success" ? "passed" : "blocked"}`);
+  console.log(`SDK dry-run gas used: ${formatGasUsed(sdkDryRun.gasUsed)}`);
+  console.log(`SDK dry-run net gas charge: ${estimateNetGasChargeMist(sdkDryRun.gasUsed) ?? "unavailable"}`);
+  if (sdkDryRun.status !== "success") {
+    console.log(`SDK dry-run error: ${sdkDryRun.error}`);
+  }
+
+  const diagnosticBudgets = uniqueStrings([requestedGasBudgetMist, ...diagnosticGasBudgets]);
+  const cliResults = await runCliGasBudgetDiagnostics({
+    tx: transactionBlock,
+    client,
+    sender,
+    gasBudgets: diagnosticBudgets,
+  });
+  let explicitGasCliResults = null;
+  let selectedPassingDryRun = cliResults.find((result) => result.status === "success") ?? null;
+  let selectedGasCoinId = selectedPassingDryRun?.gasObjectId ?? null;
+
+  if (sdkDryRun.status === "success" && !selectedPassingDryRun) {
+    const explicitGasCoin = findGasCoinCoveringBudget(gasCoins, requestedGasBudgetMist);
+
+    console.log("explicit gas coin dry-run:");
+    if (explicitGasCoin) {
+      console.log(`selected gas coin: ${explicitGasCoin.coinObjectId} balance=${explicitGasCoin.balance}`);
+      const result = await tryCliDryRun({
+        tx: transactionBlock,
+        client,
+        sender,
+        gasBudgetMist: requestedGasBudgetMist,
+        gasObjectId: explicitGasCoin.coinObjectId,
+      });
+      explicitGasCliResults = [result];
+      console.log(`explicit gas coin dry-run: ${result.status === "success" ? "passed" : "blocked"}`);
+      if (result.status === "blocked") {
+        console.log(`explicit gas coin dry-run error: ${result.error}`);
+      } else {
+        console.log(`explicit gas coin dry-run gas used: ${formatGasUsed(result.gasUsed)}`);
+        selectedPassingDryRun = result;
+        selectedGasCoinId = explicitGasCoin.coinObjectId;
+      }
+    } else {
+      explicitGasCliResults = [];
+      console.log(`explicit gas coin dry-run: skipped; no gas coin covers ${requestedGasBudgetMist} MIST`);
+    }
+  }
+
+  const dryRunDiagnosis = classifyDryRunDiagnosis({
+    devInspectPassed: preflightStatus === "success",
+    sdkDryRun,
+    cliResults,
+    explicitGasCliResults,
+  });
+  const selectedPassingGasBudgetMist = selectedPassingDryRun?.gasBudgetMist ?? null;
+
+  console.log(`dry-run diagnosis: ${dryRunDiagnosis}`);
+  console.log(`selected passing gas budget: ${selectedPassingGasBudgetMist ?? "unavailable"}`);
+  console.log(`selected gas coin: ${selectedGasCoinId ?? "CLI auto-selection"}`);
+
+  if (!selectedPassingDryRun) {
+    console.log("two-leg binary mint: blocked");
+    console.log("No write transactions submitted.");
+    return;
+  }
+
+  if (!executeRealMint) {
+    console.log("\nReal mint");
+    console.log("real mint: not executed; pass --execute-real-mint only after reviewing dry-run diagnostics");
+    console.log("No write transactions submitted.");
+    return;
+  }
+
+  const realMintBlockers = [];
+  const allowedRealMintDiagnoses = ["dry_run_passed", "gas_budget_too_low", "cli_auto_gas_selection_behavior"];
+
+  if (sdkDryRun.status !== "success") {
+    realMintBlockers.push("SDK dry-run did not pass in this invocation.");
+  }
+
+  if (!allowedRealMintDiagnoses.includes(dryRunDiagnosis)) {
+    realMintBlockers.push(`Dry-run diagnosis ${dryRunDiagnosis} is not allowed for real execution.`);
+  }
+
+  if (gasBalance?.status !== "success") {
+    realMintBlockers.push("Sender SUI gas balance was not read successfully.");
+  } else if (BigInt(gasBalance.totalBalance) < BigInt(selectedPassingGasBudgetMist) + realMintGasReserveMist) {
+    realMintBlockers.push(`Sender SUI gas balance ${gasBalance.totalBalance} is below selected gas budget ${selectedPassingGasBudgetMist} plus reserve ${realMintGasReserveMist.toString()} MIST.`);
+  }
+
+  if (selectedGasCoinId) {
+    const selectedGasCoin = gasCoins.find((coin) => normalizeAddress(coin.coinObjectId) === normalizeAddress(selectedGasCoinId));
+    if (!selectedGasCoin || BigInt(selectedGasCoin.balance) < BigInt(selectedPassingGasBudgetMist) + realMintGasReserveMist) {
+      realMintBlockers.push(`Selected gas coin does not cover selected gas budget ${selectedPassingGasBudgetMist} plus reserve ${realMintGasReserveMist.toString()} MIST.`);
+    }
+  } else if (!findGasCoinCoveringBudget(gasCoins, (BigInt(selectedPassingGasBudgetMist) + realMintGasReserveMist).toString())) {
+    realMintBlockers.push(`No gas coin covers selected gas budget ${selectedPassingGasBudgetMist} plus reserve ${realMintGasReserveMist.toString()} MIST.`);
+  }
+
+  if (realMintBlockers.length > 0) {
+    console.log("two-leg binary mint: blocked");
+    printBlockers(realMintBlockers);
+    console.log("No write transactions submitted.");
+    return;
+  }
+
   let execution;
   try {
+    assertCanSubmitAtMostOneRealMint();
     execution = await executeTwoLegMintWithSuiCli({
       tx: transactionBlock,
       client,
       sender,
+      gasBudgetMist: selectedPassingGasBudgetMist,
+      gasObjectId: selectedGasCoinId,
     });
   } catch (error) {
     console.log("\nReal mint");
@@ -344,6 +500,9 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
   const mintedEvents = transactionDetails.status === "success"
     ? extractPositionMintedEvents(transactionDetails.value)
     : [];
+  const executionGasUsed = transactionDetails.status === "success"
+    ? extractGasUsed(transactionDetails.value)
+    : null;
 
   const positionsAfter = await readBinaryPositions({ client, sender, managerId, pair: readResult.pair });
   const balanceAfter = await readManagerDusdcBalance({ client, sender, managerId });
@@ -358,7 +517,11 @@ async function runMintMode({ client, server, readResult, sender, managerId }) {
   console.log("executed: yes");
   console.log(`digest: ${execution.digest}`);
   console.log(`explorer: ${buildSuiExplorerTransactionUrl(execution.digest, "testnet")}`);
-  console.log(`CLI dry-run: ${execution.dryRunStatus}`);
+  console.log(`gas budget: ${execution.gasBudgetMist}`);
+  console.log(`gas coin: ${execution.gasObjectId ?? "CLI auto-selection"}`);
+  console.log(`gas used: ${formatGasUsed(executionGasUsed)}`);
+  console.log(`SDK dry-run: ${sdkDryRun.status === "success" ? sdkDryRun.dryRunStatus : "blocked"}`);
+  console.log(`CLI dry-run: ${selectedPassingDryRun.dryRunStatus ?? selectedPassingDryRun.status}`);
   console.log(`CLI execution: ${execution.executionStatus}`);
 
   console.log("\nEvents and transaction diagnostics");
@@ -849,7 +1012,7 @@ function printSafetyHeader(mode, sender) {
   console.log("No .env.local read.");
 
   if (mode === "mint") {
-    console.log("Write submission is gated by explicit sender/manager checks, devInspect, and one CLI dry-run.");
+    console.log("Write submission is disabled by default and requires --execute-real-mint plus passing devInspect, SDK dry-run, and CLI dry-run gates.");
     return;
   }
 
@@ -1086,31 +1249,199 @@ function getMoveCalls(tx) {
     .filter(isRecord);
 }
 
+function getMoveCallCommandDetails(tx) {
+  const data = tx.getData();
+  const commands = Array.isArray(data.commands) ? data.commands : [];
+
+  return commands.map((command, index) => {
+    const moveCall = isRecord(command.MoveCall) ? command.MoveCall : null;
+    return {
+      index,
+      oneBasedIndex: index + 1,
+      kind: typeof command.$kind === "string" ? command.$kind : "unknown",
+      module: moveCall ? String(moveCall.module ?? "unknown") : null,
+      function: moveCall ? String(moveCall.function ?? "unknown") : null,
+      target: moveCall
+        ? `${String(moveCall.module ?? "unknown")}::${String(moveCall.function ?? "unknown")}`
+        : null,
+      typeArguments: Array.isArray(moveCall?.typeArguments) ? moveCall.typeArguments : [],
+      arguments: moveCall && Array.isArray(moveCall.arguments)
+        ? moveCall.arguments.map((argument) => summarizeTransactionArgument(argument, data))
+        : [],
+    };
+  });
+}
+
+function summarizeTransactionArgument(argument, data) {
+  if (!isRecord(argument)) {
+    return summarizeShort(argument);
+  }
+
+  if (Number.isInteger(argument.Input)) {
+    return `input[${argument.Input}] ${summarizeTransactionInput(data.inputs?.[argument.Input])}`;
+  }
+
+  if (Number.isInteger(argument.Result)) {
+    return `result[${argument.Result}]`;
+  }
+
+  if (Array.isArray(argument.NestedResult) && argument.NestedResult.length === 2) {
+    return `nested_result[${argument.NestedResult[0]}][${argument.NestedResult[1]}]`;
+  }
+
+  if (typeof argument.$kind === "string") {
+    return argument.$kind;
+  }
+
+  return summarizeShort(argument);
+}
+
+function summarizeTransactionInput(input) {
+  if (!isRecord(input)) {
+    return "unknown";
+  }
+
+  const objectId = extractObjectId(input);
+  if (objectId) {
+    return `object ${objectId}`;
+  }
+
+  if (isRecord(input.Pure) || input.$kind === "Pure") {
+    return "pure";
+  }
+
+  if (typeof input.type === "string") {
+    return input.type;
+  }
+
+  return summarizeShort(input);
+}
+
+function extractObjectId(value) {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (typeof value.objectId === "string") {
+    return value.objectId;
+  }
+
+  for (const child of Object.values(value)) {
+    if (isRecord(child)) {
+      const nested = extractObjectId(child);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return null;
+}
+
+function summarizeShort(value) {
+  const text = JSON.stringify(value);
+  return text && text.length > 140 ? `${text.slice(0, 137)}...` : text;
+}
+
+function printTwoLegCommandMap(tx) {
+  console.log("Two-leg PTB command map:");
+  for (const command of getMoveCallCommandDetails(tx)) {
+    const target = command.target ?? command.kind;
+    console.log(`  command[${command.index}] / human ${command.oneBasedIndex}: ${command.kind} ${target}`);
+    if (command.arguments.length > 0) {
+      console.log(`    args: ${command.arguments.join("; ")}`);
+    }
+  }
+}
+
+function extractCommandIndexFromExecutionError(errorText) {
+  const match = String(errorText).match(/\bcommand\s+(\d+)\b/i);
+  return match ? Number(match[1]) : null;
+}
+
+function formatCommandDiagnostic(command) {
+  if (!command) {
+    return "no matching command";
+  }
+
+  return `command[${command.index}] / human ${command.oneBasedIndex}: ${command.kind} ${command.target ?? "unknown"}`;
+}
+
+function explainCommandIndex(tx, errorText) {
+  const parsedIndex = extractCommandIndexFromExecutionError(errorText);
+  if (parsedIndex === null) {
+    return;
+  }
+
+  const commands = getMoveCallCommandDetails(tx);
+  const zeroBased = commands.find((command) => command.index === parsedIndex);
+  const oneBased = commands.find((command) => command.oneBasedIndex === parsedIndex);
+
+  console.log(`diagnostic command reference: ${parsedIndex}`);
+  console.log(`if zero-based: ${formatCommandDiagnostic(zeroBased)}`);
+  console.log(`if one-based: ${formatCommandDiagnostic(oneBased)}`);
+}
+
 function formatMoveCalls(calls) {
   return calls.map((call) => `${String(call.module ?? "unknown")}::${String(call.function ?? "unknown")}`).join(", ");
 }
 
-async function executeTwoLegMintWithSuiCli({ tx, client, sender }) {
+async function buildSerializedTransactionKind({ tx, client, sender }) {
   setTransactionSender(tx, sender);
   assertExpectedTwoLegMintTransaction(tx);
   const kindBytes = await tx.build({ client, onlyTransactionKind: true });
-  const serializedKind = Buffer.from(kindBytes).toString("base64");
-  const baseArgs = [
+  return Buffer.from(kindBytes).toString("base64");
+}
+
+function buildSerializedTxKindCliArgs({ serializedKind, sender, gasBudgetMist, gasObjectId = null, dryRun = false }) {
+  const args = [
     "client",
     "serialized-tx-kind",
     serializedKind,
     "--sender",
     sender,
     "--gas-budget",
-    mintGasBudgetMist,
+    gasBudgetMist,
   ];
-  const dryRun = await runSuiJson([...baseArgs, "--dry-run", "--json"], "CLI dry-run");
+
+  if (gasObjectId) {
+    args.push("--gas", gasObjectId);
+  }
+
+  if (dryRun) {
+    args.push("--dry-run");
+  }
+
+  args.push("--json");
+  return args;
+}
+
+async function dryRunTwoLegMintWithSuiCli({ tx, client, sender, gasBudgetMist, gasObjectId = null }) {
+  setTransactionSender(tx, sender);
+  assertExpectedTwoLegMintTransaction(tx);
+  printTwoLegCommandMap(tx);
+
+  const serializedKind = await buildSerializedTransactionKind({ tx, client, sender });
+  const args = buildSerializedTxKindCliArgs({ serializedKind, sender, gasBudgetMist, gasObjectId, dryRun: true });
+  const dryRun = await runSuiJson(args, "CLI dry-run");
   const dryRunStatus = requireExecutionSuccess(dryRun, "CLI dry-run");
 
-  console.log(`CLI dry-run: ${dryRunStatus}`);
+  return {
+    dryRun,
+    dryRunStatus,
+    gasBudgetMist,
+    gasObjectId,
+    gasUsed: extractGasUsed(dryRun),
+  };
+}
+
+async function executeTwoLegMintWithSuiCli({ tx, client, sender, gasBudgetMist, gasObjectId = null }) {
+  setTransactionSender(tx, sender);
   assertExpectedTwoLegMintTransaction(tx);
 
-  const execution = await runSuiJson([...baseArgs, "--json"], "CLI execution");
+  const serializedKind = await buildSerializedTransactionKind({ tx, client, sender });
+  const args = buildSerializedTxKindCliArgs({ serializedKind, sender, gasBudgetMist, gasObjectId, dryRun: false });
+  const execution = await runSuiJson(args, "CLI execution");
   const executionStatus = requireExecutionSuccess(execution, "CLI execution");
   const digest = extractDigest(execution);
 
@@ -1118,7 +1449,160 @@ async function executeTwoLegMintWithSuiCli({ tx, client, sender }) {
     throw new Error("CLI execution succeeded but no transaction digest was found in the JSON response.");
   }
 
-  return { dryRun, dryRunStatus, execution, executionStatus, digest };
+  return { execution, executionStatus, digest, gasBudgetMist, gasObjectId };
+}
+
+async function dryRunTwoLegMintWithSdk({ tx, client, sender, gasBudgetMist }) {
+  setTransactionSender(tx, sender);
+
+  if (typeof tx.setGasBudget === "function") {
+    tx.setGasBudget(Number(gasBudgetMist));
+  }
+
+  assertExpectedTwoLegMintTransaction(tx);
+  printTwoLegCommandMap(tx);
+
+  const txBytes = await tx.build({ client });
+  const dryRun = await client.dryRunTransactionBlock({ transactionBlock: txBytes });
+  const dryRunStatus = requireExecutionSuccess(dryRun, "SDK dry-run");
+
+  return {
+    dryRun,
+    dryRunStatus,
+    gasBudgetMist,
+    gasUsed: extractGasUsed(dryRun),
+  };
+}
+
+function findGasUsedRecord(value) {
+  if (Array.isArray(value)) {
+    for (const child of value) {
+      const nested = findGasUsedRecord(child);
+      if (nested) {
+        return nested;
+      }
+    }
+
+    return null;
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (isRecord(value.gasUsed)) {
+    return value.gasUsed;
+  }
+
+  if (isRecord(value.effects) && isRecord(value.effects.gasUsed)) {
+    return value.effects.gasUsed;
+  }
+
+  for (const child of Object.values(value)) {
+    const nested = findGasUsedRecord(child);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  return null;
+}
+
+function extractGasUsed(value) {
+  const gasUsed = findGasUsedRecord(value);
+  if (!gasUsed) {
+    return null;
+  }
+
+  return {
+    computationCost: integerStringOrNull(gasUsed.computationCost),
+    storageCost: integerStringOrNull(gasUsed.storageCost),
+    storageRebate: integerStringOrNull(gasUsed.storageRebate),
+    nonRefundableStorageFee: integerStringOrNull(gasUsed.nonRefundableStorageFee),
+  };
+}
+
+function formatGasUsed(gasUsed) {
+  if (!gasUsed) {
+    return "unavailable";
+  }
+
+  return `computation=${gasUsed.computationCost ?? "?"} storage=${gasUsed.storageCost ?? "?"} rebate=${gasUsed.storageRebate ?? "?"} nonRefundable=${gasUsed.nonRefundableStorageFee ?? "?"}`;
+}
+
+function estimateNetGasChargeMist(gasUsed) {
+  if (!gasUsed?.computationCost || !gasUsed?.storageCost || !gasUsed?.storageRebate) {
+    return null;
+  }
+
+  return (BigInt(gasUsed.computationCost) + BigInt(gasUsed.storageCost) - BigInt(gasUsed.storageRebate)).toString();
+}
+
+async function tryCliDryRun({ tx, client, sender, gasBudgetMist, gasObjectId = null }) {
+  try {
+    const result = await dryRunTwoLegMintWithSuiCli({ tx, client, sender, gasBudgetMist, gasObjectId });
+    return { status: "success", ...result, error: null };
+  } catch (error) {
+    const message = sanitizeCliError(error);
+    explainCommandIndex(tx, message);
+    return { status: "blocked", gasBudgetMist, gasObjectId, error: message, gasUsed: null };
+  }
+}
+
+async function runCliGasBudgetDiagnostics({ tx, client, sender, gasBudgets, gasObjectId = null }) {
+  const results = [];
+
+  console.log("CLI dry-run gas diagnostics:");
+  for (const gasBudgetMist of gasBudgets) {
+    const result = await tryCliDryRun({ tx, client, sender, gasBudgetMist, gasObjectId });
+    results.push(result);
+
+    if (result.status === "success") {
+      console.log(`  budget ${gasBudgetMist}: passed gas=${formatGasUsed(result.gasUsed)}`);
+      break;
+    }
+
+    console.log(`  budget ${gasBudgetMist}: blocked ${result.error}`);
+  }
+
+  return results;
+}
+
+function classifyDryRunDiagnosis({ devInspectPassed, sdkDryRun, cliResults, explicitGasCliResults = null }) {
+  const firstCliSuccess = cliResults.find((result) => result.status === "success");
+  const firstCliBlocked = cliResults.find((result) => result.status === "blocked");
+
+  if (!devInspectPassed) {
+    return "devinspect_blocked";
+  }
+
+  if (firstCliSuccess && firstCliSuccess.gasBudgetMist !== mintGasBudgetMist) {
+    return "gas_budget_too_low";
+  }
+
+  if (firstCliSuccess) {
+    return "dry_run_passed";
+  }
+
+  if (sdkDryRun?.status === "success" && firstCliBlocked) {
+    return explicitGasCliResults?.some((result) => result.status === "success")
+      ? "cli_auto_gas_selection_behavior"
+      : "cli_serialized_tx_kind_behavior_unresolved";
+  }
+
+  if (cliResults.length > 0 && cliResults.every((result) => result.status === "blocked" && /InsufficientGas/i.test(result.error ?? ""))) {
+    return "not_resolved_by_budget";
+  }
+
+  return "command_or_protocol_condition";
+}
+
+function assertCanSubmitAtMostOneRealMint() {
+  if (realMintSubmittedThisProcess) {
+    throw new Error("Real mint submission blocked: one real mint was already submitted in this process.");
+  }
+
+  realMintSubmittedThisProcess = true;
 }
 
 async function assertCliEnvAndAddress({ expectedAddress }) {
@@ -1338,6 +1822,51 @@ async function readSuiGasBalance({ client, owner }) {
   }
 }
 
+async function readSuiGasCoins({ client, owner }) {
+  const coins = [];
+  let cursor = null;
+
+  do {
+    const page = await client.getCoins({
+      owner,
+      coinType: "0x2::sui::SUI",
+      cursor,
+    });
+
+    coins.push(...page.data);
+    cursor = page.hasNextPage ? page.nextCursor : null;
+  } while (cursor);
+
+  return coins
+    .map((coin) => ({
+      coinObjectId: coin.coinObjectId,
+      balance: integerStringOrNull(coin.balance) ?? "0",
+      version: coin.version,
+      digest: coin.digest,
+    }))
+    .sort((left, right) => compareBigInt(BigInt(right.balance), BigInt(left.balance)));
+}
+
+function printGasCoinSummary(coins, selectedGasCoinId = null) {
+  console.log(`available gas coins: ${coins.length}`);
+  const top = coins.slice(0, 5);
+
+  for (const coin of top) {
+    const selected = selectedGasCoinId && normalizeAddress(coin.coinObjectId) === normalizeAddress(selectedGasCoinId)
+      ? " selected"
+      : "";
+    console.log(`  gas coin${selected}: id=${coin.coinObjectId} balance=${coin.balance} version=${coin.version}`);
+  }
+
+  if (coins.length > top.length) {
+    console.log(`  ... ${coins.length - top.length} more gas coin(s) omitted`);
+  }
+}
+
+function findGasCoinCoveringBudget(coins, gasBudgetMist) {
+  return coins.find((coin) => BigInt(coin.balance) >= BigInt(gasBudgetMist));
+}
+
 function extractPositionMintedEvents(transactionBlock) {
   if (!isRecord(transactionBlock) || !Array.isArray(transactionBlock.events)) {
     return [];
@@ -1467,6 +1996,67 @@ function formatReadResult(result) {
   }
 
   return "success";
+}
+
+function optionEnabled(options, name) {
+  return options[name] === true || options[name] === "true";
+}
+
+function parsePositiveMistBudget(value, label, maxBudget) {
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    throw new Error(`${label} must be a positive integer string in MIST.`);
+  }
+
+  const budget = BigInt(value);
+
+  if (budget <= 0n) {
+    throw new Error(`${label} must be greater than zero.`);
+  }
+
+  if (budget > maxBudget) {
+    throw new Error(`${label} ${value} exceeds max allowed ${maxBudget.toString()} MIST.`);
+  }
+
+  return value;
+}
+
+function parseGasBudgetList(value, fallback, maxBudget) {
+  if (value === undefined || value === null || value === true) {
+    return fallback;
+  }
+
+  const parts = String(value).split(",").map((part) => part.trim()).filter(Boolean);
+
+  if (parts.length === 0) {
+    return fallback;
+  }
+
+  const seen = new Set();
+  const budgets = [];
+
+  for (const part of parts) {
+    const budget = parsePositiveMistBudget(part, "diagnostic gas budget", maxBudget);
+    if (!seen.has(budget)) {
+      seen.add(budget);
+      budgets.push(budget);
+    }
+  }
+
+  return budgets;
+}
+
+function uniqueStrings(values) {
+  const seen = new Set();
+  const unique = [];
+
+  for (const value of values) {
+    if (!seen.has(value)) {
+      seen.add(value);
+      unique.push(value);
+    }
+  }
+
+  return unique;
 }
 
 function parseMode(options) {

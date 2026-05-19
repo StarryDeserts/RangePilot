@@ -76,7 +76,7 @@ The intended MVP transaction path is:
 7. Deposit Create Fee into `ProtocolVault`.
 8. Mint `MoveReceipt` recording the series and binary leg metadata.
 
-The 2026-05-19 controlled Testnet round validated the direct Predict two-leg PTB through `devInspect`, but the CLI dry-run returned `InsufficientGas in command 3` before submission. No direct binary mint, Create Fee routing, or `MoveReceipt` mint has been executed yet, so the exact DeepVol wrapper design remains future implementation work.
+The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. Create Fee routing and `MoveReceipt` minting have not been executed yet, so the exact DeepVol wrapper design remains future implementation work.
 
 ### Portfolio readback path
 

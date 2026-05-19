@@ -35,7 +35,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md) | Defines VolSeries, MoveReceipt, ProtocolVault, PredictManager, transaction/readback/settlement paths | Protocol / architecture |
 | [DEEPVOL_DATA_MODEL.md](./DEEPVOL_DATA_MODEL.md) | Proposes VolSeries, MoveReceipt, and receipt lifecycle event fields | Move / SDK / product |
 | [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md) | Records source-confirmed binary entrypoints, MarketKey construction, events, and validation blockers | Protocol / SDK / PTB |
-| [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md) | Records the controlled Testnet binary mint round blocked before submission at CLI dry-run | Protocol / SDK / validation |
+| [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md) | Records the controlled Testnet binary mint validation and gas-budget diagnosis | Protocol / SDK / validation |
 | [DEEPVOL_BUSINESS_MODEL.md](./DEEPVOL_BUSINESS_MODEL.md) | Defines Create Fee MVP model and V2-only Profit Fee / Creator Share | Product / business |
 | [ADR/0003-pivot-to-deepvol-btc-move.md](./ADR/0003-pivot-to-deepvol-btc-move.md) | Records accepted pivot to DeepVol BTC MOVE | ADR |
 
@@ -98,11 +98,11 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 3. [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md)
 4. [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md)
 5. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md)
-5. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
-6. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
-7. [RANGE_QUOTE_UNITS_AND_DECODING.md](./RANGE_QUOTE_UNITS_AND_DECODING.md) for prior binary quote investigation
-8. [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) for prior wrapper composition evidence
-9. [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) for reusable fee treasury design
+6. [ENTRYPOINT_BINDINGS_PLAN.md](./ENTRYPOINT_BINDINGS_PLAN.md)
+7. [PROTOCOL_INTEGRATION_NOTES.md](./PROTOCOL_INTEGRATION_NOTES.md)
+8. [RANGE_QUOTE_UNITS_AND_DECODING.md](./RANGE_QUOTE_UNITS_AND_DECODING.md) for prior binary quote investigation
+9. [WRAPPER_FOLLOW_TESTNET_VALIDATION.md](./WRAPPER_FOLLOW_TESTNET_VALIDATION.md) for prior wrapper composition evidence
+10. [PROTOCOL_VAULT_DESIGN.md](./PROTOCOL_VAULT_DESIGN.md) for reusable fee treasury design
 
 ### Before DeepBook Predict work
 

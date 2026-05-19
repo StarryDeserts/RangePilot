@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; quote/read/preflight validated; controlled binary mint attempt blocked before submission at CLI dry-run.
+Status: Source-confirmed entrypoints; quote/read/preflight and controlled two-leg binary mint validated on Testnet.
 ---
 
 # DeepVol Binary Leg Integration
@@ -73,20 +73,21 @@ DeepVol should preview both legs before mint:
 3. `market_key::down(oracle_id, expiry, lower_strike)`.
 4. `predict::get_trade_amounts` for the DOWN key.
 
-## Current read-only/preflight validation harness
+## Current validation harness
 
-This round adds `scripts/validate-deepvol-binary-legs.mjs` with two modes:
+`scripts/validate-deepvol-binary-legs.mjs` has three modes:
 
 - `npm run validate:deepvol-binary-read` discovers active BTC oracle candidates, constructs UP/DOWN `MarketKey` values with official constructors, quotes both legs with `predict::get_trade_amounts`, and optionally reads `predict_manager::position` when `--sender` and `--manager` are supplied.
 - `npm run validate:deepvol-binary-preflight` first runs read-mode selection, then requires explicit `--sender` and `--manager` before building a two-leg `predict::mint<DUSDC>` PTB for `devInspect` only.
-- `npm run validate:deepvol-binary-mint` runs the controlled Testnet mint gates for the known funded sender/manager, serializes a two-leg transaction kind for Sui CLI dry-run, and submits only if all gates pass.
+- `npm run validate:deepvol-binary-mint` runs the controlled Testnet mint gates for the known funded sender/manager, prints gas and command diagnostics, and stays dry-run-only unless `--execute-real-mint` is explicitly supplied.
 
 Safety properties:
 
 - no private key is loaded;
 - `.env.local` is not read;
-- no write transaction is signed or submitted;
-- live binary mint/redeem remains not executed in this round.
+- mint mode is dry-run-only by default;
+- real submission requires explicit sender/manager, Testnet CLI env/address, manager balance, gas balance, transaction-shape assertion, `devInspect`, SDK dry-run, CLI dry-run, and `--execute-real-mint`;
+- binary redeem remains not executed in this round.
 
 Latest harness result from 2026-05-18:
 
@@ -103,9 +104,9 @@ Latest harness result from 2026-05-18:
 | Two-leg PTB preflight result | Passed with explicit sender/manager through `client.devInspectTransactionBlock`; no signing or execution. |
 | Blockers | Live binary mint/redeem not executed in this round. Future wallet approval still needs fresh runtime quote, manager balance, fee coverage, and full two-leg preflight. |
 
-Latest controlled mint-mode result from 2026-05-19 is recorded in [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md): read, balance, owner, CLI environment, transaction-shape, and `devInspect` gates passed for sender `0x4ff903b0dcc52dc8753787baf19b34b7425dfa64d187cc7c726b38413705fa75` and manager `0xd59be0646d948c9be6073edc0cfd253ce4cb00f4929f0bae71f451f50e5d1575`, but CLI dry-run returned `InsufficientGas in command 3`. No write transaction was submitted and no retry was attempted.
+Latest controlled mint-mode result from 2026-05-19 is recorded in [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md): the old `100000000` MIST gas budget reproduced `InsufficientGas in command 3`, where command `3` is the second `predict::mint` if zero-based and `market_key::down` if one-based. Raising the budget to `200000000` MIST passed SDK dry-run and CLI `serialized-tx-kind` dry-run, then one real Testnet two-leg mint executed with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`. UP and DOWN positions each increased by `1000`, and manager DUSDC decreased by `1003` atomic units.
 
-Quote success and `devInspect` success do not imply mintability or executable CLI submission. The full two-leg PTB still requires fresh quote, manager balance, gas, `devInspect`, CLI dry-run or wallet dry-run equivalent, and wallet approval gates before any future production mint.
+Quote success and `devInspect` success do not imply executable CLI submission. The full two-leg PTB still requires fresh quote, manager balance, gas, `devInspect`, SDK or wallet dry-run, CLI dry-run or wallet simulation equivalent, and wallet approval gates before any future production mint.
 
 ## Binary mint entrypoint
 
@@ -222,9 +223,7 @@ Validated prior work:
 
 DeepVol-specific remaining work:
 
-- Record this harness round's actual read output and blockers.
-- Diagnose the controlled mint-mode CLI dry-run blocker: `InsufficientGas in command 3`.
-- Complete controlled live binary mint validation in a later explicitly approved round only after the dry-run blocker is understood.
+- Preserve the `200000000` MIST gas budget finding in SDK/UI two-leg mint gates.
 - Binary redeem validation.
 - Binary event parsing in SDK.
 - Binary direct readback helper in SDK.
@@ -233,6 +232,6 @@ DeepVol-specific remaining work:
 ## Open blockers
 
 - Active BTC oracle, expiry, and strikes are `MUST CONFIRM AT RUNTIME`.
-- Full two-leg binary mint PTB is `MUST CONFIRM BEFORE CODING` production DeepVol flows.
+- Production DeepVol flows must preserve the validated two-leg mint gates before wallet approval.
 - Binary redeem path and post-settlement behavior are `MUST CONFIRM BEFORE CODING` guided settlement UX.
-- Final `MoveReceipt` field types are `MUST CONFIRM BEFORE CODING` after the binary validation harness is designed.
+- Final `MoveReceipt` field types are `MUST CONFIRM BEFORE CODING` after translating the validated binary mint evidence into the receipt design.
