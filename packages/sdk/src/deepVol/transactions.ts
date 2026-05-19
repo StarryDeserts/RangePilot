@@ -2,7 +2,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { SUI_CLOCK_OBJECT_ID } from "@mysten/sui/utils";
 import { DEEPVOL_TESTNET } from "@rangepilot/config/deepVolTestnet";
 import type {
-  CreateMoveReceiptParams,
+  BuyMoveReceiptParams,
   CreateVolSeriesParams,
   DeactivateVolSeriesParams,
   DeepVolTestnetConfig,
@@ -17,9 +17,11 @@ export type DeepVolPackageOptions = {
 
 export type BuildCreateVolSeriesTransactionOptions = CreateVolSeriesParams & DeepVolPackageOptions;
 export type BuildDeactivateVolSeriesTransactionOptions = DeactivateVolSeriesParams & DeepVolPackageOptions;
-export type BuildCreateMoveReceiptTransactionOptions = CreateMoveReceiptParams &
+export type BuildBuyMoveReceiptTransactionOptions = BuyMoveReceiptParams &
   DeepVolPackageOptions & {
-    requireBinaryMintValidationPassed?: boolean;
+    requireFreshBinaryQuotePassed?: boolean;
+    requireBinaryMintPreflightPassed?: boolean;
+    requireCreateFeeCoinPrepared?: boolean;
   };
 export type BuildMarkMoveReceiptSettledTransactionOptions = MarkMoveReceiptSettledParams & DeepVolPackageOptions;
 
@@ -60,21 +62,27 @@ export function buildDeactivateVolSeriesTransaction(
   return tx;
 }
 
-export function buildCreateMoveReceiptTransaction(
-  params: BuildCreateMoveReceiptTransactionOptions,
+export function buildBuyMoveReceiptTransaction(
+  params: BuildBuyMoveReceiptTransactionOptions,
 ): Transaction {
-  assertBinaryMintValidationGate(params);
+  assertBuyMoveReceiptGates(params);
 
   const packageId = resolveDeepVolPackageId(params);
+  const protocolVaultId = resolveDeepVolProtocolVaultId(params);
   const tx = new Transaction();
 
   tx.moveCall({
-    target: `${packageId}::receipt::create_move_receipt`,
+    target: `${packageId}::receipt::buy_move_receipt`,
+    typeArguments: [params.quoteCoinType],
     arguments: [
       tx.object(params.seriesId),
-      tx.pure.id(params.predictManagerId),
+      tx.object(params.predictId),
+      tx.object(params.predictManagerId),
+      tx.object(params.oracleId),
+      tx.object(params.feeCoinId),
+      tx.object(protocolVaultId),
       tx.pure.u64(normalizePositiveInteger(params.quantity, "MoveReceipt quantity")),
-      tx.pure.u64(normalizePositiveInteger(params.premiumPaid, "MoveReceipt premium paid")),
+      tx.pure.u64(normalizePositiveInteger(params.maxPremiumPaid, "MoveReceipt max premium paid")),
       tx.object(SUI_CLOCK_OBJECT_ID),
     ],
   });
@@ -101,17 +109,41 @@ function resolveDeepVolPackageId(params: DeepVolPackageOptions): string {
 
   if (!packageId) {
     throw new DeepBookPredictUnconfirmedBindingError(
-      "DeepVol package ID is unavailable because DeepVol-3 is local-only. The package must be manually configured, published, and passed as packageId before building DeepVol transactions.",
+      "DeepVol package ID is unavailable because DeepVol-3B is local-only until the user manually configures and publishes the DeepVol package.",
     );
   }
 
   return packageId;
 }
 
-function assertBinaryMintValidationGate(params: BuildCreateMoveReceiptTransactionOptions): void {
-  if (!params.requireBinaryMintValidationPassed) {
+function resolveDeepVolProtocolVaultId(params: BuildBuyMoveReceiptTransactionOptions): string {
+  const protocolVaultId = params.protocolVaultId ?? params.config?.protocolVaultId ?? DEEPVOL_TESTNET.protocolVaultId;
+
+  if (!protocolVaultId) {
     throw new DeepBookPredictUnconfirmedBindingError(
-      "DeepVol MoveReceipt creation must follow confirmed UP/DOWN binary mint validation. This builder only creates the receipt transaction and does not mint DeepBook Predict legs.",
+      "DeepVol protocol vault ID is unavailable because DeepVol-3B is local-only until the user manually creates and configures a ProtocolVault for the quote asset.",
+    );
+  }
+
+  return protocolVaultId;
+}
+
+function assertBuyMoveReceiptGates(params: BuildBuyMoveReceiptTransactionOptions): void {
+  if (!params.requireFreshBinaryQuotePassed) {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "DeepVol buy_move_receipt requires a fresh UP/DOWN binary quote before building; this builder does not discover market quotes.",
+    );
+  }
+
+  if (!params.requireBinaryMintPreflightPassed) {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "DeepVol buy_move_receipt requires full binary mint preflight before building; this builder does not sign, dry-run, or execute transactions.",
+    );
+  }
+
+  if (!params.requireCreateFeeCoinPrepared) {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "DeepVol buy_move_receipt requires a prepared create-fee coin; this builder does not select or split fee coins.",
     );
   }
 }

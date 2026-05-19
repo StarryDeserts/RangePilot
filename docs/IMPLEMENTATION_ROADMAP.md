@@ -1,7 +1,7 @@
 ---
 Purpose: Define the phased implementation roadmap for DeepVol BTC MOVE while preserving RangePilot validation history.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: Updated for the DeepVol BTC MOVE foundation refactor.
+Status: Updated for DeepVol-3B Route B local contract work.
 Source of truth relationship: Derived from DeepVol foundation docs, local protocol docs, and official-derived Testnet integration references; implementation details remain subject to confirmation.
 ---
 
@@ -40,27 +40,27 @@ The prior creator-follow strategy model is not the primary product direction bec
 | Required docs | DeepVol binary leg integration; official contract info; protocol integration notes; entrypoint bindings plan; PredictManager flow and validation docs. |
 | Risks and fallback | Risk: active BTC binary market changes or mintability fails after quote. Fallback: document runtime blocker and do not build production receipt flow until full binary preflight succeeds. |
 
-## Phase 2: DeepVol MoveReceipt / VolSeries local skeleton
+## Phase 2: DeepVol local Route B contract
 
 | Field | Content |
 |---|---|
-| Goal | Design and implement the minimal local-only non-custodial DeepVol Move package around BTC MOVE series and receipt metadata. |
-| Deliverables | `move/deepvol` package; `VolSeries`; `MoveReceipt`; Create Fee calculation/recording; receipt lifecycle events; Move tests; TypeScript type/config/SDK stubs with null deployment IDs. |
-| Non-goals | Package publish, real `VolSeries` creation, real `MoveReceipt` minting, binary mint/redeem execution, ProtocolVault deposit, custodial manager, tradable receipt, Profit Fee enforcement, secondary market, custom Predict pricing, custom settlement. |
-| Acceptance criteria | Move build/tests pass locally; receipt explicitly records linkage rather than custody; Create Fee is calculated and recorded only; package/config IDs remain null until manual publish. |
-| Required docs | DeepVol protocol architecture; DeepVol data model; DeepVol MoveReceipt contract; DeepVol contract build validation; DeepVol business model; ProtocolVault design; Move rules. |
-| Risks and fallback | Risk: trying to make receipt represent custody it does not hold or implying deployment before manual publish. Fallback: keep non-custodial receipt language, null config, and local-only status strict. |
+| Goal | Implement the minimal local-only non-custodial but protocol-enforced DeepVol Move package around BTC MOVE series, DeepVol fee vault, and receipt creation. |
+| Deliverables | `move/deepvol` package; `VolSeries`; DeepVol `AdminCap`; DeepVol `ProtocolVault<Quote>`; `MoveReceipt`; `receipt::buy_move_receipt<Quote>` with internal UP/DOWN Predict mints; Create Fee deposit; receipt lifecycle events; Move tests; TypeScript type/config/SDK stubs with null deployment IDs. |
+| Non-goals | Package publish, real `VolSeries` creation, real `MoveReceipt` minting, real `buy_move_receipt<Quote>` execution, binary redeem execution, custodial manager, tradable receipt, Profit Fee enforcement, secondary market, custom Predict pricing, custom settlement. |
+| Acceptance criteria | Move build/tests pass locally; receipt creation is not exposed as a metadata-only public path; `buy_move_receipt<Quote>` derives both keys from `VolSeries`; Create Fee deposits into DeepVol `ProtocolVault<Quote>`; package/config IDs remain null until manual publish. |
+| Required docs | DeepVol protocol architecture; DeepVol data model; DeepVol MoveReceipt contract; DeepVol contract build validation; DeepVol business model; binary leg integration; Move rules. |
+| Risks and fallback | Risk: implying deployment or on-chain validation before manual publish. Fallback: keep null config, no-publish status, and primitive-vs-Route-B evidence separation strict. |
 
-## Phase 3: Atomic PTB, publish readiness, and preflight gates
+## Phase 3: Manual publish, deployed Route B validation, and preflight gates
 
 | Field | Content |
 |---|---|
-| Goal | Turn the local skeleton into a publish-ready and wallet-gated BTC MOVE flow after manual deployment values exist. |
-| Deliverables | Manual publish readiness review; real DeepVol package/config values after user publish; binary quote helpers; binary mint preflight; receipt transaction builder wired to deployed package; Create Fee coin routing into a ProtocolVault or DeepVol vault equivalent; binary position readback; event parsing. |
-| Non-goals | Private-key browser paths, mainnet, unaudited production launch, direct custom pricing. |
-| Acceptance criteria | Builders require runtime BTC oracle/expiry, successful UP and DOWN quote previews, full PTB preflight, fee coverage, explicit package/config IDs, and binary mint validation gates before wallet prompt. |
+| Goal | Validate deployed DeepVol `buy_move_receipt<Quote>` only after the user manually publishes the package and provides real package/admin/vault values. |
+| Deliverables | Manual publish readiness review; real DeepVol package/config values after user publish; quote-asset `ProtocolVault<Quote>` setup; binary quote helpers; deployed `buy_move_receipt<Quote>` preflight; receipt transaction builder wired to deployed package; Create Fee coin routing; binary position readback; event parsing. |
+| Non-goals | Private-key browser paths, mainnet, unaudited production launch, direct custom pricing, bypassing fresh quote/preflight gates. |
+| Acceptance criteria | Builders require runtime BTC oracle/expiry, successful UP and DOWN quote previews, full DeepVol Route B preflight, fee coverage, explicit package/vault IDs, and explicit gates before wallet prompt. |
 | Required docs | DeepVol binary leg integration; entrypoint bindings plan; protocol integration notes; Sui transaction-building guidance. |
-| Risks and fallback | Risk: quote success differs from mintability. Fallback: preserve full binary mint preflight gate, mirroring range mint lessons. |
+| Risks and fallback | Risk: quote success differs from mintability or actual event costs differ from the immediate quote. Fallback: preserve full preflight gate and event/readback reconciliation, mirroring range mint lessons. |
 
 ## Phase 4: Portfolio and guided settlement UX
 
@@ -106,6 +106,6 @@ These milestones are complete and remain useful as DeepVol implementation eviden
 | Phase 1C range quote/mint | Completed | Full preflight lesson: quote success alone is insufficient. |
 | Phase 1D portfolio/readback/redeem | Completed | Direct manager readback and redeem gating patterns. |
 | Phase 2 guided range scaffold | Completed as engineering scaffold | UI and wallet-gating reference, not current MVP direction. |
-| Phase 3 Route B wrapper | Completed and validated | Reusable ProtocolVault, fee, wrapper, event-linkage patterns. |
+| Phase 3 Route B wrapper | Completed and validated | Reusable fee vault, wrapper, event-linkage, and post-state verification patterns. |
 
-Formal UI design remains deferred until the validated DeepVol binary protocol path is translated into receipt, fee, SDK, and wallet-gated UX work.
+Formal UI design remains deferred until the validated DeepVol binary protocol path is translated into deployed receipt, fee, SDK, and wallet-gated UX work.

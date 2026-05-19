@@ -7,6 +7,7 @@ export type DeepVolObjectId = DeepBookPredictObjectId;
 export type VolSeriesObjectId = DeepVolObjectId;
 export type MoveReceiptObjectId = DeepVolObjectId;
 export type DeepVolProtocolVaultObjectId = DeepVolObjectId;
+export type DeepVolAdminCapObjectId = DeepVolObjectId;
 export type DeepVolMarketSymbol = "BTC";
 export type DeepVolReceiptCustody = "non_custodial";
 export type MoveReceiptStatus = 0 | 1 | 2;
@@ -15,6 +16,7 @@ export type DeepVolTestnetConfig = {
   network: DeepBookPredictNetwork;
   packageId: DeepVolObjectId | null;
   protocolVaultId: DeepVolProtocolVaultObjectId | null;
+  adminCapId: DeepVolAdminCapObjectId | null;
   defaultCreateFeeBps: 30;
   maxCreateFeeBps: 100;
   primaryMarket: DeepVolMarketSymbol;
@@ -80,11 +82,16 @@ export type DeactivateVolSeriesParams = {
   seriesId: VolSeriesObjectId;
 };
 
-export type CreateMoveReceiptParams = {
+export type BuyMoveReceiptParams = {
   seriesId: VolSeriesObjectId;
+  predictId: DeepVolObjectId;
   predictManagerId: DeepVolObjectId;
+  oracleId: DeepVolObjectId;
+  protocolVaultId?: DeepVolProtocolVaultObjectId;
+  feeCoinId: DeepVolObjectId;
+  quoteCoinType: string;
   quantity: string;
-  premiumPaid: string;
+  maxPremiumPaid: string;
 };
 
 export type MarkMoveReceiptSettledParams = {

@@ -36,8 +36,8 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_DATA_MODEL.md](./DEEPVOL_DATA_MODEL.md) | Proposes VolSeries, MoveReceipt, and receipt lifecycle event fields | Move / SDK / product |
 | [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md) | Records source-confirmed binary entrypoints, MarketKey construction, events, and validation blockers | Protocol / SDK / PTB |
 | [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md) | Records the controlled Testnet binary mint validation and gas-budget diagnosis | Protocol / SDK / validation |
-| [DEEPVOL_MOVE_RECEIPT_CONTRACT.md](./DEEPVOL_MOVE_RECEIPT_CONTRACT.md) | Documents the local-only VolSeries and non-custodial MoveReceipt skeleton | Move / protocol / SDK |
-| [DEEPVOL_CONTRACT_BUILD_VALIDATION.md](./DEEPVOL_CONTRACT_BUILD_VALIDATION.md) | Records local DeepVol contract build/test validation scope and non-actions | Move / validation |
+| [DEEPVOL_MOVE_RECEIPT_CONTRACT.md](./DEEPVOL_MOVE_RECEIPT_CONTRACT.md) | Documents the local-only Route B VolSeries, ProtocolVault, and protocol-enforced non-custodial MoveReceipt contract | Move / protocol / SDK |
+| [DEEPVOL_CONTRACT_BUILD_VALIDATION.md](./DEEPVOL_CONTRACT_BUILD_VALIDATION.md) | Records local DeepVol Route B contract build/test validation scope and non-actions | Move / validation |
 | [DEEPVOL_BUSINESS_MODEL.md](./DEEPVOL_BUSINESS_MODEL.md) | Defines Create Fee MVP model and V2-only Profit Fee / Creator Share | Product / business |
 | [ADR/0003-pivot-to-deepvol-btc-move.md](./ADR/0003-pivot-to-deepvol-btc-move.md) | Records accepted pivot to DeepVol BTC MOVE | ADR |
 
@@ -155,7 +155,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | Task type | Required docs before work |
 |---|---|
 | DeepVol BTC MOVE product work | DeepVol product direction, primitives and receipts, MVP scope, business model, ADR-0003 |
-| DeepVol Move/data model work | DeepVol protocol architecture, data model, binary leg integration, ProtocolVault design, official contract info, entrypoint bindings plan |
+| DeepVol Move/data model work | DeepVol protocol architecture, data model, MoveReceipt contract, contract build validation, binary leg integration, official contract info, entrypoint bindings plan |
 | DeepVol binary quote/mint/redeem validation | Binary leg integration, official contract info, protocol integration notes, entrypoint bindings plan, PredictManager flow, range quote units and decoding |
 | DeepVol SDK transaction builders | Binary leg integration, official contract info, entrypoint bindings plan, protocol integration notes, Sui transaction-building docs/skills |
 | DeepVol portfolio/settlement UX | DeepVol protocol architecture, data model, binary leg integration, PredictManager validation, protocol integration notes |

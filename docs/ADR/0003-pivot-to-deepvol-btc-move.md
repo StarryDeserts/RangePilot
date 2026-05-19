@@ -64,6 +64,7 @@ Cons:
 - No receipt object.
 - No protocol-level fee custody.
 - Weak portfolio and settlement linkage.
+- Receipt claims could become metadata-only unless protocol enforcement is added.
 
 Rejected as the full MVP direction, but useful for early diagnostics.
 
@@ -75,11 +76,12 @@ Pros:
 - Lets users trade movement, not direction.
 - Better fits the Predict composability narrative.
 - Create Fee can be enforced at receipt creation.
+- Receipt creation can be protocol-enforced by internally minting both Predict binary legs.
 - Existing ProtocolVault and wrapper lessons remain reusable.
 
 Cons:
 
-- Binary mint/redeem must be validated before production coding.
+- Binary mint/redeem must be validated before production launch.
 - Non-custodial receipts cannot enforce Profit Fee.
 - New docs, SDK builders, and Move design are required.
 
@@ -99,6 +101,8 @@ Long UP above upper strike
 Long DOWN below lower strike
 ```
 
+Receipt creation must not be metadata-only. The accepted MVP boundary is non-custodial but protocol-enforced: the underlying positions stay in the user's `PredictManager`, and the DeepVol receipt path mints both UP and DOWN legs inside the DeepVol transaction before creating the receipt.
+
 ## Why BTC first
 
 Current DeepBook Predict Testnet active market state is BTC-centered. The MVP should target the market most likely to be exercised against real active protocol objects.
@@ -115,8 +119,8 @@ The MVP `MoveReceipt` records metadata and linkage:
 - series ID;
 - PredictManager;
 - oracle and expiry;
-- UP and DOWN binary keys;
-- premium paid;
+- UP and DOWN binary legs derived from the series;
+- premium basis;
 - Create Fee paid;
 - settlement guidance status.
 
@@ -129,12 +133,15 @@ Positive:
 - DeepVol becomes a clearer Predict-native volatility product.
 - BTC-only MVP keeps scope tied to current active Testnet market reality.
 - Create Fee can be enforced at receipt creation.
-- Existing ProtocolVault infrastructure can be reused for fee treasury.
+- Receipt minting can be blocked unless both Predict binary mints are in the same transaction.
+- DeepVol can own its own fee vault without depending on the old RangePilot wrapper package.
+- Existing ProtocolVault infrastructure remains useful as prior design evidence.
 - Existing wrapper validation remains evidence for atomic fee + Predict call composition.
 
 Negative:
 
-- Binary mint/redeem must be validated in a later round.
+- Binary redeem must still be validated.
+- Deployed DeepVol `buy_move_receipt<Quote>` still requires manual publish/setup and fresh preflight validation.
 - Profit Fee is not enforceable in the non-custodial MVP.
 - Creator Share must wait for a future VolSeries marketplace.
 - New data model, SDK builders, and UI surfaces are needed.
@@ -143,10 +150,10 @@ Negative:
 
 Existing Route B wrapper docs and validation are not deleted. They remain prior validated infrastructure and possible sources for:
 
-- `ProtocolVault` fee treasury design;
+- fee treasury design;
 - fee split and custody patterns;
 - wrapper-mediated DeepBook Predict calls;
 - event-linkage and post-state verification patterns;
 - Sui package publish and Testnet validation lessons.
 
-The creator-follow strategy wrapper is no longer the primary product direction, but the technical work remains useful for DeepVol.
+The creator-follow strategy wrapper is no longer the primary product direction, and DeepVol must not depend on the RangePilot Move package for its receipt path.

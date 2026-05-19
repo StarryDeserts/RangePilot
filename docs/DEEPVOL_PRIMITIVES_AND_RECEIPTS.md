@@ -1,7 +1,7 @@
 ---
 Purpose: Explain DeepVol's Predict primitives layer and composed receipt products.
 Audience: Product maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Product-layer clarification for DeepVol BTC MOVE and future structured products.
+Status: Product-layer clarification for DeepVol BTC MOVE and Route B receipts.
 ---
 
 # DeepVol Primitives and Receipts
@@ -46,7 +46,9 @@ The MVP composed receipt is BTC MOVE:
 BTC MOVE Receipt = UP upper binary leg + DOWN lower binary leg
 ```
 
-The receipt records the product series, selected oracle, expiry, strikes, premium, fee, and MarketKey linkage. In MVP, it does not custody the underlying Predict legs.
+The receipt records the product series, selected oracle, expiry, strikes, premium, fee, and Predict position linkage. In MVP, it does not custody the underlying Predict legs.
+
+DeepVol-3B makes receipt creation protocol-enforced: `receipt::buy_move_receipt<Quote>` derives both legs from `VolSeries`, calls DeepBook Predict mint for both legs, deposits Create Fee, and only then mints the receipt.
 
 ## Primary MVP product: BTC MOVE Receipt
 
@@ -66,14 +68,14 @@ Yes. Advanced users can manually buy UP + DOWN through DeepBook Predict and crea
 
 DeepVol's value is not exclusivity. DeepVol does not rely on hiding a payoff structure that cannot be copied.
 
-DeepVol's value is productization: turning a multi-leg Predict strategy into a one-click, atomic, trackable, displayable, and guided receipt product.
+DeepVol's value is productization: turning a multi-leg Predict strategy into a one-click, protocol-enforced, trackable, displayable, and guided receipt product.
 
 ## Why DeepVol still adds value
 
 DeepVol adds value through:
 
-- one-click multi-leg execution;
-- atomic PTB construction;
+- one-call multi-leg execution;
+- protocol-enforced receipt creation;
 - standardized BTC MOVE series;
 - MoveReceipt portfolio aggregation;
 - unified settlement guidance;
@@ -92,7 +94,7 @@ BTC MOVE Receipt is the MVP monetization surface:
 Create Fee = 0.30% of premium
 ```
 
-The premium is the total official DeepBook Predict mint cost for the UP and DOWN legs. The Create Fee goes to `ProtocolVault` during receipt creation.
+The premium basis is the total immediate DeepBook Predict quote for the UP and DOWN legs. The Create Fee goes to DeepVol `ProtocolVault<Quote>` during receipt creation.
 
 ## Future structured products
 
@@ -107,7 +109,7 @@ These future products should keep the same boundary: DeepBook Predict owns primi
 
 ## MVP receipt boundary
 
-The MVP `MoveReceipt` is non-custodial. It records linkage to positions held in the user's `PredictManager`; it does not own the UP or DOWN legs.
+The MVP `MoveReceipt` is non-custodial but protocol-enforced. It records linkage to positions held in the user's `PredictManager`; it does not own the UP or DOWN legs.
 
 Portfolio truth for active quantities must come from DeepBook Predict readback, especially `predict_manager::position` for each binary `MarketKey`.
 

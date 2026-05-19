@@ -1,7 +1,13 @@
 module deepvol::receipt;
 
-use deepvol::{errors, fees, series::{Self, VolSeries}};
-use sui::{clock::Clock, event};
+use deepbook_predict::{
+    market_key,
+    oracle::OracleSVI,
+    predict::{Self, Predict},
+    predict_manager::{Self, PredictManager},
+};
+use deepvol::{errors, fees, series::{Self, VolSeries}, vault::{Self, ProtocolVault}};
+use sui::{clock::Clock, coin::{Self, Coin}, event};
 
 const STATUS_ACTIVE: u8 = 0;
 const STATUS_SETTLED: u8 = 1;
@@ -60,21 +66,74 @@ public fun status_cancelled(): u8 {
     STATUS_CANCELLED
 }
 
-public entry fun create_move_receipt(
+public entry fun buy_move_receipt<Quote>(
     series: &VolSeries,
-    predict_manager_id: ID,
+    predict: &mut Predict,
+    manager: &mut PredictManager,
+    oracle: &OracleSVI,
+    mut fee_coin: Coin<Quote>,
+    protocol_vault: &mut ProtocolVault<Quote>,
     quantity: u64,
-    premium_paid: u64,
+    max_premium_paid: u64,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    let sender = ctx.sender();
+    let timestamp_ms = clock.timestamp_ms();
+
+    assert!(series::is_active(series), errors::inactive_series());
+    assert!(quantity > 0, errors::zero_quantity());
+    assert!(max_premium_paid > 0, errors::zero_premium());
+    assert!(predict_manager::owner(manager) == sender, errors::manager_owner_mismatch());
+
+    let oracle_id = series::oracle_id(series);
+    assert!(object::id(oracle) == oracle_id, errors::oracle_mismatch());
+
+    let expiry = series::expiry(series);
+    let lower_strike = series::lower_strike(series);
+    let upper_strike = series::upper_strike(series);
+    let up_key = market_key::up(oracle_id, expiry, upper_strike);
+    let down_key = market_key::down(oracle_id, expiry, lower_strike);
+    let (up_mint_cost, _) = predict::get_trade_amounts(predict, oracle, up_key, quantity, clock);
+    let (down_mint_cost, _) = predict::get_trade_amounts(predict, oracle, down_key, quantity, clock);
+    let quoted_premium_paid = up_mint_cost + down_mint_cost;
+
+    assert!(quoted_premium_paid > 0, errors::zero_premium());
+    assert!(quoted_premium_paid <= max_premium_paid, errors::premium_above_max());
+
+    let quoted_create_fee_paid = fees::calculate_create_fee(quoted_premium_paid, series::create_fee_bps(series));
+    assert!(coin::value(&fee_coin) >= quoted_create_fee_paid, errors::insufficient_create_fee_coin());
+
+    let manager_balance_before = predict_manager::balance<Quote>(manager);
+    predict::mint<Quote>(predict, manager, oracle, up_key, quantity, clock, ctx);
+    predict::mint<Quote>(predict, manager, oracle, down_key, quantity, clock, ctx);
+    let premium_paid = manager_balance_before - predict_manager::balance<Quote>(manager);
+
+    assert!(premium_paid > 0, errors::zero_premium());
+    assert!(premium_paid <= max_premium_paid, errors::premium_above_max());
+
+    let create_fee_paid = fees::calculate_create_fee(premium_paid, series::create_fee_bps(series));
+    assert!(coin::value(&fee_coin) >= create_fee_paid, errors::insufficient_create_fee_coin());
+
+    if (create_fee_paid > 0) {
+        let create_fee_coin = coin::split(&mut fee_coin, create_fee_paid, ctx);
+        vault::deposit_create_fee(protocol_vault, create_fee_coin, series::id(series), sender, timestamp_ms);
+    };
+
+    if (coin::value(&fee_coin) > 0) {
+        transfer::public_transfer(fee_coin, sender);
+    } else {
+        coin::destroy_zero(fee_coin);
+    };
+
     let receipt = new_receipt(
-        ctx.sender(),
+        sender,
         series,
-        predict_manager_id,
+        object::id(manager),
         quantity,
         premium_paid,
-        clock.timestamp_ms(),
+        create_fee_paid,
+        timestamp_ms,
         ctx,
     );
     let receipt_id = object::id(&receipt);
@@ -96,7 +155,7 @@ public entry fun create_move_receipt(
         timestamp_ms: receipt.created_at_ms,
     });
 
-    transfer::transfer(receipt, ctx.sender());
+    transfer::transfer(receipt, sender);
 }
 
 public entry fun mark_receipt_settled(
@@ -113,13 +172,14 @@ fun new_receipt(
     predict_manager_id: ID,
     quantity: u64,
     premium_paid: u64,
+    create_fee_paid: u64,
     created_at_ms: u64,
     ctx: &mut TxContext,
 ): MoveReceipt {
     assert!(series::is_active(series), errors::inactive_series());
     assert!(quantity > 0, errors::zero_quantity());
+    assert!(premium_paid > 0, errors::zero_premium());
 
-    let create_fee_paid = fees::calculate_create_fee(premium_paid, series::create_fee_bps(series));
     let lower_strike = series::lower_strike(series);
     let upper_strike = series::upper_strike(series);
 
@@ -162,6 +222,7 @@ public fun new_receipt_for_testing(
     predict_manager_id: ID,
     quantity: u64,
     premium_paid: u64,
+    create_fee_paid: u64,
     created_at_ms: u64,
     ctx: &mut TxContext,
 ): MoveReceipt {
@@ -171,6 +232,7 @@ public fun new_receipt_for_testing(
         predict_manager_id,
         quantity,
         premium_paid,
+        create_fee_paid,
         created_at_ms,
         ctx,
     )

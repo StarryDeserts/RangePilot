@@ -9,6 +9,11 @@ const EInvalidStrikeRange: u64 = 5;
 const EExpiredSeries: u64 = 6;
 const EZeroPremium: u64 = 7;
 const EInvalidReceiptStatus: u64 = 8;
+const EManagerOwnerMismatch: u64 = 9;
+const EOracleMismatch: u64 = 10;
+const EPremiumAboveMax: u64 = 11;
+const EInsufficientCreateFeeCoin: u64 = 12;
+const EInsufficientProtocolVaultBalance: u64 = 13;
 
 public fun inactive_series(): u64 {
     EInactiveSeries
@@ -44,4 +49,24 @@ public fun zero_premium(): u64 {
 
 public fun invalid_receipt_status(): u64 {
     EInvalidReceiptStatus
+}
+
+public fun manager_owner_mismatch(): u64 {
+    EManagerOwnerMismatch
+}
+
+public fun oracle_mismatch(): u64 {
+    EOracleMismatch
+}
+
+public fun premium_above_max(): u64 {
+    EPremiumAboveMax
+}
+
+public fun insufficient_create_fee_coin(): u64 {
+    EInsufficientCreateFeeCoin
+}
+
+public fun insufficient_protocol_vault_balance(): u64 {
+    EInsufficientProtocolVaultBalance
 }

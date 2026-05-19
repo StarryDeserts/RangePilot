@@ -1,7 +1,7 @@
 ---
 Purpose: Define DeepVol as the new BTC MOVE product direction for the project.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Foundation direction for the DeepVol refactor.
+Status: Foundation direction for the DeepVol refactor, updated for Route B receipts.
 ---
 
 # DeepVol Product Direction
@@ -90,10 +90,10 @@ DeepVol adds the product abstraction around the official Predict primitives:
 
 - BTC MOVE series metadata;
 - paired UP and DOWN binary leg selection;
-- atomic multi-leg PTB construction;
+- protocol-enforced multi-leg receipt creation;
 - premium and Create Fee presentation;
 - non-custodial `MoveReceipt` minting;
-- `ProtocolVault` fee deposit;
+- DeepVol `ProtocolVault<Quote>` fee deposit;
 - portfolio aggregation around receipts plus `PredictManager` readback;
 - guided settlement and redeem UX;
 - simpler risk display for a structured product instead of separate raw legs.
@@ -102,13 +102,13 @@ DeepVol adds the product abstraction around the official Predict primitives:
 
 Yes. Advanced users can manually buy UP + DOWN through DeepBook Predict to create similar exposure.
 
-DeepVol's value is not exclusivity. The value is productization: standardized BTC MOVE series, one-click atomic multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and clearer risk presentation.
+DeepVol's value is not exclusivity. The value is productization: standardized BTC MOVE series, one-call protocol-enforced multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and clearer risk presentation.
 
 Primitive UP, DOWN, and RANGE trades should remain advanced primitives in the MVP. They should not be the primary protocol fee source.
 
 ## MVP scope
 
-The MVP is BTC MOVE only. It should select one active BTC oracle and expiry at runtime, preview both binary legs, build an atomic PTB that mints both legs through DeepBook Predict, charge a Create Fee, deposit that fee into `ProtocolVault`, and mint a non-custodial `MoveReceipt` that records linkage to the user's Predict positions.
+The MVP is BTC MOVE only. It should select one active BTC oracle and expiry at runtime, preview both binary legs, call a DeepVol entrypoint that internally mints both legs through DeepBook Predict, charge a Create Fee, deposit that fee into DeepVol `ProtocolVault<Quote>`, and mint a non-custodial `MoveReceipt` that records linkage to the user's Predict positions.
 
 The MVP does not require a creator marketplace, a tradable receipt, a custodial manager, a secondary market, or profit-fee enforcement.
 
@@ -116,7 +116,7 @@ The MVP does not require a creator marketplace, a tradable receipt, a custodial 
 
 The MVP Receipt is not a fully tradable claim token because underlying Predict positions remain in the user's `PredictManager`.
 
-The receipt proves that the user created a BTC MOVE position through DeepVol and records the two binary leg keys, premium, fee, and series metadata. It can power portfolio display and settlement guidance, but it does not own the underlying Predict legs or custody payout.
+The receipt proves that the user created a BTC MOVE position through DeepVol's protocol-enforced path and records the two binary legs, premium, fee, and series metadata. It can power portfolio display and settlement guidance, but it does not own the underlying Predict legs or custody payout.
 
 Because the user can redeem directly through DeepBook Predict, a non-custodial MVP cannot enforce a Profit Fee at settlement.
 

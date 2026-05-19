@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol BTC MOVE business model and fee enforceability boundary.
 Audience: Project maintainers, business reviewers, Move developers, SDK implementers, frontend developers, and AI agents.
-Status: Foundation business model for the DeepVol refactor.
+Status: DeepVol-3B Route B business model reference.
 ---
 
 # DeepVol Business Model
@@ -26,19 +26,49 @@ Suggested MVP value:
 Create Fee = 0.30% of premium
 ```
 
-The premium is the total official DeepBook Predict mint cost for both binary legs:
+The premium basis is the actual quote-asset balance delta from the user's `PredictManager` across both binary mints:
 
 ```text
-premium = UP leg mint cost + DOWN leg mint cost
+premium = manager balance before UP/DOWN mints - manager balance after UP/DOWN mints
 ```
 
-The Create Fee should be charged during the future wrapper-mediated or atomic receipt creation path and deposited into `ProtocolVault` or a DeepVol vault equivalent. DeepVol-3 only calculates and records the fee value in the local receipt skeleton; it does not transfer coins or deposit into a vault.
+DeepVol-3B still calls `predict::get_trade_amounts` immediately before the two internal `predict::mint<Quote>` calls as an early cap and fee-coin coverage check. The receipt, final `max_premium_paid` cap, and final Create Fee basis use the actual manager balance delta.
+
+Tiny premiums can calculate a zero Create Fee because Move integer division truncates:
+
+```text
+premium * create_fee_bps / 10000
+```
+
+DeepVol-3B accepts zero-fee rounding and does not add a minimum fee policy.
 
 ## ProtocolVault destination
 
-`ProtocolVault` is reusable fee treasury infrastructure from the RangePilot wrapper work. In DeepVol MVP, it receives Create Fee deposits.
+DeepVol-3B defines its own fee treasury in `deepvol::vault`:
 
-The vault does not custody DeepBook Predict positions or payouts. It only holds DeepVol protocol fees. DeepVol-3 keeps `protocolVaultId` as `null` in config until manual publish and future fee-routing work provide real deployment values.
+- `AdminCap` is minted to the publisher during package init.
+- `ProtocolVault<Quote>` is created by the admin after publish.
+- `receipt::buy_move_receipt<Quote>` deposits Create Fee into `ProtocolVault<Quote>`.
+- `vault::withdraw_protocol_fees<Quote>` lets the admin withdraw protocol fees.
+
+The vault does not custody DeepBook Predict positions or payouts. It only holds DeepVol protocol fees.
+
+DeepVol Testnet config keeps these values as `null` until manual publish/setup:
+
+- `packageId`;
+- `protocolVaultId`;
+- `adminCapId`.
+
+## Predict premium vs DeepVol Create Fee
+
+The Predict mint premium and DeepVol Create Fee are separate flows:
+
+| Flow | Paid from | Controlled by | Destination |
+|---|---|---|---|
+| Predict UP/DOWN mint premium | User's `PredictManager` quote-asset balance | DeepBook Predict | DeepBook Predict accounting/vaults |
+| DeepVol Create Fee | Separate `fee_coin<Quote>` passed to DeepVol | DeepVol `receipt::buy_move_receipt<Quote>` | DeepVol `ProtocolVault<Quote>` |
+
+A DeepBook Predict abort rolls back the DeepVol fee deposit and receipt creation because both mints and the fee deposit run in one transaction.
 
 ## Profit Fee is V2 only
 
@@ -85,6 +115,6 @@ The MVP monetizes structure and UX rather than copyable creator parameters:
 
 1. DeepVol discovers and presents a BTC MOVE series.
 2. DeepVol previews both Predict binary legs.
-3. DeepVol builds the atomic two-leg mint path.
+3. DeepVol calls one protocol-enforced receipt path that internally mints both legs.
 4. DeepVol mints a non-custodial receipt for portfolio and settlement guidance.
-5. DeepVol collects a Create Fee into `ProtocolVault`.
+5. DeepVol collects a Create Fee into its own `ProtocolVault<Quote>`.

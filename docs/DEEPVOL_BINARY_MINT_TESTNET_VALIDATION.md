@@ -190,8 +190,8 @@ The gas blocker is resolved for the controlled two-leg path by using a `20000000
 ## Follow-up
 
 - Keep binary redeem validation pending.
-- DeepVol-3 adds a local-only `VolSeries` / non-custodial `MoveReceipt` skeleton and does not rerun this successful binary mint.
-- DeepVol-3 does not wrap the binary mint on-chain, publish the DeepVol package, create real series/receipts, or submit transactions.
-- Implement on-chain DeepVol receipt creation only after preserving the same fresh two-leg mint gates in SDK/UI builders.
-- Keep Create Fee routing and receipt minting as a separate future transaction-composition task.
+- DeepVol-3B adds a local-only Route B `VolSeries` / `ProtocolVault` / non-custodial `MoveReceipt` contract path and does not rerun this successful binary mint.
+- DeepVol-3B does not publish the DeepVol package, create real series/receipts, execute `buy_move_receipt<Quote>`, or submit transactions.
+- Validate deployed DeepVol receipt creation only after manual publish/setup and after preserving the same fresh two-leg mint gates in SDK/UI builders.
+- Treat this digest as primitive evidence only; it is not evidence of a DeepVol Route B receipt or Create Fee deposit.
 - Preserve the rule that quote success and `devInspect` success alone do not prove executable mint submission.

@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; quote/read/preflight and controlled two-leg binary mint validated on Testnet.
+Status: Source-confirmed entrypoints; direct two-leg primitive mint validated, DeepVol Route B local code typechecked.
 ---
 
 # DeepVol Binary Leg Integration
@@ -20,9 +20,7 @@ Long DOWN below lower strike
 BTC MOVE exposure
 ```
 
-Advanced users can manually buy UP + DOWN through DeepBook Predict. DeepVol's value is not exclusivity; it is standardized series selection, atomic multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and simpler risk display.
-
-Range mint has been validated end-to-end through the existing RangePilot wrapper work. Binary quote/read/preflight is now DeepVol-critical and still needs dedicated validation before production DeepVol coding.
+Advanced users can manually buy UP + DOWN through DeepBook Predict. DeepVol's value is not exclusivity; it is standardized series selection, protocol-enforced multi-leg execution, receipt-based portfolio aggregation, fee accounting, guided settlement/redeem, and simpler risk display.
 
 ## Source-confirmed binary key construction
 
@@ -48,14 +46,19 @@ Source-confirmed direction constants are `DIRECTION_UP = 0` and `DIRECTION_DOWN 
 - UP leg: long above the upper strike.
 - DOWN leg: long below the lower strike.
 
-A BTC MOVE Receipt should record both keys or the fields needed to reconstruct them.
+`VolSeries` is the source of truth for DeepVol legs. The Route B entrypoint derives:
+
+- UP: `market_key::up(series.oracle_id, series.expiry, series.upper_strike)`;
+- DOWN: `market_key::down(series.oracle_id, series.expiry, series.lower_strike)`.
+
+Do not accept caller-supplied `up_market_key`, `down_market_key`, `up_strike`, or `down_strike` for receipt creation.
 
 ## Quote preview method
 
 Binary quote preview is source-confirmed as:
 
 ```move
-predict::get_trade_amounts(
+public fun deepbook_predict::predict::get_trade_amounts(
     predict: &Predict,
     oracle: &OracleSVI,
     key: MarketKey,
@@ -64,56 +67,23 @@ predict::get_trade_amounts(
 ): (u64, u64)
 ```
 
-The return values are the mint cost and redeem payout for the binary market at the requested quantity.
+The return values are `(mint_cost, redeem_payout)` for the binary market at the requested quantity.
 
-DeepVol should preview both legs before mint:
+DeepVol previews both legs before mint:
 
 1. `market_key::up(oracle_id, expiry, upper_strike)`.
 2. `predict::get_trade_amounts` for the UP key.
 3. `market_key::down(oracle_id, expiry, lower_strike)`.
 4. `predict::get_trade_amounts` for the DOWN key.
 
-## Current validation harness
-
-`scripts/validate-deepvol-binary-legs.mjs` has three modes:
-
-- `npm run validate:deepvol-binary-read` discovers active BTC oracle candidates, constructs UP/DOWN `MarketKey` values with official constructors, quotes both legs with `predict::get_trade_amounts`, and optionally reads `predict_manager::position` when `--sender` and `--manager` are supplied.
-- `npm run validate:deepvol-binary-preflight` first runs read-mode selection, then requires explicit `--sender` and `--manager` before building a two-leg `predict::mint<DUSDC>` PTB for `devInspect` only.
-- `npm run validate:deepvol-binary-mint` runs the controlled Testnet mint gates for the known funded sender/manager, prints gas and command diagnostics, and stays dry-run-only unless `--execute-real-mint` is explicitly supplied.
-
-Safety properties:
-
-- no private key is loaded;
-- `.env.local` is not read;
-- mint mode is dry-run-only by default;
-- real submission requires explicit sender/manager, Testnet CLI env/address, manager balance, gas balance, transaction-shape assertion, `devInspect`, SDK dry-run, CLI dry-run, and `--execute-real-mint`;
-- binary redeem remains not executed in this round.
-
-Latest harness result from 2026-05-18:
-
-| Field | Result |
-|---|---|
-| Selected BTC oracle | `0xc746336e790db7e93a34b684fa3768f43a7c3171d0262d0f2c71dc0a2ab5fe22` |
-| Selected expiry | `1779436800000` |
-| Lower / upper strikes | Read mode selected `76310000000000 / 76418000000000`; preflight reran at runtime and selected `76306000000000 / 76409000000000`. |
-| UP MarketKey construction | `market_key::up(oracle, 1779436800000, 76418000000000)` in read mode; `market_key::up(oracle, 1779436800000, 76409000000000)` in preflight mode. |
-| DOWN MarketKey construction | `market_key::down(oracle, 1779436800000, 76310000000000)` in read mode; `market_key::down(oracle, 1779436800000, 76306000000000)` in preflight mode. |
-| UP quote result | Read mode `mint=495`, `redeem=475`, `quantity=1000`; preflight rerun `mint=498`, `redeem=478`, `quantity=1000`. |
-| DOWN quote result | Read mode `mint=510`, `redeem=490`, `quantity=1000`; preflight rerun `mint=507`, `redeem=487`, `quantity=1000`. |
-| Binary readback result | With sender `0x4ff903b0dcc52dc8753787baf19b34b7425dfa64d187cc7c726b38413705fa75` and manager `0xd59be0646d948c9be6073edc0cfd253ce4cb00f4929f0bae71f451f50e5d1575`, UP position `0`, DOWN position `0`. |
-| Two-leg PTB preflight result | Passed with explicit sender/manager through `client.devInspectTransactionBlock`; no signing or execution. |
-| Blockers | Live binary mint/redeem not executed in this round. Future wallet approval still needs fresh runtime quote, manager balance, fee coverage, and full two-leg preflight. |
-
-Latest controlled mint-mode result from 2026-05-19 is recorded in [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md): the old `100000000` MIST gas budget reproduced `InsufficientGas in command 3`, where command `3` is the second `predict::mint` if zero-based and `market_key::down` if one-based. Raising the budget to `200000000` MIST passed SDK dry-run and CLI `serialized-tx-kind` dry-run, then one real Testnet two-leg mint executed with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`. UP and DOWN positions each increased by `1000`, and manager DUSDC decreased by `1003` atomic units.
-
-Quote success and `devInspect` success do not imply executable CLI submission. The full two-leg PTB still requires fresh quote, manager balance, gas, `devInspect`, SDK or wallet dry-run, CLI dry-run or wallet simulation equivalent, and wallet approval gates before any future production mint.
+`receipt::buy_move_receipt<Quote>` sums both quoted mint costs as an early cap check, then computes final `premium_paid` from the user's `PredictManager` quote-asset balance delta after the internal mints.
 
 ## Binary mint entrypoint
 
 Binary mint is source-confirmed as:
 
 ```move
-predict::mint<Quote>(
+public fun deepbook_predict::predict::mint<Quote>(
     predict: &mut Predict,
     manager: &mut PredictManager,
     oracle: &OracleSVI,
@@ -135,14 +105,57 @@ Required objects and type parameters:
 | `Clock` | Sui clock object. |
 | `Quote` | Quote asset type parameter, DUSDC for current Testnet integration. |
 
-The mint entrypoint checks manager ownership, trading pause state, positive quantity, quote asset, oracle/key match, live oracle state, mintable ask, manager balance, and vault exposure limits. DeepVol must not duplicate that pricing/risk logic.
+The mint path checks manager ownership, trading pause state, positive quantity, quote asset, oracle/key match, live oracle state, mintable ask, manager balance, and vault exposure limits. DeepVol must not duplicate that pricing/risk logic.
+
+## Route B DeepVol entrypoint
+
+DeepVol-3B adds the local contract entrypoint:
+
+```move
+receipt::buy_move_receipt<Quote>(
+    series: &VolSeries,
+    predict: &mut Predict,
+    manager: &mut PredictManager,
+    oracle: &OracleSVI,
+    fee_coin: Coin<Quote>,
+    protocol_vault: &mut ProtocolVault<Quote>,
+    quantity: u64,
+    max_premium_paid: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+)
+```
+
+This entrypoint internally calls `predict::mint<Quote>` twice. The underlying positions remain in the user's `PredictManager`; the receipt records linkage and the actual quote-asset balance delta used for max-premium and Create Fee enforcement.
+
+`predict::mint<Quote>` does not return the final charged cost. DeepVol reads `predict_manager::balance<Quote>` before and after the two mints, records the total balance delta, and future indexer/event logic can reconcile that total with DeepBook Predict `PositionMinted` event costs.
+
+## Current validation harness
+
+`scripts/validate-deepvol-binary-legs.mjs` has three modes:
+
+- `npm run validate:deepvol-binary-read` discovers active BTC oracle candidates, constructs UP/DOWN `MarketKey` values with official constructors, quotes both legs with `predict::get_trade_amounts`, and optionally reads `predict_manager::position` when `--sender` and `--manager` are supplied.
+- `npm run validate:deepvol-binary-preflight` first runs read-mode selection, then requires explicit `--sender` and `--manager` before building a two-leg `predict::mint<DUSDC>` PTB for `devInspect` only.
+- `npm run validate:deepvol-binary-mint` runs the controlled Testnet mint gates for the known funded sender/manager, prints gas and command diagnostics, and stays dry-run-only unless `--execute-real-mint` is explicitly supplied.
+
+Safety properties:
+
+- no private key is loaded;
+- `.env.local` is not read;
+- mint mode is dry-run-only by default;
+- real submission requires explicit sender/manager, Testnet CLI env/address, manager balance, gas balance, transaction-shape assertion, `devInspect`, SDK dry-run, CLI dry-run, and `--execute-real-mint`;
+- binary redeem remains not executed in this round.
+
+Latest controlled mint-mode result from 2026-05-19 is recorded in [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md): the old `100000000` MIST gas budget reproduced `InsufficientGas in command 3`; raising the budget to `200000000` MIST passed SDK dry-run and CLI `serialized-tx-kind` dry-run, then one real Testnet two-leg mint executed with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`. UP and DOWN positions each increased by `1000`, and manager DUSDC decreased by `1003` atomic units.
+
+That digest is primitive evidence only. It did not execute DeepVol `buy_move_receipt<Quote>`, did not create a DeepVol `MoveReceipt`, and did not deposit a DeepVol Create Fee.
 
 ## Binary redeem entrypoints
 
 Source-confirmed binary redeem functions:
 
 ```move
-predict::redeem<Quote>(
+public fun deepbook_predict::predict::redeem<Quote>(
     predict: &mut Predict,
     manager: &mut PredictManager,
     oracle: &OracleSVI,
@@ -154,7 +167,7 @@ predict::redeem<Quote>(
 ```
 
 ```move
-predict::redeem_permissionless<Quote>(
+public fun deepbook_predict::predict::redeem_permissionless<Quote>(
     predict: &mut Predict,
     manager: &mut PredictManager,
     oracle: &OracleSVI,
@@ -174,7 +187,10 @@ DeepVol MVP can guide redeem, but non-custodial receipts cannot force users to r
 Binary position readback is source-confirmed as:
 
 ```move
-predict_manager::position(self: &PredictManager, key: MarketKey): u64
+public fun deepbook_predict::predict_manager::position(
+    self: &PredictManager,
+    key: MarketKey,
+): u64
 ```
 
 DeepVol portfolio should read both:
@@ -195,7 +211,7 @@ Source-confirmed binary lifecycle events:
 
 A later SDK implementation should normalize these events and link them with DeepVol receipt events by transaction digest and fields.
 
-## Preflight gates for later implementation
+## Preflight gates for deployed Route B
 
 Before any production DeepVol mint flow:
 
@@ -206,9 +222,9 @@ Before any production DeepVol mint flow:
 5. Preview DOWN leg with `predict::get_trade_amounts`.
 6. Ensure both mint costs are nonzero.
 7. Ensure quote success is not treated as mintability proof.
-8. Ensure manager DUSDC balance covers total premium.
+8. Ensure manager quote-asset balance covers total premium.
 9. Ensure fee coin covers Create Fee.
-10. DevInspect the full two-leg PTB before wallet approval.
+10. Simulate/preflight the full `buy_move_receipt<Quote>` call before wallet approval.
 11. After mint, read back both quantities through `predict_manager::position`.
 12. Verify expected `PositionMinted` events or direct position increases.
 
@@ -223,15 +239,15 @@ Validated prior work:
 
 DeepVol-specific remaining work:
 
-- Preserve the `200000000` MIST gas budget finding in SDK/UI two-leg mint gates.
+- Manual DeepVol package publish and quote-asset `ProtocolVault` setup.
+- Deployed `buy_move_receipt<Quote>` preflight and execution validation.
 - Binary redeem validation.
 - Binary event parsing in SDK.
 - Binary direct readback helper in SDK.
-- Non-custodial receipt creation around the two-leg mint path.
 
 ## Open blockers
 
 - Active BTC oracle, expiry, and strikes are `MUST CONFIRM AT RUNTIME`.
 - Production DeepVol flows must preserve the validated two-leg mint gates before wallet approval.
+- DeepVol package, admin cap, and protocol vault IDs remain null until manual publish/setup.
 - Binary redeem path and post-settlement behavior are `MUST CONFIRM BEFORE CODING` guided settlement UX.
-- Final `MoveReceipt` field types are `MUST CONFIRM BEFORE CODING` after translating the validated binary mint evidence into the receipt design.

@@ -1,7 +1,7 @@
 ---
-Purpose: Record DeepVol-3 local contract build and validation scope.
+Purpose: Record DeepVol-3B local Route B contract build and validation scope.
 Audience: Move developers, SDK implementers, reviewers, and AI agents.
-Status: DeepVol-3 local validation checklist.
+Status: DeepVol-3B local validation checklist.
 ---
 
 # DeepVol Contract Build Validation
@@ -23,43 +23,60 @@ npm run move:test:rangepilot
 
 This validation is local-only:
 
-- Sui Move build for `move/deepvol`.
-- Sui Move tests for `move/deepvol`.
+- Sui Move build for `move/deepvol` with DeepBook Predict dependencies.
+- Sui Move tests for `move/deepvol` fee, series, vault, and receipt helper behavior.
 - TypeScript typecheck for the workspace.
 - Web app build regression check.
 - Existing RangePilot Move build/test regression checks.
 
+`npm run move:build:deepvol` typechecks the real `receipt::buy_move_receipt<Quote>` entrypoint against the source-confirmed DeepBook Predict signatures. Local unit tests do not instantiate real DeepBook Predict `Predict`, `PredictManager`, or `OracleSVI` fixtures.
+
 ## Explicit non-actions
 
-DeepVol-3 does not perform any chain write:
+DeepVol-3B does not perform any chain write:
 
 - no package was published;
 - no real `VolSeries` object was created;
 - no real `MoveReceipt` object was minted;
 - no real transaction was submitted;
-- no DeepBook Predict binary mint was rerun;
+- no DeepVol Route B call was executed on Testnet;
+- no DeepBook Predict binary mint was rerun in this phase;
 - no binary redeem was executed;
 - no RangePilot wrapper follow was executed;
 - no ProtocolVault withdrawal or supply action was executed.
 
 ## Prior binary primitive evidence
 
-The previous controlled Testnet binary mint digest remains the evidence for the BTC MOVE primitive:
+The previous controlled Testnet binary mint digest remains evidence for the BTC MOVE primitive only:
 
 ```text
 4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh
 ```
 
-That transaction validated:
+That transaction validated direct DeepBook Predict UP + DOWN binary minting for one runtime-selected BTC pair. It did not execute DeepVol `buy_move_receipt<Quote>`, did not create a DeepVol receipt, and did not deposit a DeepVol Create Fee.
 
-- UP binary leg quantity `1000`;
-- DOWN binary leg quantity `1000`;
-- total quoted premium `1003` atomic DUSDC;
-- direct `predict_manager::position` readback for both legs;
-- manager DUSDC balance delta matching the total premium.
+The `200000000` MIST gas finding from DeepVol-2-fix is relevant for future wallet simulations involving two binary mints plus receipt and fee routing. It is not used by local Move tests.
 
-The `200000000` MIST gas finding from DeepVol-2-fix is relevant for future atomic PTBs that compose both binary mints, fee routing, and receipt creation. It is not used by local Move tests.
+## Local Route B coverage
+
+Local tests cover:
+
+- Create Fee calculation and max fee bps validation;
+- `VolSeries` field storage and validation;
+- DeepVol-owned `ProtocolVault<Quote>` creation, deposit, withdrawal, and insufficient-balance aborts;
+- `MoveReceipt` storage through a test-only constructor;
+- series-derived `up_strike` and `down_strike` metadata;
+- receipt status transitions and owner-only settlement marker.
+
+Build coverage confirms the production entrypoint imports and calls:
+
+- `market_key::up`;
+- `market_key::down`;
+- `predict::get_trade_amounts`;
+- `predict::mint<Quote>`;
+- `predict_manager::owner`;
+- `vault::deposit_create_fee`.
 
 ## Expected result
 
-Success means the local contract skeleton compiles, tests pass, TypeScript exports resolve, and existing RangePilot regressions remain green. It does not mean the DeepVol package has been deployed or that receipt creation has been validated on-chain.
+Success means the local Route B contract compiles, tests pass, TypeScript exports resolve, and existing RangePilot regressions remain green. It does not mean the DeepVol package has been deployed or that Route B receipt creation has been validated on-chain.
