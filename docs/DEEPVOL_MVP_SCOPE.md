@@ -1,7 +1,7 @@
 ---
 Purpose: Define the first DeepVol BTC MOVE MVP boundary.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Foundation MVP scope for the DeepVol refactor, updated for Route B local code.
+Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-4 Testnet package and vault setup.
 ---
 
 # DeepVol MVP Scope
@@ -58,7 +58,7 @@ The MVP excludes:
 - Pro API.
 - Full UI polish.
 
-These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; DeepVol-3B adds the local-only Route B contract path, while real DeepVol package publish, real `buy_move_receipt<Quote>` execution, and real Create Fee deposit remain future manual-deployment work.
+These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; DeepVol-3B added the Route B contract path, and DeepVol-4 records the manual Testnet package publish plus shared `ProtocolVault<DUSDC>` setup in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md). Real `buy_move_receipt<DUSDC>` execution, real `MoveReceipt` creation, and real Create Fee deposit through the receipt path remain next-phase work.
 
 ## Runtime assumptions
 
@@ -75,10 +75,11 @@ The first implementation should prefer runtime discovery over hardcoded market a
 5. Validate a two-leg binary mint PTB in devInspect.
 6. Run a controlled binary mint round and document the result. The 2026-05-19 round diagnosed the old `InsufficientGas in command 3` as a too-low `100000000` MIST gas budget and validated one real two-leg mint at `200000000` MIST.
 7. Add DeepVol-3 local skeleton for `VolSeries`, non-custodial `MoveReceipt`, Create Fee calculation/recording, TypeScript stubs, and docs without publishing or executing transactions.
-8. Upgrade to DeepVol-3B Route B local contract code: DeepVol derives both binary legs from `VolSeries`, calls Predict mint twice inside `buy_move_receipt<Quote>`, deposits Create Fee into a DeepVol-owned vault, and keeps deployment IDs null.
-9. After manual publish/configuration, add fresh quote, fee coin, and full preflight gates around the deployed `buy_move_receipt<Quote>` path.
-10. Add portfolio readback and guided settlement UI.
-11. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
+8. Upgrade to DeepVol-3B Route B contract code: DeepVol derives both binary legs from `VolSeries`, calls Predict mint twice inside `buy_move_receipt<Quote>`, and deposits Create Fee into a DeepVol-owned vault.
+9. Record DeepVol-4 manual Testnet publish/configuration and create the shared `ProtocolVault<DUSDC>`.
+10. Add fresh quote, fee coin, and full preflight gates around the deployed `buy_move_receipt<DUSDC>` path.
+11. Add portfolio readback and guided settlement UI.
+12. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
 
 ## Code organization
 

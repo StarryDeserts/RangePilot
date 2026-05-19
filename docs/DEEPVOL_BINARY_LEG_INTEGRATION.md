@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; direct two-leg primitive mint validated, DeepVol Route B local code typechecked.
+Status: Source-confirmed entrypoints; direct two-leg primitive mint validated, DeepVol Route B package and DUSDC ProtocolVault configured on Testnet.
 ---
 
 # DeepVol Binary Leg Integration
@@ -148,7 +148,7 @@ Safety properties:
 
 Latest controlled mint-mode result from 2026-05-19 is recorded in [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md): the old `100000000` MIST gas budget reproduced `InsufficientGas in command 3`; raising the budget to `200000000` MIST passed SDK dry-run and CLI `serialized-tx-kind` dry-run, then one real Testnet two-leg mint executed with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`. UP and DOWN positions each increased by `1000`, and manager DUSDC decreased by `1003` atomic units.
 
-That digest is primitive evidence only. It did not execute DeepVol `buy_move_receipt<Quote>`, did not create a DeepVol `MoveReceipt`, and did not deposit a DeepVol Create Fee.
+That digest is primitive evidence only. It did not execute DeepVol `buy_move_receipt<Quote>`, did not create a DeepVol `MoveReceipt`, and did not deposit a DeepVol Create Fee. DeepVol-4 later records the manual Testnet package publish and shared `ProtocolVault<DUSDC>` setup in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md), but the receipt path still remains unexecuted.
 
 ## Binary redeem entrypoints
 
@@ -239,8 +239,8 @@ Validated prior work:
 
 DeepVol-specific remaining work:
 
-- Manual DeepVol package publish and quote-asset `ProtocolVault` setup.
-- Deployed `buy_move_receipt<Quote>` preflight and execution validation.
+- Manual DeepVol package publish and quote-asset `ProtocolVault<DUSDC>` setup are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
+- Deployed `buy_move_receipt<DUSDC>` preflight and execution validation.
 - Binary redeem validation.
 - Binary event parsing in SDK.
 - Binary direct readback helper in SDK.
@@ -249,5 +249,6 @@ DeepVol-specific remaining work:
 
 - Active BTC oracle, expiry, and strikes are `MUST CONFIRM AT RUNTIME`.
 - Production DeepVol flows must preserve the validated two-leg mint gates before wallet approval.
-- DeepVol package, admin cap, and protocol vault IDs remain null until manual publish/setup.
+- DeepVol package, admin cap, upgrade cap, and DUSDC protocol vault IDs are configured after DeepVol-4; see [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
+- No real `VolSeries`, `MoveReceipt`, or deployed `buy_move_receipt<DUSDC>` has been executed yet.
 - Binary redeem path and post-settlement behavior are `MUST CONFIRM BEFORE CODING` guided settlement UX.

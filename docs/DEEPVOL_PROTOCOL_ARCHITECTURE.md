@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol BTC MOVE protocol architecture and custody boundaries.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: DeepVol-3B Route B architecture; local-only until manual publish.
+Status: DeepVol-4 Route B architecture; package and DUSDC ProtocolVault are published/configured on Testnet, first buy_move_receipt remains pending.
 ---
 
 # DeepVol Protocol Architecture
@@ -81,7 +81,7 @@ The local Route B contract path is:
 7. Submit one Sui transaction that calls `receipt::buy_move_receipt<Quote>`.
 8. Inside the entrypoint, DeepVol derives both keys, quotes both legs, calls `predict::mint<Quote>` twice, deposits Create Fee into `ProtocolVault<Quote>`, and mints the receipt.
 
-The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. DeepVol-3B translates that primitive into local Move code, but it does not publish the package, create real series/receipts, route real fees, or execute a real DeepVol Route B transaction in this phase.
+The 2026-05-19 controlled Testnet round validated the direct Predict two-leg binary mint with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh` after diagnosing the old `InsufficientGas in command 3` blocker as a too-low `100000000` MIST gas budget. DeepVol-3B translated that primitive into Route B Move code. DeepVol-4 then records the manual Testnet package publish and creates the shared DUSDC ProtocolVault; concrete deployment IDs are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md). DeepVol-4 still does not create real series/receipts, route Create Fee through `buy_move_receipt`, execute Predict mint/redeem, or execute a real DeepVol Route B receipt transaction.
 
 ## Premium and fee accounting
 
@@ -135,7 +135,7 @@ This is future scope and should not block the BTC MOVE MVP.
 
 ## Code organization
 
-DeepVol-3B includes local-only Route B code and stubs:
+DeepVol includes Route B code and TypeScript integration stubs:
 
 ```text
 move/deepvol/
@@ -152,4 +152,4 @@ apps/web/src/pages/DeepVolSeriesPage.tsx
 apps/web/src/pages/DeepVolPortfolioPage.tsx
 ```
 
-The full transaction path remains unexecuted until the user manually publishes DeepVol and supplies real package, admin cap, and vault IDs.
+The package, admin cap, upgrade cap, and DUSDC ProtocolVault IDs are now configured after DeepVol-4. The full `buy_move_receipt<DUSDC>` transaction path remains unexecuted until the next validation phase.

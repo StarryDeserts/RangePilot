@@ -1,7 +1,7 @@
 ---
 Purpose: Define the phased implementation roadmap for DeepVol BTC MOVE while preserving RangePilot validation history.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: Updated for DeepVol-3B Route B local contract work.
+Status: Updated for DeepVol-4 Testnet package and vault setup.
 Source of truth relationship: Derived from DeepVol foundation docs, local protocol docs, and official-derived Testnet integration references; implementation details remain subject to confirmation.
 ---
 
@@ -44,10 +44,10 @@ The prior creator-follow strategy model is not the primary product direction bec
 
 | Field | Content |
 |---|---|
-| Goal | Implement the minimal local-only non-custodial but protocol-enforced DeepVol Move package around BTC MOVE series, DeepVol fee vault, and receipt creation. |
-| Deliverables | `move/deepvol` package; `VolSeries`; DeepVol `AdminCap`; DeepVol `ProtocolVault<Quote>`; `MoveReceipt`; `receipt::buy_move_receipt<Quote>` with internal UP/DOWN Predict mints; Create Fee deposit; receipt lifecycle events; Move tests; TypeScript type/config/SDK stubs with null deployment IDs. |
+| Goal | Implement the minimal non-custodial but protocol-enforced DeepVol Move package around BTC MOVE series, DeepVol fee vault, and receipt creation. |
+| Deliverables | `move/deepvol` package; `VolSeries`; DeepVol `AdminCap`; DeepVol `ProtocolVault<Quote>`; `MoveReceipt`; `receipt::buy_move_receipt<Quote>` with internal UP/DOWN Predict mints; Create Fee deposit; receipt lifecycle events; Move tests; TypeScript type/config/SDK stubs. |
 | Non-goals | Package publish, real `VolSeries` creation, real `MoveReceipt` minting, real `buy_move_receipt<Quote>` execution, binary redeem execution, custodial manager, tradable receipt, Profit Fee enforcement, secondary market, custom Predict pricing, custom settlement. |
-| Acceptance criteria | Move build/tests pass locally; receipt creation is not exposed as a metadata-only public path; `buy_move_receipt<Quote>` derives both keys from `VolSeries`; Create Fee deposits into DeepVol `ProtocolVault<Quote>`; package/config IDs remain null until manual publish. |
+| Acceptance criteria | Move build/tests pass locally; receipt creation is not exposed as a metadata-only public path; `buy_move_receipt<Quote>` derives both keys from `VolSeries`; Create Fee deposits into DeepVol `ProtocolVault<Quote>`; DeepVol-4 records the later manual Testnet publish and DUSDC ProtocolVault setup. |
 | Required docs | DeepVol protocol architecture; DeepVol data model; DeepVol MoveReceipt contract; DeepVol contract build validation; DeepVol business model; binary leg integration; Move rules. |
 | Risks and fallback | Risk: implying deployment or on-chain validation before manual publish. Fallback: keep null config, no-publish status, and primitive-vs-Route-B evidence separation strict. |
 
@@ -55,11 +55,12 @@ The prior creator-follow strategy model is not the primary product direction bec
 
 | Field | Content |
 |---|---|
-| Goal | Validate deployed DeepVol `buy_move_receipt<Quote>` only after the user manually publishes the package and provides real package/admin/vault values. |
-| Deliverables | Manual publish readiness review; real DeepVol package/config values after user publish; quote-asset `ProtocolVault<Quote>` setup; binary quote helpers; deployed `buy_move_receipt<Quote>` preflight; receipt transaction builder wired to deployed package; Create Fee coin routing; binary position readback; event parsing. |
+| Goal | Validate deployed DeepVol `buy_move_receipt<DUSDC>` after manual package publish and DUSDC ProtocolVault setup. |
+| Deliverables | Manual publish readiness review; DeepVol-4 package/AdminCap/UpgradeCap/config values; shared `ProtocolVault<DUSDC>` setup; binary quote helpers; deployed `buy_move_receipt<DUSDC>` preflight; receipt transaction builder wired to deployed package; Create Fee coin routing; binary position readback; event parsing. |
+| Current status | Manual publish and shared `ProtocolVault<DUSDC>` setup are complete and recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md). No real `VolSeries`, `MoveReceipt`, deployed `buy_move_receipt<DUSDC>`, Predict mint/redeem, or withdrawal was executed in DeepVol-4. |
 | Non-goals | Private-key browser paths, mainnet, unaudited production launch, direct custom pricing, bypassing fresh quote/preflight gates. |
 | Acceptance criteria | Builders require runtime BTC oracle/expiry, successful UP and DOWN quote previews, full DeepVol Route B preflight, fee coverage, explicit package/vault IDs, and explicit gates before wallet prompt. |
-| Required docs | DeepVol binary leg integration; entrypoint bindings plan; protocol integration notes; Sui transaction-building guidance. |
+| Required docs | DeepVol Testnet publish result; DeepVol binary leg integration; entrypoint bindings plan; protocol integration notes; Sui transaction-building guidance. |
 | Risks and fallback | Risk: quote success differs from mintability or actual event costs differ from the immediate quote. Fallback: preserve full preflight gate and event/readback reconciliation, mirroring range mint lessons. |
 
 ## Phase 4: Portfolio and guided settlement UX

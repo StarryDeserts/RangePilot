@@ -1,14 +1,14 @@
 ---
-Purpose: Document the local-only DeepVol Route B VolSeries, ProtocolVault, and MoveReceipt contract.
+Purpose: Document the DeepVol Route B VolSeries, ProtocolVault, and MoveReceipt contract.
 Audience: Move developers, SDK implementers, protocol integrators, reviewers, and AI agents.
-Status: DeepVol-3B local Route B reference; not published.
+Status: DeepVol-4 Testnet reference; package and DUSDC ProtocolVault are published/configured, first buy_move_receipt remains pending.
 ---
 
 # DeepVol MoveReceipt Contract
 
 ## Scope
 
-DeepVol-3B upgrades `move/deepvol` from a metadata-only receipt skeleton to a local-only Route B contract model:
+DeepVol-3B upgraded `move/deepvol` from a metadata-only receipt skeleton to the Route B contract model:
 
 ```text
 VolSeries-defined BTC MOVE series
@@ -20,7 +20,7 @@ VolSeries-defined BTC MOVE series
 
 The receipt remains non-custodial because the underlying DeepBook Predict positions stay in the user's `PredictManager`. It is protocol-enforced because the public receipt creation path now mints both Predict legs inside `receipt::buy_move_receipt<Quote>` before the receipt is created.
 
-This round does not publish the package and does not submit any chain transaction. The user will manually review publish configuration, publish later, create the quote-asset vault, and provide real deployment values afterward.
+DeepVol-4 records the manual Testnet package publish and creates the shared `ProtocolVault<DUSDC>`. The first deployed `receipt::buy_move_receipt<DUSDC>` validation remains pending and must use fresh quote, fee coin, and full preflight gates.
 
 ## Package boundary
 
@@ -191,16 +191,17 @@ Predict mint costs are paid from the user's `PredictManager` balance by DeepBook
 
 ## Publish and deployment status
 
-DeepVol-3B writes local code and tests only:
+DeepVol Route B is now published on Sui Testnet, and the DUSDC ProtocolVault is configured after the DeepVol-4 setup transaction. Concrete package, vault, AdminCap, UpgradeCap, publisher, and setup digest values are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md) and `packages/config/src/deepVolTestnet.ts`.
 
-- DeepVol package ID: `null` in config.
-- DeepVol protocol vault ID: `null` in config.
-- DeepVol admin cap ID: `null` in config.
-- no package publish;
-- no real `VolSeries` creation;
-- no real `MoveReceipt` creation;
-- no real DeepVol Route B transaction;
-- no real Predict mint in this phase;
-- no real ProtocolVault deposit in this phase.
+Current deployment state:
 
-Final publish configuration and deployment object IDs are manual future work. Do not invent package IDs or deployment object IDs.
+- DeepVol package ID is configured.
+- DeepVol `ProtocolVault<DUSDC>` ID is configured.
+- DeepVol `AdminCap` and `UpgradeCap` IDs are documented as admin-only objects.
+- No real `VolSeries` object has been created unless separately verified.
+- No real `MoveReceipt` object has been minted.
+- No deployed `receipt::buy_move_receipt<DUSDC>` transaction has been executed yet.
+- No DeepBook Predict mint/redeem was executed in DeepVol-4.
+- No DeepVol withdrawal was executed in DeepVol-4.
+
+The next phase is first deployed `buy_move_receipt<DUSDC>` validation with fresh runtime market discovery, quote previews, fee coin preparation, full preflight, wallet approval, and post-transaction receipt/position/event checks.

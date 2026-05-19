@@ -8,6 +8,8 @@ export type VolSeriesObjectId = DeepVolObjectId;
 export type MoveReceiptObjectId = DeepVolObjectId;
 export type DeepVolProtocolVaultObjectId = DeepVolObjectId;
 export type DeepVolAdminCapObjectId = DeepVolObjectId;
+export type DeepVolUpgradeCapObjectId = DeepVolObjectId;
+export type DeepVolPublisherAddress = string;
 export type DeepVolMarketSymbol = "BTC";
 export type DeepVolReceiptCustody = "non_custodial";
 export type MoveReceiptStatus = 0 | 1 | 2;
@@ -17,6 +19,8 @@ export type DeepVolTestnetConfig = {
   packageId: DeepVolObjectId | null;
   protocolVaultId: DeepVolProtocolVaultObjectId | null;
   adminCapId: DeepVolAdminCapObjectId | null;
+  upgradeCapId: DeepVolUpgradeCapObjectId | null;
+  publisher: DeepVolPublisherAddress | null;
   defaultCreateFeeBps: 30;
   maxCreateFeeBps: 100;
   primaryMarket: DeepVolMarketSymbol;
