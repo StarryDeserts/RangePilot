@@ -1,7 +1,7 @@
 ---
 Purpose: Record DeepVol-11 source confirmation and read/preflight validation for guided BTC MOVE redeem.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: DeepVol-11 source-confirmed redeem preflight artifact; no real redeem executed.
+Status: DeepVol-11 source-confirmed redeem preflight artifact, with DeepVol-12 controlled browser redeem wiring/blocker cross-reference; no real redeem executed in either validation artifact.
 Source of truth relationship: Derived from local DeepBook Predict source snapshot, Sui Testnet read/devInspect evidence, and DeepVol browser buy validation; on-chain state and official source remain authoritative.
 ---
 
@@ -204,16 +204,17 @@ DeepVol must parse this event and reconcile before/after `PredictManager` positi
 
 DeepVol-11 executed only object reads and `devInspectTransactionBlock` preflight calls. The validation script has no execute mode and prints `No real redeem executed.` No real redeem, buy, withdraw, publish, upgrade, or mainnet command was run.
 
-## DeepVol-12 next step
+## DeepVol-12 controlled browser result
 
-DeepVol-12 should run one controlled browser wallet redeem only after approval and after these gates pass in the browser:
+DeepVol-12 wires the Portfolio controlled browser redeem path for the known receipt and records the current blocker in [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
 
-1. Read the selected `MoveReceipt`.
-2. Read current UP and DOWN `PredictManager` position quantities.
-3. Preview redeem payout with `predict::get_trade_amounts`.
-4. Run explicit `predict::redeem<DUSDC>` devInspect preflight.
-5. Confirm manager DUSDC balance and position quantities before wallet prompt.
-6. Execute one approved Testnet redeem through the browser wallet.
-7. Parse `PositionRedeemed`.
-8. Reconcile payout, manager DUSDC balance delta, and position delta.
-9. Only then update local receipt status, clearly labeled as local/indexer-limited until a broader receipt indexer exists.
+Current status:
+
+1. The known receipt readback remains open with receipt quantity `10000`.
+2. UP and DOWN manager-level positions read as `20000`, while the receipt-scoped redeem quantity remains `10000` per leg.
+3. Fresh payout preview and `predict::redeem<DUSDC>` devInspect preflight passed immediately before browser validation.
+4. Portfolio now gates `Redeem both receipt legs` behind the exact receipt, exact owner wallet, Sui Testnet, both leg preflights, receipt-scoped quantities, fresh submit-time read/preflight, and a local one-shot attempt record.
+5. No real redeem was executed because the validation browser did not have the approved wallet extension/account installed and connected.
+6. No script/private-key fallback was used.
+
+The next real validation must happen in a browser profile where the approved wallet is already installed, unlocked, and connected on Sui Testnet. After one wallet approval, the result still must be reconciled with exactly two `PositionRedeemed` events, UP/DOWN position deltas of `10000`, and manager DUSDC balance delta before any local receipt status is treated as redeemed.

@@ -12,8 +12,8 @@ type ReceiptSummaryCardProps = {
 
 export function ReceiptSummaryCard({ receipt }: ReceiptSummaryCardProps) {
   const object = receipt.object;
-  const sourceLabel = receipt.source === "local" ? "Local browser record" : "Reference artifact";
-  const redeem = useDeepVolRedeemPreflight(object);
+  const sourceLabel = receipt.source === "local" ? "Local browser record" : "Controlled validation artifact";
+  const redeem = useDeepVolRedeemPreflight(object, receipt.storedRecord);
   const redeemBlockers = redeemExecutionBlockers(redeem);
 
   return (
@@ -24,7 +24,9 @@ export function ReceiptSummaryCard({ receipt }: ReceiptSummaryCardProps) {
           <h2>BTC MOVE Receipt</h2>
         </div>
         <div className="receiptStatusStack">
-          <StatusPill tone={object ? "success" : "warning"}>{object ? statusLabel(object.status) : "Readback pending"}</StatusPill>
+          <StatusPill tone={receipt.storedRecord?.redeemValidation ? "success" : object ? "success" : "warning"}>
+            {receipt.storedRecord?.redeemValidation ? "Local redeemed" : object ? statusLabel(object.status) : "Readback pending"}
+          </StatusPill>
           <StatusPill tone={receipt.source === "local" ? "info" : "neutral"}>{sourceLabel}</StatusPill>
         </div>
       </div>
@@ -102,12 +104,16 @@ export function ReceiptSummaryCard({ receipt }: ReceiptSummaryCardProps) {
           <button className="primaryButton" type="button" onClick={redeem.runPreflight} disabled={!redeem.canRunPreflight}>
             {redeem.isChecking ? "Running preflight..." : "Run redeem preflight"}
           </button>
-          <button className="secondaryButton" type="button" disabled>
-            Redeem execution disabled
+          <button className="secondaryButton" type="button" onClick={redeem.executeControlledRedeem} disabled={!redeem.canExecute}>
+            {redeem.transactionStatus.state === "building" || redeem.transactionStatus.state === "awaiting_wallet"
+              ? "Redeem pending..."
+              : "Redeem both receipt legs"}
           </button>
         </div>
 
         <p className="redeemMessage">{redeem.stale ? "Run redeem preflight again for the current wallet and receipt state." : redeem.message}</p>
+        <TransactionStatusPanel status={redeem.transactionStatus} />
+        {redeem.reconciliation && <RedeemReconciliationPanel reconciliation={redeem.reconciliation} />}
 
         <StateCallout tone="info" title="Non-custodial redeem boundary">
           This is a non-custodial receipt. The underlying UP and DOWN positions remain in your PredictManager. MVP redeem is guided:
@@ -115,8 +121,10 @@ export function ReceiptSummaryCard({ receipt }: ReceiptSummaryCardProps) {
           directly through DeepBook Predict. DeepVol MVP focuses on guided UX and receipt tracking.
         </StateCallout>
 
-        <StateCallout tone="warning" title="Execution remains disabled">
-          {redeemBlockers.join(" ")}
+        <StateCallout tone={redeem.canExecute ? "success" : "warning"} title={redeem.canExecute ? "Controlled execution ready" : "Controlled execution blockers"}>
+          {redeemBlockers.length > 0
+            ? redeemBlockers.join(" ")
+            : "Fresh preflight, exact receipt gates, Testnet wallet, and one-shot checks are ready for one controlled browser-wallet redeem."}
         </StateCallout>
       </section>
 
@@ -129,6 +137,54 @@ export function ReceiptSummaryCard({ receipt }: ReceiptSummaryCardProps) {
         Underlying positions stay in PredictManager. This MVP reads known/local receipts; general receipt indexing is future work.
       </StateCallout>
     </section>
+  );
+}
+
+function TransactionStatusPanel({ status }: { status: ReturnType<typeof useDeepVolRedeemPreflight>["transactionStatus"] }) {
+  if (status.state === "idle") {
+    return null;
+  }
+
+  return (
+    <div className={`redeemExecutionStatus redeemExecutionStatus-${status.state}`}>
+      <strong>{transactionStatusLabel(status.state)}</strong>
+      {status.message && <span>{status.message}</span>}
+      {status.error && <span>{status.error}</span>}
+      {status.digest && (
+        <a href={status.explorerUrl} target="_blank" rel="noreferrer" className="mono">
+          {shortId(status.digest)}
+        </a>
+      )}
+    </div>
+  );
+}
+
+function RedeemReconciliationPanel({ reconciliation }: { reconciliation: NonNullable<ReturnType<typeof useDeepVolRedeemPreflight>["reconciliation"]> }) {
+  return (
+    <div className="redeemReconciliationPanel">
+      <div className="redeemReconciliationHeader">
+        <strong>{reconciliation.status === "reconciled" ? "Redeem reconciled" : "Redeem needs review"}</strong>
+        <StatusPill tone={reconciliation.status === "reconciled" ? "success" : "warning"}>
+          {reconciliation.status === "reconciled" ? "Local/indexer-limited" : "Warnings"}
+        </StatusPill>
+      </div>
+      <DataGrid
+        variant="compact"
+        items={[
+          { label: "Digest", value: <a className="mono" href={reconciliation.explorerUrl} target="_blank" rel="noreferrer">{shortId(reconciliation.digest)}</a> },
+          { label: "Total payout", value: reconciliation.totalPayoutAtomic ? `${formatAtomicAmount(reconciliation.totalPayoutAtomic)} DUSDC` : "Unavailable" },
+          { label: "Manager balance before", value: formatAtomicAmount(reconciliation.managerBalanceBeforeAtomic) },
+          { label: "Manager balance after", value: formatAtomicAmount(reconciliation.managerBalanceAfterAtomic) },
+          { label: "UP position", value: `${reconciliation.up.positionBeforeAtomic ?? "?"} → ${reconciliation.up.positionAfterAtomic ?? "?"}` },
+          { label: "DOWN position", value: `${reconciliation.down.positionBeforeAtomic ?? "?"} → ${reconciliation.down.positionAfterAtomic ?? "?"}` },
+        ]}
+      />
+      {reconciliation.warnings.length > 0 && (
+        <ul className="redeemWarningList">
+          {reconciliation.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -154,6 +210,25 @@ function RedeemLegCard({ leg, label }: { leg: RedeemLegUiState; label: string })
       {leg.blocker && <p className="redeemLegBlocker">{leg.blocker}</p>}
     </article>
   );
+}
+
+function transactionStatusLabel(status: ReturnType<typeof useDeepVolRedeemPreflight>["transactionStatus"]["state"]): string {
+  switch (status) {
+    case "building":
+      return "Building redeem";
+    case "awaiting_wallet":
+      return "Awaiting wallet";
+    case "success":
+      return "Redeem submitted";
+    case "failed":
+      return "Redeem failed";
+    case "blocked_unconfirmed":
+      return "Redeem blocked";
+    case "submitted":
+      return "Submitted";
+    default:
+      return "Redeem status";
+  }
 }
 
 function statusLabel(status: number): string {

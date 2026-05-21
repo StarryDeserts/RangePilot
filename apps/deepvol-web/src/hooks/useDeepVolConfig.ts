@@ -2,8 +2,8 @@ import { DEEPVOL_TESTNET } from "@rangepilot/config/deepVolTestnet";
 import { DEEPBOOK_PREDICT_TESTNET } from "@rangepilot/config/deepbookPredictTestnet";
 import {
   CONFIGURED_BTC_MOVE_SERIES_ID,
-  VALIDATED_REFERENCE_BUY_DIGEST,
-  VALIDATED_REFERENCE_RECEIPT_ID,
+  CONTROLLED_REDEEM_BUY_DIGEST,
+  CONTROLLED_REDEEM_RECEIPT_ID,
 } from "../lib/constants";
 
 export function useDeepVolConfig() {
@@ -26,8 +26,8 @@ export function useDeepVolConfig() {
     dusdcCurrencyId: dusdc.currencyId,
     dusdcDecimals: dusdc.decimals,
     configuredSeriesId: CONFIGURED_BTC_MOVE_SERIES_ID,
-    validatedReferenceReceiptId: VALIDATED_REFERENCE_RECEIPT_ID,
-    validatedReferenceBuyDigest: VALIDATED_REFERENCE_BUY_DIGEST,
+    validatedReferenceReceiptId: CONTROLLED_REDEEM_RECEIPT_ID,
+    validatedReferenceBuyDigest: CONTROLLED_REDEEM_BUY_DIGEST,
     isPackageConfigured: Boolean(DEEPVOL_TESTNET.packageId),
     isProtocolVaultConfigured: Boolean(DEEPVOL_TESTNET.protocolVaultId),
     isDusdcConfigured: Boolean(dusdc.coinType),

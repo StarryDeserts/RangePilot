@@ -460,6 +460,28 @@ export type RangeRedeemedEvent = {
   fields?: NormalizedRangeRedeemedFields;
 };
 
+export type NormalizedPositionRedeemedFields = {
+  predictId: string | null;
+  managerId: string | null;
+  owner: string | null;
+  executor: string | null;
+  quoteAsset: string | null;
+  oracleId: string | null;
+  expiry: string | null;
+  strike: string | null;
+  isUp: boolean | null;
+  quantity: string | null;
+  payoutAtomic: string | null;
+  bidPrice: string | null;
+  isSettled: boolean | null;
+};
+
+export type PositionRedeemedEvent = {
+  type: string;
+  parsedJson: Record<string, unknown> | null;
+  fields?: NormalizedPositionRedeemedFields;
+};
+
 export type RedeemSafetyGateResult = {
   passed: boolean;
   blockers: string[];

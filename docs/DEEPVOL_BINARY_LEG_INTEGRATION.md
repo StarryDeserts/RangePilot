@@ -254,7 +254,7 @@ DeepVol-specific validation status:
 
 - Manual DeepVol package publish and quote-asset `ProtocolVault<DUSDC>` setup are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - Deployed `buy_move_receipt<DUSDC>` preflight, execution, event parsing, and post-state validation are recorded in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
-- Binary redeem read/preflight validation exists for the known browser receipt; real redeem execution remains pending DeepVol-12.
+- Binary redeem read/preflight validation exists for the known browser receipt; DeepVol-12 controlled browser execution is wired but real wallet approval remains pending an approved wallet in-browser.
 - Production SDK event normalization remains pending.
 - Production SDK binary direct readback helper exists for known keys; general position enumeration remains pending.
 
@@ -264,4 +264,4 @@ DeepVol-specific validation status:
 - Production DeepVol flows must preserve the validated two-leg mint gates before wallet approval.
 - DeepVol package, admin cap, upgrade cap, and DUSDC protocol vault IDs are configured after DeepVol-4; see [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - DeepVol-5 executed one real `VolSeries` creation and one deployed `buy_move_receipt<DUSDC>` validation; future buys still require fresh runtime gates.
-- Binary redeem signatures and read/preflight call shapes are source-confirmed and implemented for devInspect; real browser redeem execution and post-settlement reconciliation remain pending DeepVol-12 approval.
+- Binary redeem signatures and read/preflight call shapes are source-confirmed and implemented for devInspect; DeepVol-12 wires controlled browser redeem execution, but real wallet approval and post-settlement reconciliation remain pending because the validation browser had no approved wallet extension/account.

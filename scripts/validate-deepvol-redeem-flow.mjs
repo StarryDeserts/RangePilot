@@ -3,6 +3,7 @@ import { DEEPBOOK_PREDICT_TESTNET } from "@rangepilot/config/deepbookPredictTest
 import {
   classifyRedeemAbort,
   devInspectBinaryQuote,
+  devInspectManagerBalance,
   devInspectRedeemBinaryPosition,
   readBinaryPositionQuantity,
 } from "@rangepilot/sdk/deepbookPredict";
@@ -54,6 +55,12 @@ async function runReadMode(client) {
   const upStrike = receipt.upStrike || receipt.upperStrike || knownReceipt.upStrike;
   const downStrike = receipt.downStrike || receipt.lowerStrike || knownReceipt.downStrike;
   const quantity = receipt.quantity || knownReceipt.quantity;
+  const managerBalance = await tryRead("manager DUSDC balance", () => devInspectManagerBalance({
+    client,
+    sender: knownReceipt.sender,
+    managerId,
+    config,
+  }));
   const legs = [
     { direction: "up", strike: upStrike, quantity },
     { direction: "down", strike: downStrike, quantity },
@@ -97,9 +104,9 @@ async function runReadMode(client) {
     });
   }
 
-  printReadSummary({ receipt, managerId, oracleObjectId, expiry, legResults });
+  printReadSummary({ receipt, managerId, oracleObjectId, expiry, managerBalance, legResults });
 
-  return { receipt, managerId, oracleObjectId, expiry, legResults };
+  return { receipt, managerId, oracleObjectId, expiry, managerBalance, legResults };
 }
 
 async function runPreflightMode(client, readResult) {
@@ -175,7 +182,7 @@ function printSafetyHeader(mode) {
   console.log("safety: read/devInspect only; no signing; no execution; no publish; no withdraw; no mainnet");
 }
 
-function printReadSummary({ receipt, managerId, oracleObjectId, expiry, legResults }) {
+function printReadSummary({ receipt, managerId, oracleObjectId, expiry, managerBalance, legResults }) {
   console.log("\nReceipt readback");
   console.log(`receipt_id: ${receipt.receiptId}`);
   console.log(`owner: ${receipt.owner}`);
@@ -185,6 +192,7 @@ function printReadSummary({ receipt, managerId, oracleObjectId, expiry, legResul
   console.log(`expiry: ${expiry}`);
   console.log(`quantity: ${receipt.quantity}`);
   console.log(`status: ${receipt.status}`);
+  console.log(`manager_dusdc_balance: ${formatReadResult(managerBalance, (value) => value.balanceAtomic)}`);
 
   console.log("\nBinary position and payout preview");
   for (const leg of legResults) {

@@ -48,6 +48,25 @@ export type BuildRedeemBinaryPositionTransactionOptions = BinaryRedeemParams & {
   allowRealTestnetRedeem?: boolean;
 };
 
+export type BuildRedeemBinaryPositionsTransactionOptions = {
+  managerId: string;
+  oracleObjectId: string;
+  legs: Array<MarketKeyInput & { quantity: string | bigint }>;
+  config?: DeepBookPredictNetworkConfig;
+  allowRealTestnetRedeem?: boolean;
+};
+
+export type DevInspectRedeemBinaryPositionsParams = BuildRedeemBinaryPositionsTransactionOptions & {
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: Transaction;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  candidateParams?: RedeemAbortCandidateParams;
+};
+
 export type DevInspectRedeemBinaryPositionParams = BinaryRedeemParams & {
   client: {
     devInspectTransactionBlock(input: {
@@ -177,20 +196,48 @@ export function buildRedeemBinaryPositionTransaction(
   }
 
   const tx = new Transaction();
-  const marketKey = buildMarketKeyTransactionArgument(tx, params, config);
+  appendRedeemBinaryPositionCall(tx, {
+    ...params,
+    quantity,
+  }, config);
 
-  tx.moveCall({
-    target: `${config.packageId}::predict::redeem`,
-    typeArguments: [config.quoteAssets.DUSDC.coinType],
-    arguments: [
-      tx.object(config.predictId),
-      tx.object(params.managerId),
-      tx.object(params.oracleObjectId),
-      marketKey,
-      tx.pure.u64(quantity),
-      tx.object(SUI_CLOCK_OBJECT_ID),
-    ],
-  });
+  return tx;
+}
+
+export function buildRedeemBinaryPositionsTransaction(
+  params: BuildRedeemBinaryPositionsTransactionOptions,
+): Transaction {
+  const config = resolveDeepBookPredictConfig(params.config);
+
+  if (!params.allowRealTestnetRedeem) {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      `MUST CONFIRM BEFORE REAL REDEEM: combined ${config.packageId}::predict::redeem<${config.quoteAssets.DUSDC.coinType}> PTB requires controlled Testnet validation gates immediately before wallet approval.`,
+    );
+  }
+
+  if (config.network !== "testnet") {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "Combined binary redeem transaction building is only allowed for Sui Testnet validation.",
+    );
+  }
+
+  if (params.legs.length === 0) {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "Combined binary redeem transaction requires at least one leg.",
+    );
+  }
+
+  const tx = new Transaction();
+
+  for (const leg of params.legs) {
+    const quantity = normalizePositiveInteger(leg.quantity, "Binary redeem quantity");
+    appendRedeemBinaryPositionCall(tx, {
+      ...leg,
+      managerId: params.managerId,
+      oracleObjectId: params.oracleObjectId,
+      quantity,
+    }, config);
+  }
 
   return tx;
 }
@@ -289,37 +336,40 @@ export async function devInspectRedeemBinaryPosition(
       ...params,
       allowPreflightOnlyBinaryRedeem: true,
     });
-    const result = await params.client.devInspectTransactionBlock({
+    return await devInspectRedeemTransactionBlock({
+      client: params.client,
       sender: params.sender,
       transactionBlock,
+      candidateParams: binaryRedeemAbortCandidateParams(params),
+      fallbackMessage: "predict::redeem devInspect did not succeed.",
     });
-
-    if (isRecord(result) && typeof result.error === "string") {
-      return {
-        status: "failed",
-        abort: classifyRedeemAbort(result.error, { candidateParams: binaryRedeemAbortCandidateParams(params) }),
-      };
-    }
-
-    const status = isRecord(result) && isRecord(result.effects) && isRecord(result.effects.status)
-      ? result.effects.status
-      : null;
-
-    if (status?.status !== "success") {
-      return {
-        status: "failed",
-        abort: classifyRedeemAbort(
-          typeof status?.error === "string" ? status.error : "predict::redeem devInspect did not succeed.",
-          { candidateParams: binaryRedeemAbortCandidateParams(params) },
-        ),
-      };
-    }
-
-    return { status: "passed" };
   } catch (error) {
     return {
       status: "failed",
       abort: classifyRedeemAbort(error, { candidateParams: binaryRedeemAbortCandidateParams(params) }),
+    };
+  }
+}
+
+export async function devInspectRedeemBinaryPositions(
+  params: DevInspectRedeemBinaryPositionsParams,
+): Promise<BinaryRedeemPreflightResult> {
+  try {
+    const transactionBlock = buildRedeemBinaryPositionsTransaction({
+      ...params,
+      allowRealTestnetRedeem: true,
+    });
+    return await devInspectRedeemTransactionBlock({
+      client: params.client,
+      sender: params.sender,
+      transactionBlock,
+      candidateParams: params.candidateParams,
+      fallbackMessage: "combined predict::redeem devInspect did not succeed.",
+    });
+  } catch (error) {
+    return {
+      status: "failed",
+      abort: classifyRedeemAbort(error, { candidateParams: params.candidateParams }),
     };
   }
 }
@@ -369,6 +419,74 @@ function redeemAbortCandidateParams(params: RangeRedeemParams & { candidateParam
     redeemQuantity: String(params.quantity),
     ...params.candidateParams,
   };
+}
+
+async function devInspectRedeemTransactionBlock({
+  client,
+  sender,
+  transactionBlock,
+  candidateParams,
+  fallbackMessage,
+}: {
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: Transaction;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  transactionBlock: Transaction;
+  candidateParams?: RedeemAbortCandidateParams;
+  fallbackMessage: string;
+}): Promise<BinaryRedeemPreflightResult> {
+  const result = await client.devInspectTransactionBlock({
+    sender,
+    transactionBlock,
+  });
+
+  if (isRecord(result) && typeof result.error === "string") {
+    return {
+      status: "failed",
+      abort: classifyRedeemAbort(result.error, { candidateParams }),
+    };
+  }
+
+  const status = isRecord(result) && isRecord(result.effects) && isRecord(result.effects.status)
+    ? result.effects.status
+    : null;
+
+  if (status?.status !== "success") {
+    return {
+      status: "failed",
+      abort: classifyRedeemAbort(
+        typeof status?.error === "string" ? status.error : fallbackMessage,
+        { candidateParams },
+      ),
+    };
+  }
+
+  return { status: "passed" };
+}
+
+function appendRedeemBinaryPositionCall(
+  tx: Transaction,
+  params: BinaryRedeemParams,
+  config: DeepBookPredictNetworkConfig,
+) {
+  const marketKey = buildMarketKeyTransactionArgument(tx, params, config);
+
+  tx.moveCall({
+    target: `${config.packageId}::predict::redeem`,
+    typeArguments: [config.quoteAssets.DUSDC.coinType],
+    arguments: [
+      tx.object(config.predictId),
+      tx.object(params.managerId),
+      tx.object(params.oracleObjectId),
+      marketKey,
+      tx.pure.u64(params.quantity),
+      tx.object(SUI_CLOCK_OBJECT_ID),
+    ],
+  });
 }
 
 function binaryRedeemAbortCandidateParams(params: BinaryRedeemParams & { candidateParams?: RedeemAbortCandidateParams }): RedeemAbortCandidateParams {

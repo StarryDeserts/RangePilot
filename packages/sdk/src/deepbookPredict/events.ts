@@ -1,7 +1,9 @@
 import type {
   DeepBookPredictNetworkConfig,
+  NormalizedPositionRedeemedFields,
   NormalizedRangeMintedFields,
   NormalizedRangeRedeemedFields,
+  PositionRedeemedEvent,
   PredictManagerCreatedEventCandidate,
   RangeMintedEvent,
   RangeRedeemedEvent,
@@ -12,6 +14,7 @@ import { resolveDeepBookPredictConfig } from "./config.ts";
 const MANAGER_CREATED_SUFFIX = "::predict_manager::PredictManagerCreated";
 const RANGE_MINTED_SUFFIX = "::predict::RangeMinted";
 const RANGE_REDEEMED_SUFFIX = "::predict::RangeRedeemed";
+const POSITION_REDEEMED_SUFFIX = "::predict::PositionRedeemed";
 const MANAGER_EVENT_ID_FIELDS = [
   "manager_id",
   "managerId",
@@ -115,6 +118,26 @@ export function parseRangeRedeemedEvent(
   };
 }
 
+export function parsePositionRedeemedEvents(
+  result: { events?: readonly DeepBookPredictEventLike[] | null },
+  config?: DeepBookPredictNetworkConfig,
+): PositionRedeemedEvent[] {
+  const resolvedConfig = resolveDeepBookPredictConfig(config);
+
+  return (result.events ?? [])
+    .filter((candidate) => isPositionRedeemedEvent(candidate, resolvedConfig))
+    .filter((event): event is DeepBookPredictEventLike & { type: string } => Boolean(event.type))
+    .map((event) => {
+      const parsedJson = isRecord(event.parsedJson) ? event.parsedJson : null;
+
+      return {
+        type: event.type,
+        parsedJson,
+        fields: extractPositionRedeemedFields(parsedJson),
+      };
+    });
+}
+
 export function extractRangeMintedFields(parsedJson: unknown): NormalizedRangeMintedFields {
   const record = isRecord(parsedJson) ? parsedJson : {};
 
@@ -145,6 +168,26 @@ export function extractRangeRedeemedFields(parsedJson: unknown): NormalizedRange
     expiry: integerStringOrNull(record.expiry),
     lowerStrike: integerStringOrNull(record.lower_strike),
     higherStrike: integerStringOrNull(record.higher_strike),
+    quantity: integerStringOrNull(record.quantity),
+    payoutAtomic: integerStringOrNull(record.payout),
+    bidPrice: integerStringOrNull(record.bid_price),
+    isSettled: booleanOrNull(record.is_settled),
+  };
+}
+
+export function extractPositionRedeemedFields(parsedJson: unknown): NormalizedPositionRedeemedFields {
+  const record = isRecord(parsedJson) ? parsedJson : {};
+
+  return {
+    predictId: stringOrNull(record.predict_id),
+    managerId: stringOrNull(record.manager_id),
+    owner: stringOrNull(record.owner),
+    executor: stringOrNull(record.executor),
+    quoteAsset: stringOrNull(record.quote_asset),
+    oracleId: stringOrNull(record.oracle_id),
+    expiry: integerStringOrNull(record.expiry),
+    strike: integerStringOrNull(record.strike),
+    isUp: booleanOrNull(record.is_up),
     quantity: integerStringOrNull(record.quantity),
     payoutAtomic: integerStringOrNull(record.payout),
     bidPrice: integerStringOrNull(record.bid_price),
@@ -269,6 +312,18 @@ export function isRangeRedeemedEvent(
   return (
     eventType.startsWith(`${config.packageId}::`) &&
     eventType.endsWith(RANGE_REDEEMED_SUFFIX)
+  );
+}
+
+export function isPositionRedeemedEvent(
+  event: DeepBookPredictEventLike,
+  config: DeepBookPredictNetworkConfig,
+): boolean {
+  const eventType = event.type ?? "";
+
+  return (
+    eventType.startsWith(`${config.packageId}::`) &&
+    eventType.endsWith(POSITION_REDEEMED_SUFFIX)
   );
 }
 

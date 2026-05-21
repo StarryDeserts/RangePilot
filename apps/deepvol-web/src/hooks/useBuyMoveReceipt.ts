@@ -15,14 +15,7 @@ import { getBuyMoveReceiptBlockers } from "./buyMoveReceiptGate";
 import { buildPreflightDependencyKey } from "./useDeepVolPreflight";
 import type { DeepVolQuoteState } from "./useDeepVolQuote";
 import { DEEPVOL_STORAGE_KEYS, TESTNET_CHAIN } from "../lib/constants";
-
-export type StoredDeepVolReceipt = {
-  receiptId: string | null;
-  digest: string;
-  seriesId: string;
-  owner: string;
-  createdAtMs: number;
-};
+import { persistReceipt } from "../lib/deepVolReceiptStorage";
 
 type UseBuyMoveReceiptParams = {
   quote: DeepVolQuoteState;
@@ -145,7 +138,7 @@ export function useBuyMoveReceipt({ quote, predictManagerId }: UseBuyMoveReceipt
             const receiptId = recoverReceiptId(result);
             const digest = result.digest;
 
-            persistReceipt({
+            persistReceipt(DEEPVOL_STORAGE_KEYS, {
               receiptId,
               digest,
               seriesId: series.seriesId,
@@ -190,39 +183,6 @@ export function useBuyMoveReceipt({ quote, predictManagerId }: UseBuyMoveReceipt
 
 function isString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
-}
-
-function persistReceipt(record: StoredDeepVolReceipt) {
-  const current = readStoredReceipts();
-  const deduped = current.filter((entry) => entry.digest !== record.digest);
-  window.localStorage.setItem(
-    DEEPVOL_STORAGE_KEYS.receipts,
-    JSON.stringify([record, ...deduped].slice(0, 10)),
-  );
-}
-
-function readStoredReceipts(): StoredDeepVolReceipt[] {
-  try {
-    const raw = window.localStorage.getItem(DEEPVOL_STORAGE_KEYS.receipts);
-
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isStoredReceipt) : [];
-  } catch {
-    return [];
-  }
-}
-
-function isStoredReceipt(value: unknown): value is StoredDeepVolReceipt {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  const record = value as Partial<StoredDeepVolReceipt>;
-  return typeof record.digest === "string" && typeof record.seriesId === "string" && typeof record.owner === "string";
 }
 
 function recoverReceiptId(result: unknown): string | null {

@@ -1,7 +1,7 @@
 ---
 Purpose: Define DeepVol BTC MOVE post-buy redeem and settlement options after browser buy validation.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: Updated for DeepVol-11 source-confirmed binary redeem read/preflight; no real redeem executed.
+Status: Updated for DeepVol-12 controlled browser redeem wiring and current wallet-extension blocker; no real redeem executed.
 Source of truth relationship: Builds on browser buy validation, MoveReceipt architecture, DeepVol MVP scope, DeepBook Predict source confirmation, and read/devInspect validation; on-chain state remains authoritative for runtime payout and redeemability.
 ---
 
@@ -232,28 +232,30 @@ Runtime behavior:
 
 DeepVol-11 known receipt validation is recorded in [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md). The read script observed current manager-level UP and DOWN quantities of `20000`, while the selected receipt quantity is `10000`; DeepVol therefore preflights the receipt-scoped quantity `min(manager position, receipt quantity)` and displays manager quantity separately. DevInspect redeem preflight passed for both receipt-scoped legs. Payout values are runtime-dependent and must be refreshed before any future wallet prompt.
 
-## DeepVol-12 controlled browser redeem plan
+## DeepVol-12 controlled browser redeem status
 
-DeepVol-12 should execute at most one controlled real Testnet browser redeem only after explicit approval and after all gates pass:
+DeepVol-12 wires the Portfolio browser-wallet redeem path for the known controlled receipt, but the validation run stopped before real execution because the Playwright validation browser had no approved wallet extension/account installed and connected. The full result is recorded in [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
 
-1. Read the selected `MoveReceipt`.
-2. Derive UP/DOWN `MarketKey` values from receipt fields.
-3. Read current UP/DOWN `PredictManager` position quantities.
-4. Preview redeem payout through `predict::get_trade_amounts`.
-5. Run explicit `predict::redeem<DUSDC>` devInspect preflight for the intended quantity.
-6. Confirm manager DUSDC balance and position quantities before wallet prompt.
-7. Prompt the browser wallet for one approved Testnet redeem.
-8. Parse `PositionRedeemed`.
-9. Reconcile payout, manager DUSDC balance delta, and position delta.
-10. Only then update local receipt status, labeled as local/indexer-limited until general receipt indexing exists.
+Implemented gates require:
+
+1. Connected wallet on Sui Testnet.
+2. Connected address equal to the approved receipt owner.
+3. Exact known `MoveReceipt`, `PredictManager`, oracle, expiry, UP/DOWN strikes, quantity, and open status.
+4. Explicit UP and DOWN preflights with receipt-scoped quantity `10000` for both legs.
+5. Fresh receipt, manager balance, position, payout preview, and combined two-leg devInspect immediately before wallet review.
+6. No local one-shot attempt record for the receipt.
+
+The intended execution remains one browser-wallet PTB containing two `predict::redeem<DUSDC>` calls, one for UP and one for DOWN. DeepVol-12 intentionally does not call `receipt::mark_receipt_settled`; local receipt status is only a Portfolio/indexer-limited display after `PositionRedeemed` event and `PredictManager` readback reconciliation.
+
+The next real validation must be run in a browser profile where the approved wallet is already installed, unlocked, and connected on Sui Testnet. No script/private-key fallback should be used.
 
 ## Remaining confirmations
 
 | Topic | Status |
 |---|---|
-| Exact binary `predict::redeem<DUSDC>` PTB signature | Source-confirmed and SDK preflight builder added for devInspect; real execution remains disabled pending DeepVol-12 approval. |
+| Exact binary `predict::redeem<DUSDC>` PTB signature | Source-confirmed; SDK now supports a gated combined two-leg PTB builder for controlled Testnet browser execution. |
 | Whether `predict::redeem_permissionless<DUSDC>` is appropriate for guided user redeem | Source-confirmed as settled-only; not the MVP guided active redeem path. |
-| Binary redeem event field shape | Source-confirmed as `PositionRedeemed`; production browser reconciliation pending. |
+| Binary redeem event field shape | Source-confirmed as `PositionRedeemed`; SDK parser is wired, but production browser reconciliation remains blocked until a real wallet-approved redeem executes. |
 | Binary payout estimate source and return shape | Source-confirmed as `predict::get_trade_amounts` returning `(mint_cost, redeem_payout)`; runtime values are `MUST CONFIRM AT RUNTIME`. |
 | Claim/expiry-specific behavior for selected BTC markets | Source-confirmed behavior; selected market state remains `MUST CONFIRM AT RUNTIME`. |
 | Wallet-wide receipt indexing strategy | TBD |

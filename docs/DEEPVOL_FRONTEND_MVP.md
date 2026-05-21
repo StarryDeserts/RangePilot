@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol wallet-gated frontend MVP scaffold, UI/UX foundation, and safety boundaries.
 Audience: Frontend developers, SDK implementers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol-11 guided redeem read/preflight scaffold; real redeem execution remains disabled.
+Status: Updated for DeepVol-12 controlled browser redeem execution wiring; real redeem remains blocked until an approved Testnet wallet is available in-browser.
 Source of truth relationship: Derived from DeepVol foundation docs, deployed receipt validation, and local frontend implementation; protocol docs and on-chain state remain authoritative for transaction semantics.
 ---
 
@@ -19,7 +19,9 @@ DeepVol-9 implements the browser-safe main preflight for `buy_move_receipt<DUSDC
 
 DeepVol-10 records manual browser wallet validation of the full buy path. The validated browser digest is `A6YB62BqMmWsQeEZUoh4qYAA6n4RMqnih5TtHRdadfGn`, the created receipt is `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb`, and the portfolio page displayed the receipt successfully.
 
-DeepVol-11 adds guided non-custodial redeem read/preflight scaffolding to Portfolio. Each receipt card can run an explicit redeem preflight that reads UP/DOWN `PredictManager` quantities, previews redeem payout, and devInspects `predict::redeem<DUSDC>`. Real redeem execution stays disabled in the UI until DeepVol-12 controlled browser validation.
+DeepVol-11 adds guided non-custodial redeem read/preflight scaffolding to Portfolio. Each receipt card can run an explicit redeem preflight that reads UP/DOWN `PredictManager` quantities, previews redeem payout, and devInspects `predict::redeem<DUSDC>`.
+
+DeepVol-12 wires controlled browser-wallet redeem execution for the known BTC MOVE receipt behind exact receipt, owner, Testnet, preflight, fresh submit-time read/preflight, and one-shot attempt gates. The validation run did not execute a real redeem because the browser had no approved wallet extension/account available; see [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
 
 ## App path
 
@@ -71,7 +73,7 @@ DeepVol-7 used it only for interaction and layout patterns: app shell rhythm, fo
 | `/` | Alias to the markets page. |
 | `/markets` | Product entry page for BTC MOVE with `Trade movement, not direction.`, BTC MOVE payoff zones, CTA, advanced primitive context, and first-time setup preview. |
 | `/buy/btc-move` | Transaction workspace with product context, first-time flow checklist, PredictManager create/store actions, DUSDC wallet/deposit visibility, quantity setup, quote metrics, UP/DOWN leg quotes, explicit preflight, disabled buy CTA, and advanced protocol details. |
-| `/portfolio` | Receipt overview showing local browser records or validation reference artifacts, explicit local/indexer limitations, DeepVol-10 browser receipt display validation, and DeepVol-11 guided redeem read/preflight scaffolding with execution disabled. |
+| `/portfolio` | Receipt overview showing local browser records or validation reference artifacts, explicit local/indexer limitations, DeepVol-10 browser receipt display validation, DeepVol-11 guided redeem read/preflight diagnostics, and DeepVol-12 controlled redeem execution gates/blocker state. |
 
 The redesigned Buy page follows a transaction workspace model: product explanation and payoff zones stay near the guided setup flow, while PredictManager setup, DUSDC funding, quote metrics, explicit preflight, and wallet-gated execution sit in a focused action column. The buy button stays disabled until all hook-derived gates and explicit preflight gates pass.
 
@@ -143,7 +145,7 @@ General receipt enumeration is not implemented. A future indexer or event-query 
 
 Receipt object readback is best-effort and displays only fields that can be parsed from the Move object. Wallet-critical underlying position quantities still require direct `PredictManager` binary position readback for the known UP and DOWN MarketKeys.
 
-DeepVol-11 adds the first redeem and settlement UX scaffold. The recommended MVP path remains guided non-custodial redeem from the portfolio: select a receipt, show UP/DOWN positions, show a redeem estimate, run redeem preflight, later redeem one or both legs through wallet approval, show the digest, and mark local receipt status only after user-visible event/readback evidence.
+DeepVol-11 adds the first redeem and settlement UX scaffold. DeepVol-12 then wires the controlled browser-wallet execution path for the known receipt while preserving strict no-overclaim behavior when a wallet is unavailable. The recommended MVP path remains guided non-custodial redeem from the portfolio: select a receipt, show UP/DOWN positions, show a redeem estimate, run redeem preflight, redeem both receipt-scoped legs through wallet approval only when exact gates pass, show the digest, and mark local receipt status only after user-visible event/readback evidence.
 
 Current Portfolio behavior:
 
@@ -151,7 +153,8 @@ Current Portfolio behavior:
 - Shows UP and DOWN strikes, receipt quantity, manager-level position quantity after explicit preflight, receipt-scoped preflight quantity, and redeem payout preview when available.
 - Uses an explicit `Run redeem preflight` button.
 - Shows stale-state copy if wallet/receipt dependencies change after preflight.
-- Keeps `Redeem execution disabled` regardless of preflight result.
+- Enables `Redeem both receipt legs` only for the known controlled receipt after exact owner wallet, Sui Testnet, both preflights, receipt-scoped quantities, fresh submit-time read/preflight, and one-shot attempt gates pass.
+- Shows transaction digest/reconciliation panels only after wallet-approved execution; the DeepVol-12 validation browser never reached that state because no approved wallet extension/account was available.
 - States that the receipt is non-custodial and the underlying positions remain in the user's `PredictManager`.
 
 General receipt enumeration remains unimplemented. Receipt status cannot be treated as payout proof without `PositionRedeemed` event parsing and before/after `PredictManager` position and DUSDC balance reconciliation. See [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md) and [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md).
@@ -172,7 +175,7 @@ The DeepVol frontend does not:
 - run `buy_move_receipt<DUSDC>` from CLI or scripts;
 - execute wallet transactions automatically;
 - withdraw protocol fees;
-- execute binary position redeem transactions in DeepVol-11;
+- execute binary position redeem transactions from scripts or automatically from the browser;
 - mark receipt settlement as payout proof without Predict redeem event/readback reconciliation;
 - implement Profit Fee;
 - implement creator marketplace or secondary market flows;
@@ -194,6 +197,6 @@ npm run build:web
 
 Manual browser checks should cover `/markets`, `/buy/btc-move`, `/portfolio`, disconnected wallet gating, wrong-network gating, PredictManager create/store visibility, DUSDC balance/deposit visibility, explicit quote refresh, real receipt preflight pass/fail diagnostics, explicit BTC MOVE copy, non-custodial receipt copy, disabled buy gating before preflight, enabled wallet review only after receipt preflight passes, visible focus states, responsive layout, and absence of historical validation quote values as live quotes.
 
-DeepVol-11 browser guided redeem preflight verification should cover: portfolio receipt display, UP/DOWN position readback, redeem payout preview, explicit preflight action, disabled redeem execution after preflight, local status labeling, and continued no-mainnet/no-withdraw/no-automatic-execution safety checks.
+DeepVol-11 browser guided redeem preflight verification should cover: portfolio receipt display, UP/DOWN position readback, redeem payout preview, explicit preflight action, local status labeling, and continued no-mainnet/no-withdraw/no-automatic-execution safety checks.
 
-DeepVol-12 browser execution verification should add wallet-review-only-after-explicit-click, digest display, `PositionRedeemed` parsing, post-redeem position and DUSDC balance readback, and local receipt status update only after reconciliation.
+DeepVol-12 browser execution verification should cover: controlled receipt display, disconnected/wrong-wallet/wrong-network blockers, wallet-review-only-after-explicit-click, one-shot attempt behavior, digest display after success, `PositionRedeemed` parsing, post-redeem position and DUSDC balance readback, local receipt status update only after reconciliation, and accurate blocker reporting when the validation browser has no approved wallet extension/account.

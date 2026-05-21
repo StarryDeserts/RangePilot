@@ -1,7 +1,7 @@
 ---
 Purpose: Navigation index for RangePilot and DeepVol architecture documentation.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol BTC MOVE, DeepVol-11 guided redeem read/preflight validation, and disabled Portfolio redeem scaffold.
+Status: Updated for DeepVol BTC MOVE and DeepVol-12 controlled browser redeem wiring/blocker evidence.
 Source of truth relationship: Indexes local source-of-truth documents, official-derived protocol references, generated companion docs, and pivot ADRs; does not replace source docs.
 ---
 
@@ -39,8 +39,9 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md) | Records the DeepVol Testnet package publish, AdminCap/UpgradeCap, and shared ProtocolVault<DUSDC> setup | Move / protocol / validation |
 | [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md) | Records the first deployed BTC VolSeries and buy_move_receipt<DUSDC> execution, receipt, mints, fee accounting, and later browser validation links | Move / protocol / validation |
 | [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md) | Records the manually validated browser wallet buy_move_receipt<DUSDC> transaction and portfolio receipt display | Frontend / protocol / validation |
-| [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md) | Defines post-buy redeem/settlement options, recommends guided non-custodial redeem for MVP, records DeepVol-11 source-confirmed redeem path, and scopes DeepVol-12 controlled execution | Product / frontend / protocol |
+| [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md) | Defines post-buy redeem/settlement options, recommends guided non-custodial redeem for MVP, records DeepVol-11 source-confirmed redeem path, and records DeepVol-12 controlled browser redeem wiring/blocker scope | Product / frontend / protocol |
 | [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md) | Records DeepVol-11 source confirmation, known receipt readback, payout preview, devInspect redeem preflight, blockers, and no-real-redeem boundary | Protocol / frontend / validation |
+| [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md) | Records DeepVol-12 controlled browser redeem gates, fresh read/preflight evidence, browser smoke, and current missing-wallet blocker | Frontend / protocol / validation |
 | [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md) | Defines the `apps/deepvol-web` wallet-gated frontend, DeepVol-7 oceanic UI/UX foundation, DeepVol-8 browser flow repair, DeepVol-9 browser receipt preflight gate, DeepVol-10 browser buy validation, and DeepVol-11 guided redeem scaffold | Frontend / product / SDK |
 | [DEEPVOL_MOVE_RECEIPT_CONTRACT.md](./DEEPVOL_MOVE_RECEIPT_CONTRACT.md) | Documents the Route B VolSeries, ProtocolVault, and protocol-enforced non-custodial MoveReceipt contract | Move / protocol / SDK |
 | [DEEPVOL_CONTRACT_BUILD_VALIDATION.md](./DEEPVOL_CONTRACT_BUILD_VALIDATION.md) | Records local DeepVol Route B contract build/test validation scope and non-actions | Move / validation |
