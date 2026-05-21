@@ -1,7 +1,7 @@
 ---
 Purpose: Record the first deployed DeepVol buy_move_receipt<DUSDC> Testnet validation.
 Audience: Move developers, SDK implementers, frontend developers, protocol integrators, reviewers, and product leads.
-Status: DeepVol-5 validation record; DeepVol-9 browser preflight now ports the receipt devInspect and manager-balance subset into the web app.
+Status: DeepVol-5 deployed receipt validation record; DeepVol-9 browser preflight and DeepVol-10 browser wallet buy validation are recorded.
 Source of truth relationship: Records observed Testnet validation facts; Sui transaction effects, object reads, and Move source remain authoritative for on-chain state.
 ---
 
@@ -14,6 +14,8 @@ DeepVol-5 validated the first deployed DeepVol BTC MOVE receipt path on Sui Test
 The executed receipt remains the MVP non-custodial model: the user's `PredictManager` holds the binary legs, and the `MoveReceipt` records protocol-enforced metadata/linkage.
 
 DeepVol-9 ports the browser-safe subset of this validation into `apps/deepvol-web`: the web app reads `predict_manager::balance<DUSDC>`, verifies the manager balance covers the expected premium, builds the final `receipt::buy_move_receipt<DUSDC>` transaction, and runs browser `devInspect` before enabling wallet review. CLI-only safety checks, private-key execution, raw transaction bytes, and post-execution reconciliation remain script/manual validation concerns and are not imported into browser code.
+
+DeepVol-10 then manually validated the browser wallet buy flow itself. The browser execution digest was `A6YB62BqMmWsQeEZUoh4qYAA6n4RMqnih5TtHRdadfGn`, creating MoveReceipt `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb` for sender `0x60ce00b02feafce805f1c3c8a7beaf7db8e903d73610fb232ad928d31fcd9349`; the portfolio page displayed the receipt successfully. See [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md).
 
 ## Network and deployed config
 
@@ -217,12 +219,14 @@ Future executions still require fresh runtime oracle, expiry, strike, quote, man
 - No second `create_series` transaction was submitted in the validation run.
 - No second `buy_move_receipt<DUSDC>` transaction was submitted in the validation run.
 
-## DeepVol-6 frontend scaffold note
+## DeepVol-6 through DeepVol-10 frontend validation notes
 
 DeepVol-6 uses the validated VolSeries and receipt in this document as reference artifacts for the new `apps/deepvol-web/` wallet-gated frontend scaffold. The historical quote values recorded above are validation evidence only; they are not live offers and must not be displayed as current quotes.
 
 The frontend must refresh quote, wallet fee coin, manager DUSDC balance, and receipt preflight state at runtime before enabling wallet approval. Browser-side receipt preflight is now the main gate; direct two-leg binary mint preflight may remain diagnostic-only and must not block the composed receipt path by itself.
 
+DeepVol-10 records that a real browser wallet user flow has now passed preflight, executed `buy_move_receipt<DUSDC>`, created receipt `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb`, deposited a `29` atomic DUSDC Create Fee, and displayed the receipt in the portfolio page. This browser validation is separate from the original DeepVol-5 Node/CLI validation and does not validate redeem, settlement, wallet-wide receipt indexing, payout/PnL, or Profit Fee enforcement.
+
 ## Next step
 
-Finish browser-safe quote/preflight/readback helpers or polish the transaction step UX from the `apps/deepvol-web/` scaffold, depending on which blockers remain after verification.
+Implement DeepVol-11 browser guided redeem preflight: confirm binary redeem entrypoints, read UP/DOWN positions from the user's `PredictManager`, quote/preflight one-leg or both-leg redeem, and update the portfolio without adding Profit Fee, withdraw, custody, automatic execution, or mainnet paths.
