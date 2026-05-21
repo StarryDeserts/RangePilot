@@ -886,7 +886,7 @@ function normalizeUniquePositiveBigints(values: readonly (string | bigint)[], la
   return [...unique].map((value) => BigInt(value)).sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
 }
 
-function normalizeMarketKeyInput(input: MarketKeyInput): {
+export function normalizeMarketKeyInput(input: MarketKeyInput): {
   oracleId: string;
   expiry: string;
   strike: string;

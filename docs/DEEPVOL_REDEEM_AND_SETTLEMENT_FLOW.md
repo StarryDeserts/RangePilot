@@ -1,8 +1,8 @@
 ---
 Purpose: Define DeepVol BTC MOVE post-buy redeem and settlement options after browser buy validation.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: DeepVol-10 design; implementation pending DeepVol-11.
-Source of truth relationship: Builds on browser buy validation, MoveReceipt architecture, DeepVol MVP scope, and DeepBook Predict integration notes; redeem entrypoints remain subject to source and runtime confirmation before coding.
+Status: Updated for DeepVol-11 source-confirmed binary redeem read/preflight; no real redeem executed.
+Source of truth relationship: Builds on browser buy validation, MoveReceipt architecture, DeepVol MVP scope, DeepBook Predict source confirmation, and read/devInspect validation; on-chain state remains authoritative for runtime payout and redeemability.
 ---
 
 # DeepVol Redeem and Settlement Flow
@@ -19,8 +19,9 @@ This document defines the post-buy state, analyzes three redeem/settlement model
 - The underlying UP and DOWN binary positions remain in the user's DeepBook Predict `PredictManager`.
 - `BTC MOVE = UP + DOWN.` The exit path must respect that the product is composed from two official DeepBook Predict binary legs.
 - DeepVol Create Fee is validated on Sui Testnet; Profit Fee is not MVP-enforceable in the current non-custodial receipt model.
-- DeepVol-10 performs no redeem execution, settlement execution, withdrawal, publish, upgrade, or mainnet action.
-- Predict binary redeem signatures, payout behavior, event parsing, and post-redeem readback must be source-confirmed and runtime-confirmed before coding.
+- DeepVol-11 performs no real redeem execution, settlement execution, withdrawal, publish, upgrade, or mainnet action.
+- Predict binary redeem signatures, payout preview, event shape, and binary position readback are source-confirmed for the MVP guided path.
+- Runtime payout values and redeemability must still be refreshed by read/preflight immediately before any future wallet prompt.
 - Any receipt-settled marker is metadata unless it is reconciled with official Predict redeem events and `PredictManager` readback.
 
 ## Current post-buy state
@@ -161,62 +162,99 @@ UX requirements:
 
 “Mark receipt locally as redeemed/settled” is UX metadata in the MVP. It is not proof of payout unless reconciled with official DeepBook Predict redeem events and direct `PredictManager` readback.
 
-## DeepVol-11: Browser Guided Redeem Preflight
+## DeepVol-11: Source-confirmed browser guided redeem preflight
 
-DeepVol-11 should implement the first guided exit path without adding Profit Fee, custody, withdraw, mainnet, or automatic execution.
+DeepVol-11 implements the first guided exit scaffold without adding Profit Fee, custody, withdraw, mainnet, or automatic execution.
 
-Implementation plan:
+Source-confirmed binary redeem path:
 
-1. Locate and source-confirm Predict binary redeem entrypoints.
-   - `predict::redeem<DUSDC>` and `predict::redeem_permissionless<DUSDC>` are known protocol concepts, but the exact browser PTB call shape is `MUST CONFIRM BEFORE CODING`.
-   - Confirm required `MarketKey`, `PredictManager`, `Predict` object, oracle/expiry/strike, quantity, and signer constraints.
+```move
+public fun predict::redeem<Quote>(
+    predict: &mut Predict,
+    manager: &mut PredictManager,
+    oracle: &OracleSVI,
+    key: MarketKey,
+    quantity: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+)
+```
 
-2. Confirm quote and payout preview semantics.
-   - Reuse `packages/sdk/src/deepbookPredict/quote.ts` devInspect parsing patterns.
-   - Confirm whether `predict::get_trade_amounts` provides the needed binary redeem payout estimate for UP and DOWN legs.
-   - Mark market state and payout values `MUST CONFIRM AT RUNTIME`.
+`predict::redeem<Quote>` is owner-mediated. It requires `ctx.sender() == manager.owner()`, decreases the selected binary position quantity from `PredictManager`, dispenses the official protocol payout, deposits payout into the same manager, and emits `PositionRedeemed`.
 
-3. Build browser-safe position readback.
-   - Reuse `packages/sdk/src/deepbookPredict/portfolio.ts` direct `predict_manager::position` patterns.
-   - Read UP and DOWN position quantities before enabling redeem.
-   - Read positions again after execution for user-visible reconciliation.
+```move
+public fun predict::redeem_permissionless<Quote>(
+    predict: &mut Predict,
+    manager: &mut PredictManager,
+    oracle: &OracleSVI,
+    key: MarketKey,
+    quantity: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+)
+```
 
-4. Build PTB helpers for redeem UP and DOWN.
-   - Reuse safety patterns from `packages/sdk/src/deepbookPredict/trade.ts` range redeem helpers and preflight status classification.
-   - Support one-leg and both-leg guided redeem if official entrypoints allow it.
-   - Keep all builders Testnet/wallet gated.
+`predict::redeem_permissionless<Quote>` requires `oracle.is_settled()`. It is a settled-oracle path and is not the MVP guided active redeem path.
 
-5. Add browser preflight.
-   - Use connected wallet sender.
-   - Run quote/payout preview and full redeem `devInspect` before wallet review.
-   - Keep wallet execution disabled if preflight is missing, stale, or failed.
+Payout preview and readback:
 
-6. Update Portfolio UI.
-   - Add a selected-receipt detail path.
-   - Show UP/DOWN quantities, payout estimate, preflight status, and explicit redeem CTA.
-   - Explain non-custodial receipt semantics and local/indexer status limits.
+- `predict::get_trade_amounts` returns `(mint_cost, redeem_payout)` for the binary `MarketKey` and quantity.
+- `market_key::up(oracle_id, expiry, strike)` derives the UP key from the receipt oracle, expiry, and upper/up strike.
+- `market_key::down(oracle_id, expiry, strike)` derives the DOWN key from the receipt oracle, expiry, and lower/down strike.
+- `predict_manager::position(manager, key)` returns the current manager-level binary position quantity, or `0` if absent.
 
-7. Add post-execution reconciliation.
-   - Parse official redeem events and payout amounts.
-   - Show transaction digest.
-   - Read positions before/after.
-   - Mark local receipt status only after observed event/readback evidence.
+`PositionRedeemed` fields are source-confirmed as:
 
-8. Preserve non-actions.
-   - No Profit Fee in MVP.
-   - No protocol fee withdrawal.
-   - No mainnet.
-   - No automatic transaction execution.
-   - No custody or escrow claim.
+```move
+public struct PositionRedeemed has copy, drop, store {
+    predict_id: ID,
+    manager_id: ID,
+    owner: address,
+    executor: address,
+    quote_asset: TypeName,
+    oracle_id: ID,
+    expiry: u64,
+    strike: u64,
+    is_up: bool,
+    quantity: u64,
+    payout: u64,
+    bid_price: u64,
+    is_settled: bool,
+}
+```
 
-## Open confirmations before coding
+Runtime behavior:
+
+- Active/fresh quoteable oracles can produce redeem previews and pass owner-guided redeem preflight.
+- Settled oracles can use the settled payout path when the vault has settled oracle state.
+- Expired-but-unsettled/pending settlement, inactive, and stale active oracles are blockers.
+- DeepVol-11 executed no real redeem; it only added read/devInspect helpers, a validation script, and disabled Portfolio UX scaffold.
+
+DeepVol-11 known receipt validation is recorded in [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md). The read script observed current manager-level UP and DOWN quantities of `20000`, while the selected receipt quantity is `10000`; DeepVol therefore preflights the receipt-scoped quantity `min(manager position, receipt quantity)` and displays manager quantity separately. DevInspect redeem preflight passed for both receipt-scoped legs. Payout values are runtime-dependent and must be refreshed before any future wallet prompt.
+
+## DeepVol-12 controlled browser redeem plan
+
+DeepVol-12 should execute at most one controlled real Testnet browser redeem only after explicit approval and after all gates pass:
+
+1. Read the selected `MoveReceipt`.
+2. Derive UP/DOWN `MarketKey` values from receipt fields.
+3. Read current UP/DOWN `PredictManager` position quantities.
+4. Preview redeem payout through `predict::get_trade_amounts`.
+5. Run explicit `predict::redeem<DUSDC>` devInspect preflight for the intended quantity.
+6. Confirm manager DUSDC balance and position quantities before wallet prompt.
+7. Prompt the browser wallet for one approved Testnet redeem.
+8. Parse `PositionRedeemed`.
+9. Reconcile payout, manager DUSDC balance delta, and position delta.
+10. Only then update local receipt status, labeled as local/indexer-limited until general receipt indexing exists.
+
+## Remaining confirmations
 
 | Topic | Status |
 |---|---|
-| Exact binary `predict::redeem<DUSDC>` PTB signature | MUST CONFIRM BEFORE CODING |
-| Whether `predict::redeem_permissionless<DUSDC>` is appropriate for guided user redeem | MUST CONFIRM BEFORE CODING |
-| Binary redeem event field shape | MUST CONFIRM BEFORE CODING |
-| Binary payout estimate source and return shape | MUST CONFIRM BEFORE CODING |
-| Claim/expiry-specific behavior for selected BTC markets | MUST CONFIRM AT RUNTIME |
+| Exact binary `predict::redeem<DUSDC>` PTB signature | Source-confirmed and SDK preflight builder added for devInspect; real execution remains disabled pending DeepVol-12 approval. |
+| Whether `predict::redeem_permissionless<DUSDC>` is appropriate for guided user redeem | Source-confirmed as settled-only; not the MVP guided active redeem path. |
+| Binary redeem event field shape | Source-confirmed as `PositionRedeemed`; production browser reconciliation pending. |
+| Binary payout estimate source and return shape | Source-confirmed as `predict::get_trade_amounts` returning `(mint_cost, redeem_payout)`; runtime values are `MUST CONFIRM AT RUNTIME`. |
+| Claim/expiry-specific behavior for selected BTC markets | Source-confirmed behavior; selected market state remains `MUST CONFIRM AT RUNTIME`. |
 | Wallet-wide receipt indexing strategy | TBD |
-| Authoritative on-chain receipt settlement marker | TBD |
+| Authoritative receipt settlement marker | TBD until `PositionRedeemed` event/readback reconciliation is implemented. |

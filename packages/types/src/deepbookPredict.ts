@@ -316,6 +316,37 @@ export type MarketKeyInput = {
   direction: MarketQuoteDirection;
 };
 
+export type GetManagerBinaryPositionParams = MarketKeyInput & {
+  managerId: DeepBookPredictObjectId;
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: unknown;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  config?: DeepBookPredictNetworkConfig;
+};
+
+export type ManagerBinaryPositionResult = {
+  managerId: DeepBookPredictObjectId;
+  marketKey: MarketKeyInput;
+  quantity: string;
+  source: "dev_inspect";
+  diagnostic?: DevInspectU64Diagnostic;
+};
+
+export type BinaryRedeemPreflightPassed = {
+  status: "passed";
+};
+
+export type BinaryRedeemPreflightFailed = {
+  status: "failed";
+  abort: RedeemAbortClassification;
+};
+
+export type BinaryRedeemPreflightResult = BinaryRedeemPreflightPassed | BinaryRedeemPreflightFailed;
+
 export type MarketQuoteCandidate = MarketKeyInput & {
   oracleObjectId: DeepBookPredictObjectId;
   underlyingAsset: string | null;

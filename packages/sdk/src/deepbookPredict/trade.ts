@@ -1,6 +1,8 @@
 import { Transaction } from "@mysten/sui/transactions";
 import type {
+  BinaryRedeemPreflightResult,
   DeepBookPredictNetworkConfig,
+  MarketKeyInput,
   MintAbortCandidateParams,
   MintAbortClassification,
   MintRangePreflightResult,
@@ -16,6 +18,7 @@ import {
   type ClassifyDeepBookPredictAbortOptions,
   DeepBookPredictUnconfirmedBindingError,
 } from "./errors.ts";
+import { buildMarketKeyTransactionArgument } from "./quote.ts";
 import {
   buildRangeKeyTransactionArgument,
   normalizePositiveInteger,
@@ -31,6 +34,30 @@ export type BuildMintRangeTransactionOptions = RangeMintParams & {
 export type BuildRedeemRangeTransactionOptions = RangeRedeemParams & {
   config?: DeepBookPredictNetworkConfig;
   allowRealTestnetRedeem?: boolean;
+};
+
+export type BinaryRedeemParams = MarketKeyInput & {
+  managerId: string;
+  oracleObjectId: string;
+  quantity: string | bigint;
+};
+
+export type BuildRedeemBinaryPositionTransactionOptions = BinaryRedeemParams & {
+  config?: DeepBookPredictNetworkConfig;
+  allowPreflightOnlyBinaryRedeem?: boolean;
+  allowRealTestnetRedeem?: boolean;
+};
+
+export type DevInspectRedeemBinaryPositionParams = BinaryRedeemParams & {
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: Transaction;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  config?: DeepBookPredictNetworkConfig;
+  candidateParams?: RedeemAbortCandidateParams;
 };
 
 export type DevInspectMintRangePreflightParams = RangeMintParams & {
@@ -131,6 +158,43 @@ export function buildRedeemRangeTransaction(
   return tx;
 }
 
+export function buildRedeemBinaryPositionTransaction(
+  params: BuildRedeemBinaryPositionTransactionOptions,
+): Transaction {
+  const config = resolveDeepBookPredictConfig(params.config);
+  const quantity = normalizePositiveInteger(params.quantity, "Binary redeem quantity");
+
+  if (!params.allowPreflightOnlyBinaryRedeem && !params.allowRealTestnetRedeem) {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      `MUST CONFIRM BEFORE REAL REDEEM: ${config.packageId}::predict::redeem<${config.quoteAssets.DUSDC.coinType}> must only be built for read-only preflight or a future approved controlled Testnet redeem after quote, position readback, and full preflight gates pass.`,
+    );
+  }
+
+  if (config.network !== "testnet") {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "Binary redeem transaction building is only allowed for Sui Testnet validation.",
+    );
+  }
+
+  const tx = new Transaction();
+  const marketKey = buildMarketKeyTransactionArgument(tx, params, config);
+
+  tx.moveCall({
+    target: `${config.packageId}::predict::redeem`,
+    typeArguments: [config.quoteAssets.DUSDC.coinType],
+    arguments: [
+      tx.object(config.predictId),
+      tx.object(params.managerId),
+      tx.object(params.oracleObjectId),
+      marketKey,
+      tx.pure.u64(quantity),
+      tx.object(SUI_CLOCK_OBJECT_ID),
+    ],
+  });
+
+  return tx;
+}
+
 export async function devInspectMintRangePreflight(
   params: DevInspectMintRangePreflightParams,
 ): Promise<MintRangePreflightResult> {
@@ -217,11 +281,54 @@ export async function devInspectRedeemRangePreflight(
   }
 }
 
+export async function devInspectRedeemBinaryPosition(
+  params: DevInspectRedeemBinaryPositionParams,
+): Promise<BinaryRedeemPreflightResult> {
+  try {
+    const transactionBlock = buildRedeemBinaryPositionTransaction({
+      ...params,
+      allowPreflightOnlyBinaryRedeem: true,
+    });
+    const result = await params.client.devInspectTransactionBlock({
+      sender: params.sender,
+      transactionBlock,
+    });
+
+    if (isRecord(result) && typeof result.error === "string") {
+      return {
+        status: "failed",
+        abort: classifyRedeemAbort(result.error, { candidateParams: binaryRedeemAbortCandidateParams(params) }),
+      };
+    }
+
+    const status = isRecord(result) && isRecord(result.effects) && isRecord(result.effects.status)
+      ? result.effects.status
+      : null;
+
+    if (status?.status !== "success") {
+      return {
+        status: "failed",
+        abort: classifyRedeemAbort(
+          typeof status?.error === "string" ? status.error : "predict::redeem devInspect did not succeed.",
+          { candidateParams: binaryRedeemAbortCandidateParams(params) },
+        ),
+      };
+    }
+
+    return { status: "passed" };
+  } catch (error) {
+    return {
+      status: "failed",
+      abort: classifyRedeemAbort(error, { candidateParams: binaryRedeemAbortCandidateParams(params) }),
+    };
+  }
+}
+
 export function isMintPreflightPassed(result: MintRangePreflightResult): boolean {
   return result.status === "passed";
 }
 
-export function isRedeemPreflightPassed(result: RedeemRangePreflightResult): boolean {
+export function isRedeemPreflightPassed(result: RedeemRangePreflightResult | BinaryRedeemPreflightResult): boolean {
   return result.status === "passed";
 }
 
@@ -258,6 +365,17 @@ function redeemAbortCandidateParams(params: RangeRedeemParams & { candidateParam
     expiry: String(params.expiry),
     lowerStrike: String(params.lowerStrike),
     higherStrike: String(params.higherStrike),
+    quantity: String(params.quantity),
+    redeemQuantity: String(params.quantity),
+    ...params.candidateParams,
+  };
+}
+
+function binaryRedeemAbortCandidateParams(params: BinaryRedeemParams & { candidateParams?: RedeemAbortCandidateParams }): RedeemAbortCandidateParams {
+  return {
+    oracleId: params.oracleId,
+    oracleObjectId: params.oracleObjectId,
+    expiry: String(params.expiry),
     quantity: String(params.quantity),
     redeemQuantity: String(params.quantity),
     ...params.candidateParams,

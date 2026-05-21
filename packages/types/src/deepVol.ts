@@ -109,6 +109,25 @@ export type DeepVolBuyReceiptPreflightResult = {
   diagnostics: string[];
 };
 
+export type DeepVolRedeemLegState = {
+  direction: "up" | "down";
+  strike: string;
+  positionQuantityAtomic: string | null;
+  redeemPayoutAtomic: string | null;
+  preflightPassed: boolean;
+  blocker: string | null;
+};
+
+export type DeepVolGuidedRedeemPreflightResult = {
+  passed: boolean;
+  receiptId: MoveReceiptObjectId;
+  predictManagerId: DeepVolObjectId | null;
+  up: DeepVolRedeemLegState;
+  down: DeepVolRedeemLegState;
+  devInspectError: string | null;
+  diagnostics: string[];
+};
+
 export type MarkMoveReceiptSettledParams = {
   receiptId: MoveReceiptObjectId;
 };

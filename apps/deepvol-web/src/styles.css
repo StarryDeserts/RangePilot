@@ -1077,6 +1077,65 @@ input:focus {
   justify-content: flex-end;
 }
 
+.redeemSection,
+.redeemLegCard {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.redeemSection {
+  border: 1px solid rgba(124, 247, 212, 0.2);
+  border-radius: var(--dv-radius-lg);
+  padding: 1rem;
+  background: linear-gradient(145deg, rgba(124, 247, 212, 0.08), rgba(3, 12, 24, 0.44));
+}
+
+.redeemSectionHeader,
+.redeemLegCardTop,
+.redeemActions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.redeemSectionHeader h3 {
+  margin-bottom: 0;
+}
+
+.redeemLegGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.redeemLegCard {
+  border: 1px solid rgba(116, 232, 255, 0.14);
+  border-radius: var(--dv-radius-md);
+  padding: 1rem;
+  background: rgba(3, 12, 24, 0.34);
+}
+
+.redeemLegCardTop span {
+  color: var(--dv-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.redeemLegBlocker,
+.redeemMessage {
+  margin: 0;
+  color: var(--dv-muted);
+  font-size: 0.9rem;
+}
+
+.redeemLegBlocker {
+  color: var(--dv-warning);
+}
+
 .errorText {
   color: var(--dv-danger);
 }
@@ -1180,16 +1239,25 @@ input:focus {
 
   .cardHeader,
   .receiptTopRow,
+  .redeemSectionHeader,
+  .redeemLegCardTop,
+  .redeemActions,
   .shellActions,
   .cardActions {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  .redeemActions .primaryButton,
+  .redeemActions .secondaryButton {
+    width: 100%;
+  }
+
   .moveDiagramTrack,
   .moveDiagramLabels,
   .legQuoteGrid,
   .receiptLegRow,
+  .redeemLegGrid,
   .dataGrid,
   .dataGrid-compact,
   .detailsGrid,

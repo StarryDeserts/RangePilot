@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; direct two-leg primitive mint and deployed DeepVol buy_move_receipt<DUSDC> validated on Testnet.
+Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, and DeepVol-11 binary redeem read/preflight validated on Testnet without real redeem execution.
 ---
 
 # DeepVol Binary Leg Integration
@@ -178,9 +178,22 @@ public fun deepbook_predict::predict::redeem_permissionless<Quote>(
 )
 ```
 
-`redeem` is owner-mediated. `redeem_permissionless` requires the oracle to be settled and deposits through the permissionless manager path.
+`redeem` is owner-mediated. It asserts that the transaction sender is the `PredictManager` owner, decreases the binary position, deposits the payout into the same manager, and emits `PositionRedeemed`.
 
-DeepVol MVP can guide redeem, but non-custodial receipts cannot force users to redeem through DeepVol.
+`redeem_permissionless` requires the oracle to be settled and deposits through the permissionless manager path. It is not the MVP guided active-redeem path.
+
+Binary redeem is distinct from the validated range redeem entrypoint. BTC MOVE uses `predict::redeem<Quote>` with a binary `MarketKey`; it must not call `predict::redeem_range<Quote>` or construct a `RangeKey` for the receipt's UP/DOWN legs.
+
+DeepVol MVP can guide redeem, but non-custodial receipts cannot force users to redeem through DeepVol. DeepVol-11 adds read/devInspect preflight only; no real binary redeem was executed.
+
+## Redeem read/preflight validation
+
+DeepVol-11 adds `scripts/validate-deepvol-redeem-flow.mjs` with two modes:
+
+- `npm run validate:deepvol-redeem-read` reads the known browser `MoveReceipt`, derives UP/DOWN binary keys, reads `PredictManager` binary quantities, and previews redeem payout with `predict::get_trade_amounts`.
+- `npm run validate:deepvol-redeem-preflight` runs read mode first, then uses `devInspectTransactionBlock` for `predict::redeem<DUSDC>` on each positive-quantity leg.
+
+The script has no execute mode and prints `No real redeem executed.` DeepVol-11 read mode observed UP and DOWN manager-level quantities of `20000` for the known manager/key pair, while the selected receipt quantity is `10000`. Preflight mode uses the receipt-scoped quantity `min(manager position, receipt quantity)`, passed devInspect for both legs, and labels manager quantity separately. Payout previews remain `MUST CONFIRM AT RUNTIME` before any future wallet prompt.
 
 ## Manager readback
 
@@ -241,9 +254,9 @@ DeepVol-specific validation status:
 
 - Manual DeepVol package publish and quote-asset `ProtocolVault<DUSDC>` setup are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - Deployed `buy_move_receipt<DUSDC>` preflight, execution, event parsing, and post-state validation are recorded in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
-- Binary redeem validation remains pending.
+- Binary redeem read/preflight validation exists for the known browser receipt; real redeem execution remains pending DeepVol-12.
 - Production SDK event normalization remains pending.
-- Production SDK binary direct readback helper remains pending.
+- Production SDK binary direct readback helper exists for known keys; general position enumeration remains pending.
 
 ## Open blockers
 
@@ -251,4 +264,4 @@ DeepVol-specific validation status:
 - Production DeepVol flows must preserve the validated two-leg mint gates before wallet approval.
 - DeepVol package, admin cap, upgrade cap, and DUSDC protocol vault IDs are configured after DeepVol-4; see [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - DeepVol-5 executed one real `VolSeries` creation and one deployed `buy_move_receipt<DUSDC>` validation; future buys still require fresh runtime gates.
-- Binary redeem path and post-settlement behavior are `MUST CONFIRM BEFORE CODING` guided settlement UX.
+- Binary redeem signatures and read/preflight call shapes are source-confirmed and implemented for devInspect; real browser redeem execution and post-settlement reconciliation remain pending DeepVol-12 approval.
