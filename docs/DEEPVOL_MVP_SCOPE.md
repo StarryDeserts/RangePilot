@@ -1,7 +1,7 @@
 ---
 Purpose: Define the first DeepVol BTC MOVE MVP boundary.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-13 browser redeem validation and primitives frontend scaffold.
+Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-14 primitive quote/preflight previews.
 ---
 
 # DeepVol MVP Scope
@@ -39,7 +39,7 @@ The MVP includes:
 - Portfolio readback that combines `MoveReceipt` metadata with `PredictManager` binary position readback.
 - A DeepVol-first wallet-gated frontend under `apps/deepvol-web/`, redesigned in DeepVol-7 as an oceanic BTC MOVE UX/demo foundation.
 - Guided redeem / settlement path that directs users through the official DeepBook Predict binary redeem flow.
-- DeepVol-13 frontend scaffold for UP / DOWN / RANGE primitives that keeps direct primitive execution disabled.
+- DeepVol-14 quote/preflight preview route for UP / DOWN / RANGE primitives that keeps direct primitive execution disabled.
 
 ## Explicitly out of MVP
 
@@ -83,8 +83,9 @@ The first implementation should prefer runtime discovery over hardcoded market a
 11. Add the DeepVol-6 wallet-gated frontend scaffold under `apps/deepvol-web/`, separate from the prior RangePilot `apps/web` validation UI.
 12. Apply DeepVol-7 BTC MOVE UX/demo polish to Markets, Buy, Portfolio, and the oceanic app shell without adding mainnet, redeem, withdraw, marketplace, or protocol changes.
 13. Add completed browser-safe portfolio readback and guided settlement UI.
-14. Record controlled browser guided redeem validation for the known receipt and introduce scaffold-only UP / DOWN / RANGE primitive surfaces in `apps/deepvol-web/`.
-15. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
+14. Record controlled browser guided redeem validation for the known receipt and introduce UP / DOWN / RANGE primitive surfaces in `apps/deepvol-web/`.
+15. Add DeepVol-14 primitive quote/preflight previews for UP / DOWN / RANGE using configured BTC MOVE series context while keeping direct primitive wallet execution disabled.
+16. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
 
 ## Code organization
 

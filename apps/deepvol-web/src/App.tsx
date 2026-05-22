@@ -2,6 +2,7 @@ import { AppShell } from "./components/AppShell";
 import { BuyMovePage } from "./routes/BuyMovePage";
 import { MarketsPage } from "./routes/MarketsPage";
 import { PortfolioPage } from "./routes/PortfolioPage";
+import { PrimitiveQuotePage } from "./routes/PrimitiveQuotePage";
 
 export function App() {
   const path = window.location.pathname;
@@ -22,6 +23,10 @@ function renderRoute(path: string) {
     return <BuyMovePage />;
   }
 
+  if (path === "/primitives") {
+    return <PrimitiveQuotePage />;
+  }
+
   if (path === "/portfolio") {
     return <PortfolioPage />;
   }
@@ -30,7 +35,7 @@ function renderRoute(path: string) {
     <section className="card notFoundCard">
       <div className="eyebrow">Route not found</div>
       <h1>DeepVol page unavailable</h1>
-      <p>The DeepVol MVP scaffold includes Markets, Buy BTC MOVE, and Portfolio routes.</p>
+      <p>The DeepVol MVP scaffold includes Markets, Buy BTC MOVE, Primitives, and Portfolio routes.</p>
       <a className="primaryLink" href="/markets">Back to markets</a>
     </section>
   );

@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, DeepVol-11 binary redeem read/preflight, and DeepVol-13 known-receipt browser redeem validated on Testnet.
+Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, DeepVol-11 binary redeem read/preflight, DeepVol-13 known-receipt browser redeem, and DeepVol-14 primitive quote/preflight previews validated or wired on Testnet.
 ---
 
 # DeepVol Binary Leg Integration
@@ -69,7 +69,7 @@ public fun deepbook_predict::predict::get_trade_amounts(
 
 The return values are `(mint_cost, redeem_payout)` for the binary market at the requested quantity.
 
-DeepVol previews both legs before mint:
+DeepVol previews both legs before BTC MOVE receipt mint:
 
 1. `market_key::up(oracle_id, expiry, upper_strike)`.
 2. `predict::get_trade_amounts` for the UP key.
@@ -106,6 +106,8 @@ Required objects and type parameters:
 | `Quote` | Quote asset type parameter, DUSDC for current Testnet integration. |
 
 The mint path checks manager ownership, trading pause state, positive quantity, quote asset, oracle/key match, live oracle state, mintable ask, manager balance, and vault exposure limits. DeepVol must not duplicate that pricing/risk logic.
+
+DeepVol-14 exposes direct binary primitive mint only as `devInspect` preflight through `devInspectMintBinaryPreflight(...)`. The helper builds `predict::mint<DUSDC>` for UP or DOWN diagnostics, but the binary mint transaction builder remains internal and unexported. The `/primitives` route must not import signing hooks or a real primitive execution builder, and a passed direct primitive preflight must not unlock wallet execution.
 
 ## Route B DeepVol entrypoint
 
@@ -258,7 +260,7 @@ DeepVol-specific validation status:
 - Deployed `buy_move_receipt<DUSDC>` preflight, execution, event parsing, and post-state validation are recorded in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
 - Binary redeem read/preflight validation exists for the known browser receipt; DeepVol-13 validated one controlled browser-wallet redeem for that receipt with fresh gates and post-state readback.
 - Production SDK event normalization remains pending.
-- Production SDK binary direct readback helper exists for known keys; general position enumeration remains pending.
+- Production SDK binary direct readback helper exists for known keys; DeepVol-14 uses known-key primitive readback groundwork, and general position enumeration remains pending.
 
 ## Open blockers
 

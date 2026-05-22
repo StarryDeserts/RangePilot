@@ -102,6 +102,7 @@ summary:focus-visible {
 button,
 summary,
 a.primaryLink,
+a.secondaryButton,
 .navLinks a {
   cursor: pointer;
 }
@@ -113,6 +114,7 @@ button:disabled {
 button,
 .primaryLink,
 .secondaryButton,
+a.secondaryButton,
 .navLinks a {
   min-height: 44px;
 }
@@ -188,6 +190,7 @@ button,
 .navLinks a,
 .primaryLink,
 .secondaryButton,
+a.secondaryButton,
 .primaryButton {
   display: inline-flex;
   align-items: center;
@@ -201,7 +204,8 @@ button,
 }
 
 .navLinks a:hover,
-.secondaryButton:hover:not(:disabled) {
+.secondaryButton:hover:not(:disabled),
+a.secondaryButton:hover {
   border-color: var(--dv-border-strong);
   background: rgba(54, 216, 255, 0.1);
   box-shadow: 0 0 24px rgba(54, 216, 255, 0.08);
@@ -302,7 +306,8 @@ button,
   align-items: start;
 }
 
-.tradeWorkspace {
+.tradeWorkspace,
+.primitiveTradeWorkspace {
   display: grid;
   grid-template-columns: minmax(18rem, 0.85fr) minmax(24rem, 1.15fr);
   gap: 1.25rem;
@@ -870,17 +875,25 @@ dd {
 }
 
 .fundingSplitGrid,
-.preflightAction {
+.preflightAction,
+.primitiveFormGrid,
+.primitiveQuoteMetrics,
+.primitiveSelector,
+.primitiveExecutionDisabled {
   display: grid;
   gap: 0.85rem;
 }
 
-.fundingSplitGrid {
+.fundingSplitGrid,
+.primitiveFormGrid,
+.primitiveQuoteMetrics,
+.primitiveSelector {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .fundingSplitGrid article,
-.preflightAction {
+.preflightAction,
+.primitiveExecutionDisabled {
   min-width: 0;
   border: 1px solid rgba(116, 232, 255, 0.14);
   border-radius: var(--dv-radius-md);
@@ -911,14 +924,29 @@ dd {
   line-height: 1.45;
 }
 
-.preflightAction {
+.preflightAction,
+.primitiveExecutionDisabled {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   margin-top: 1rem;
 }
 
-.preflightAction p {
+.preflightAction p,
+.primitiveExecutionDisabled p {
   margin: 0.35rem 0 0;
+}
+
+.primitiveSelector .secondaryButton,
+.primitiveSelector .primaryButton {
+  margin-top: 0;
+}
+
+.primitiveFormGrid label {
+  min-width: 0;
+}
+
+.primitiveExecutionDisabled {
+  border-color: rgba(251, 191, 36, 0.32);
 }
 
 .fieldLabel {
@@ -1263,7 +1291,8 @@ input:focus {
     justify-content: flex-start;
   }
 
-  .tradeWorkspace {
+  .tradeWorkspace,
+  .primitiveTradeWorkspace {
     grid-template-columns: 1fr;
   }
 }
@@ -1275,7 +1304,10 @@ input:focus {
   .portfolioSummaryBand,
   .receiptMetricRow,
   .fundingSplitGrid,
-  .preflightAction {
+  .preflightAction,
+  .primitiveFormGrid,
+  .primitiveQuoteMetrics,
+  .primitiveExecutionDisabled {
     grid-template-columns: 1fr;
   }
 
@@ -1337,6 +1369,7 @@ input:focus {
   .dataGrid-compact,
   .detailsGrid,
   .primitiveGrid,
+  .primitiveSelector,
   .inlineFieldGroup,
   .flowStep {
     grid-template-columns: 1fr;

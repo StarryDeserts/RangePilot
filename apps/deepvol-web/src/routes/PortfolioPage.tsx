@@ -1,12 +1,17 @@
-import { PREDICT_PRIMITIVES } from "../components/PredictPrimitiveCards";
+import { useState } from "react";
 import { ReceiptSummaryCard } from "../components/ReceiptSummaryCard";
 import { PageHero } from "../components/ui/PageHero";
 import { StateCallout } from "../components/ui/StateCallout";
 import { StatusPill } from "../components/ui/StatusPill";
 import { useDeepVolPortfolio } from "../hooks/useDeepVolPortfolio";
+import { usePrimitivePositionReadback } from "../hooks/usePrimitivePositionReadback";
 
 export function PortfolioPage() {
   const portfolio = useDeepVolPortfolio();
+  const [predictManagerInput, setPredictManagerInput] = useState("");
+  const primitiveReadback = usePrimitivePositionReadback({
+    predictManagerId: predictManagerInput.trim() || null,
+  });
   const receiptCount = portfolio.receipts.length;
 
   return (
@@ -83,20 +88,44 @@ export function PortfolioPage() {
             <div className="eyebrow">Primitive Positions</div>
             <h2>Known-key readback groundwork</h2>
           </div>
-          <StatusPill tone="neutral">Indexer future work</StatusPill>
+          <StatusPill tone={primitiveReadback.status === "ready" ? "success" : primitiveReadback.status === "error" ? "danger" : "neutral"}>{primitiveReadback.status}</StatusPill>
         </div>
         <StateCallout tone="warning" title="Primitive trades do not create DeepVol MoveReceipt">
-          Only BTC MOVE creates a receipt in this app. General primitive position indexing is future work; known/selected key readback is the first supported path.
+          Only BTC MOVE creates a receipt in this app. Known selected key readback is supported first. General primitive position indexing is future work.
         </StateCallout>
-        <div className="primitiveGrid">
-          {PREDICT_PRIMITIVES.map((primitive) => (
-            <article className="primitiveCard primitivePositionCard" key={primitive.kind}>
-              <span>{primitive.kind} positions</span>
-              <p>{primitive.kind === "RANGE" ? "General RANGE indexing is future work." : "Known-key binary position readback is future work."}</p>
-              <small>{primitive.riskCopy}</small>
-            </article>
-          ))}
-        </div>
+        <label className="fieldLabel" htmlFor="portfolio-predict-manager">
+          PredictManager ID for primitive readback
+        </label>
+        <input
+          id="portfolio-predict-manager"
+          value={predictManagerInput}
+          placeholder="0x..."
+          onChange={(event) => setPredictManagerInput(event.target.value)}
+        />
+        <small className="fieldHelp">Read-only known-key checks only; Portfolio does not create managers or deposit DUSDC.</small>
+        {primitiveReadback.entries.length > 0 && (
+          <div className="primitiveGrid">
+            {primitiveReadback.entries.map((entry) => (
+              <article className="primitiveCard primitivePositionCard" key={entry.label}>
+                <span>{entry.label}</span>
+                <strong>{entry.quantity ?? "Not available"}</strong>
+                <small>{entry.key}</small>
+              </article>
+            ))}
+          </div>
+        )}
+        {primitiveReadback.blockers.length > 0 && (
+          <StateCallout tone="warning" title="Primitive readback blockers">
+            <ul>
+              {primitiveReadback.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}
+            </ul>
+          </StateCallout>
+        )}
+        {primitiveReadback.error && (
+          <StateCallout tone="danger" title="Primitive readback error">
+            {primitiveReadback.error}
+          </StateCallout>
+        )}
       </section>
     </div>
   );

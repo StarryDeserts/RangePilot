@@ -200,6 +200,8 @@ export type MintAbortCandidateParams = {
   oracleId?: string;
   oracleObjectId?: string;
   expiry?: string;
+  strike?: string;
+  direction?: MarketQuoteDirection;
   lowerStrike?: string;
   higherStrike?: string;
   widthTicks?: string;
@@ -243,6 +245,17 @@ export type MintRangePreflightFailed = {
 };
 
 export type MintRangePreflightResult = MintRangePreflightPassed | MintRangePreflightFailed;
+
+export type BinaryMintPreflightPassed = {
+  status: "passed";
+};
+
+export type BinaryMintPreflightFailed = {
+  status: "failed";
+  abort: MintAbortClassification;
+};
+
+export type BinaryMintPreflightResult = BinaryMintPreflightPassed | BinaryMintPreflightFailed;
 
 export type OnchainAskBoundsAvailable = {
   status: "available";

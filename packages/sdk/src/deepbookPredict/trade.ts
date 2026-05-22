@@ -1,5 +1,6 @@
 import { Transaction } from "@mysten/sui/transactions";
 import type {
+  BinaryMintPreflightResult,
   BinaryRedeemPreflightResult,
   DeepBookPredictNetworkConfig,
   MarketKeyInput,
@@ -36,10 +37,28 @@ export type BuildRedeemRangeTransactionOptions = RangeRedeemParams & {
   allowRealTestnetRedeem?: boolean;
 };
 
+export type BinaryMintParams = MarketKeyInput & {
+  managerId: string;
+  oracleObjectId: string;
+  quantity: string | bigint;
+};
+
 export type BinaryRedeemParams = MarketKeyInput & {
   managerId: string;
   oracleObjectId: string;
   quantity: string | bigint;
+};
+
+export type DevInspectMintBinaryPreflightParams = BinaryMintParams & {
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: Transaction;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  config?: DeepBookPredictNetworkConfig;
+  candidateParams?: MintAbortCandidateParams;
 };
 
 export type BuildRedeemBinaryPositionTransactionOptions = BinaryRedeemParams & {
@@ -242,6 +261,46 @@ export function buildRedeemBinaryPositionsTransaction(
   return tx;
 }
 
+export async function devInspectMintBinaryPreflight(
+  params: DevInspectMintBinaryPreflightParams,
+): Promise<BinaryMintPreflightResult> {
+  try {
+    const transactionBlock = buildMintBinaryPositionPreflightTransaction(params);
+    const result = await params.client.devInspectTransactionBlock({
+      sender: params.sender,
+      transactionBlock,
+    });
+
+    if (isRecord(result) && typeof result.error === "string") {
+      return {
+        status: "failed",
+        abort: classifyMintAbort(result.error, { candidateParams: binaryMintAbortCandidateParams(params) }),
+      };
+    }
+
+    const status = isRecord(result) && isRecord(result.effects) && isRecord(result.effects.status)
+      ? result.effects.status
+      : null;
+
+    if (status?.status !== "success") {
+      return {
+        status: "failed",
+        abort: classifyMintAbort(
+          typeof status?.error === "string" ? status.error : "predict::mint devInspect did not succeed.",
+          { candidateParams: binaryMintAbortCandidateParams(params) },
+        ),
+      };
+    }
+
+    return { status: "passed" };
+  } catch (error) {
+    return {
+      status: "failed",
+      abort: classifyMintAbort(error, { candidateParams: binaryMintAbortCandidateParams(params) }),
+    };
+  }
+}
+
 export async function devInspectMintRangePreflight(
   params: DevInspectMintRangePreflightParams,
 ): Promise<MintRangePreflightResult> {
@@ -374,7 +433,7 @@ export async function devInspectRedeemBinaryPositions(
   }
 }
 
-export function isMintPreflightPassed(result: MintRangePreflightResult): boolean {
+export function isMintPreflightPassed(result: MintRangePreflightResult | BinaryMintPreflightResult): boolean {
   return result.status === "passed";
 }
 
@@ -403,6 +462,18 @@ function mintAbortCandidateParams(params: RangeMintParams & { candidateParams?: 
     expiry: String(params.expiry),
     lowerStrike: String(params.lowerStrike),
     higherStrike: String(params.higherStrike),
+    quantity: String(params.quantity),
+    ...params.candidateParams,
+  };
+}
+
+function binaryMintAbortCandidateParams(params: BinaryMintParams & { candidateParams?: MintAbortCandidateParams }): MintAbortCandidateParams {
+  return {
+    oracleId: params.oracleId,
+    oracleObjectId: params.oracleObjectId,
+    expiry: String(params.expiry),
+    strike: String(params.strike),
+    direction: params.direction,
     quantity: String(params.quantity),
     ...params.candidateParams,
   };
@@ -466,6 +537,35 @@ async function devInspectRedeemTransactionBlock({
   }
 
   return { status: "passed" };
+}
+
+function buildMintBinaryPositionPreflightTransaction(params: BinaryMintParams & { config?: DeepBookPredictNetworkConfig }): Transaction {
+  const config = resolveDeepBookPredictConfig(params.config);
+  const quantity = normalizePositiveInteger(params.quantity, "Binary mint quantity");
+
+  if (config.network !== "testnet") {
+    throw new DeepBookPredictUnconfirmedBindingError(
+      "Binary mint preflight is only allowed for Sui Testnet validation.",
+    );
+  }
+
+  const tx = new Transaction();
+  const marketKey = buildMarketKeyTransactionArgument(tx, params, config);
+
+  tx.moveCall({
+    target: `${config.packageId}::predict::mint`,
+    typeArguments: [config.quoteAssets.DUSDC.coinType],
+    arguments: [
+      tx.object(config.predictId),
+      tx.object(params.managerId),
+      tx.object(params.oracleObjectId),
+      marketKey,
+      tx.pure.u64(quantity),
+      tx.object(SUI_CLOCK_OBJECT_ID),
+    ],
+  });
+
+  return tx;
 }
 
 function appendRedeemBinaryPositionCall(

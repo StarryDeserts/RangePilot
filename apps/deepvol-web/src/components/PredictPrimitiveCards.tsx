@@ -9,8 +9,9 @@ export type PredictPrimitive = {
   meaning: string;
   winsWhen: string;
   riskCopy: string;
-  status: "Scaffold only";
+  status: "Quote/preflight preview";
   ctaLabel: string;
+  previewHref: string;
 };
 
 export const PREDICT_PRIMITIVES = [
@@ -19,24 +20,27 @@ export const PREDICT_PRIMITIVES = [
     meaning: "Buy upside.",
     winsWhen: "BTC expires above the selected strike.",
     riskCopy: "Raw Predict primitive; it does not create a DeepVol MoveReceipt.",
-    status: "Scaffold only",
+    status: "Quote/preflight preview",
     ctaLabel: "Direct UP execution disabled",
+    previewHref: "/primitives?type=UP",
   },
   {
     kind: "DOWN",
     meaning: "Buy downside.",
     winsWhen: "BTC expires below the selected strike.",
     riskCopy: "Raw Predict primitive; it does not create a DeepVol MoveReceipt.",
-    status: "Scaffold only",
+    status: "Quote/preflight preview",
     ctaLabel: "Direct DOWN execution disabled",
+    previewHref: "/primitives?type=DOWN",
   },
   {
     kind: "RANGE",
     meaning: "Buy inside-range exposure.",
     winsWhen: "BTC expires inside the selected lower / upper range.",
     riskCopy: "Complement to MOVE; direct RANGE execution is not enabled in DeepVol MVP yet.",
-    status: "Scaffold only",
+    status: "Quote/preflight preview",
     ctaLabel: "Direct RANGE execution disabled",
+    previewHref: "/primitives?type=RANGE",
   },
 ] as const satisfies readonly PredictPrimitive[];
 
@@ -48,11 +52,11 @@ export function PredictPrimitiveCards() {
           <div className="eyebrow">Advanced primitives</div>
           <h2>Predict building blocks</h2>
         </div>
-        <StatusPill tone="neutral">Scaffold only</StatusPill>
+        <StatusPill tone="info">Preview only</StatusPill>
       </div>
 
       <StateCallout tone="info" title="BTC MOVE remains the enabled receipt product">
-        Direct primitives are scaffold-only and do not create MoveReceipt. Only BTC MOVE creates a DeepVol receipt in this app.
+        Direct primitives now open quote/preflight preview only and do not create MoveReceipt. Only BTC MOVE creates a DeepVol receipt in this app.
       </StateCallout>
 
       <div className="primitiveGrid">
@@ -71,6 +75,9 @@ export function PredictPrimitiveCards() {
               ]}
             />
             <div className="cardActions primitiveActions">
+              <a className="secondaryButton" href={primitive.previewHref}>
+                Preview quote/preflight
+              </a>
               <button className="secondaryButton" type="button" disabled>
                 {primitive.ctaLabel}
               </button>

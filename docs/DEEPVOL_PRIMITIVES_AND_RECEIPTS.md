@@ -1,7 +1,7 @@
 ---
 Purpose: Explain DeepVol's Predict primitives layer and composed receipt products.
 Audience: Product maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Product-layer clarification for DeepVol BTC MOVE, Route B receipts, and DeepVol-13 primitives frontend scaffold.
+Status: Product-layer clarification for DeepVol BTC MOVE, Route B receipts, and DeepVol-14 primitive quote/preflight previews.
 ---
 
 # DeepVol Primitives and Receipts
@@ -24,7 +24,7 @@ This framing keeps DeepVol from becoming a generic Predict UI. The primary produ
 
 ## Predict primitives
 
-UP, DOWN, and RANGE are official DeepBook Predict primitives. DeepVol should expose them only as advanced primitives in the MVP, not as the main product or the main fee source. DeepVol-13 introduces them in the frontend as scaffold-only education and future composer groundwork; see [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md).
+UP, DOWN, and RANGE are official DeepBook Predict primitives. DeepVol should expose them only as advanced primitives in the MVP, not as the main product or the main fee source. DeepVol-14 exposes them in the frontend as quote/preflight previews for education, diagnostics, known-key readback groundwork, and future composer work; see [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md) and [DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md](./DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md).
 
 Primitive responsibilities remain with DeepBook Predict:
 
@@ -86,7 +86,7 @@ Advanced users can construct the raw legs themselves, but most users should not 
 
 ## Fee model boundary
 
-Primitive UP, DOWN, and RANGE trades are not the primary MVP monetization surface. In MVP, primitive surfaces should have no DeepVol protocol fee or should remain advanced/debug-only.
+Primitive UP, DOWN, and RANGE trades are not the primary MVP monetization surface. In DeepVol-14, primitive surfaces are quote/preflight previews only: they do not submit wallet transactions, do not create `MoveReceipt` objects, and do not charge DeepVol Create Fee.
 
 BTC MOVE Receipt is the MVP monetization surface:
 

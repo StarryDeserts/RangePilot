@@ -13,14 +13,17 @@ assert.match(marketsSource, /<PredictPrimitiveCards \/>/, "Markets must render p
 for (const primitive of ["UP", "DOWN", "RANGE"]) {
   assert.match(primitiveCardsSource, new RegExp(`kind: "${primitive}"`), `${primitive} primitive metadata must exist`);
 }
-assert.match(portfolioSource, /PREDICT_PRIMITIVES\.map/, "Portfolio must render primitive placeholders from primitive metadata");
-assert.match(portfolioSource, /\{primitive\.kind\} positions/, "Portfolio must label primitive position placeholders");
+assert.match(portfolioSource, /usePrimitivePositionReadback/, "Portfolio must use known-key primitive readback");
+assert.match(portfolioSource, /Known selected key readback is supported first/, "Portfolio must explain known-key readback scope");
 
 assert.match(
   primitiveCardsSource,
-  /Direct primitives are scaffold-only and do not create MoveReceipt\./,
-  "Primitive scaffold must state direct primitives do not create MoveReceipt",
+  /Direct primitives now open quote\/preflight preview only and do not create MoveReceipt\./,
+  "Primitive cards must state direct primitives are preview-only and do not create MoveReceipt",
 );
+assert.match(primitiveCardsSource, /\/primitives\?type=UP/, "UP card must link to primitive preview route");
+assert.match(primitiveCardsSource, /\/primitives\?type=DOWN/, "DOWN card must link to primitive preview route");
+assert.match(primitiveCardsSource, /\/primitives\?type=RANGE/, "RANGE card must link to primitive preview route");
 assert.match(
   primitiveCardsSource,
   /disabled>/,
@@ -39,5 +42,5 @@ assert.match(
   "Portfolio must state only BTC MOVE creates receipts",
 );
 
-console.log("PASS primitive scaffold gating");
+console.log("PASS primitive preview gating");
 console.log(`Loaded ${pathToFileURL("src/components/PredictPrimitiveCards.tsx").href}`);

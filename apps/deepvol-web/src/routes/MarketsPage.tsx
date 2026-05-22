@@ -14,12 +14,13 @@ export function MarketsPage() {
             <StatusPill tone="info">Sui Testnet</StatusPill>
             <StatusPill tone="neutral">BTC only MVP</StatusPill>
             <StatusPill tone="success">Non-custodial receipt</StatusPill>
+          <StatusPill tone="warning">Primitives preview only</StatusPill>
           </div>
         )}
       >
         <p>
           BTC MOVE packages UP and DOWN DeepBook Predict binary legs into one protocol-enforced receipt for traders who want
-          volatility exposure instead of directional exposure.
+          volatility exposure instead of directional exposure. Primitive UP, DOWN, and RANGE panels are quote/preflight previews only.
         </p>
       </PageHero>
 

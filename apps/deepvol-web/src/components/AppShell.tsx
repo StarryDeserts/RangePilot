@@ -11,6 +11,7 @@ type AppShellProps = {
 const navItems = [
   { href: "/markets", label: "Markets" },
   { href: "/buy/btc-move", label: "BTC MOVE" },
+  { href: "/primitives", label: "Primitives" },
   { href: "/portfolio", label: "Portfolio" },
 ] as const;
 
