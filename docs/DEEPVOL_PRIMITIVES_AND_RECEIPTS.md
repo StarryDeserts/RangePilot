@@ -1,7 +1,7 @@
 ---
 Purpose: Explain DeepVol's Predict primitives layer and composed receipt products.
 Audience: Product maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Product-layer clarification for DeepVol BTC MOVE and Route B receipts.
+Status: Product-layer clarification for DeepVol BTC MOVE, Route B receipts, and DeepVol-13 primitives frontend scaffold.
 ---
 
 # DeepVol Primitives and Receipts
@@ -24,7 +24,7 @@ This framing keeps DeepVol from becoming a generic Predict UI. The primary produ
 
 ## Predict primitives
 
-UP, DOWN, and RANGE are official DeepBook Predict primitives. DeepVol should expose them only as advanced primitives in the MVP, not as the main product or the main fee source.
+UP, DOWN, and RANGE are official DeepBook Predict primitives. DeepVol should expose them only as advanced primitives in the MVP, not as the main product or the main fee source. DeepVol-13 introduces them in the frontend as scaffold-only education and future composer groundwork; see [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md).
 
 Primitive responsibilities remain with DeepBook Predict:
 
@@ -60,7 +60,7 @@ A user buys movement exposure rather than choosing direction:
 - the DOWN leg covers a move below the lower strike;
 - the receipt aggregates those legs into one product-level portfolio item.
 
-The MVP should keep BTC MOVE front-and-center. UP, DOWN, and RANGE should be treated as advanced primitives, diagnostics, or future composer building blocks.
+The MVP should keep BTC MOVE front-and-center. UP, DOWN, and RANGE should be treated as advanced primitives, diagnostics, education, or future composer building blocks. Direct primitive buys do not create a DeepVol `MoveReceipt`; only the BTC MOVE receipt route creates a receipt in the MVP app.
 
 ## Can users manually buy UP + DOWN themselves?
 

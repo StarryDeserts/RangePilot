@@ -311,7 +311,8 @@ button,
 
 .tradeContextColumn,
 .tradeActionColumn,
-.receiptList {
+.receiptList,
+.portfolioSection {
   display: grid;
   gap: 1.25rem;
 }
@@ -358,7 +359,8 @@ button,
 }
 
 .cardHeader,
-.receiptTopRow {
+.receiptTopRow,
+.primitiveCardTop {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -743,9 +745,38 @@ dd {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.primitiveCard {
+  display: grid;
+  gap: 1rem;
+}
+
 .primitiveCard span {
   color: var(--dv-seafoam);
   font-size: 1rem;
+}
+
+.primitiveCardTop {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.primitiveCard .dataGrid,
+.primitiveCard .dataGrid-compact {
+  grid-template-columns: 1fr;
+}
+
+.primitiveActions {
+  margin-top: auto;
+}
+
+.primitiveActions .primaryLink,
+.primitiveActions .secondaryButton {
+  flex: 1 1 12rem;
+}
+
+.primitivePositionCard small {
+  color: var(--dv-muted);
+  line-height: 1.45;
 }
 
 .flowChecklist ol {
@@ -1282,6 +1313,7 @@ input:focus {
 
   .cardHeader,
   .receiptTopRow,
+  .primitiveCardTop,
   .redeemSectionHeader,
   .redeemLegCardTop,
   .redeemActions,

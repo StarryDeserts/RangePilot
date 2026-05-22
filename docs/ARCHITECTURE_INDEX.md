@@ -1,7 +1,7 @@
 ---
 Purpose: Navigation index for RangePilot and DeepVol architecture documentation.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol BTC MOVE and DeepVol-12 controlled browser redeem wiring/blocker evidence.
+Status: Updated for DeepVol BTC MOVE, DeepVol-13 controlled browser redeem validation, and Predict primitives frontend scaffold.
 Source of truth relationship: Indexes local source-of-truth documents, official-derived protocol references, generated companion docs, and pivot ADRs; does not replace source docs.
 ---
 
@@ -21,6 +21,7 @@ RangePilot's guided range trading and Route B creator-follow wrapper work remain
 | [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md) | Current product direction | DeepVol structured-product positioning, BTC MOVE primary product, and non-custodial receipt boundary |
 | [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md) | Current product-layer model | Distinguishing Predict primitives from composed receipts and answering the manual UP + DOWN concern |
 | [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md) | Current MVP scope | Deciding what belongs in the BTC MOVE MVP and what stays future scope |
+| [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md) | Current primitives frontend scope | Explaining UP / DOWN / RANGE / MOVE UX relationships and scaffold-only primitive execution |
 | [ADR/0003-pivot-to-deepvol-btc-move.md](./ADR/0003-pivot-to-deepvol-btc-move.md) | Accepted pivot decision | Explaining why DeepVol supersedes creator-follow as the primary direction |
 
 Do not edit the original product or protocol-analysis source docs for normal implementation tasks unless the user explicitly requests source-doc maintenance. If older RangePilot docs conflict with the DeepVol pivot, use the DeepVol foundation docs and ADR-0003 for current direction while preserving historical validation records.
@@ -32,6 +33,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_PRODUCT_DIRECTION.md](./DEEPVOL_PRODUCT_DIRECTION.md) | Defines DeepVol structured-product direction, pivot rationale, BTC-first scope, and receipt limitations | Product / strategy |
 | [DEEPVOL_PRIMITIVES_AND_RECEIPTS.md](./DEEPVOL_PRIMITIVES_AND_RECEIPTS.md) | Explains primitives vs composed receipts, manual UP + DOWN, and productization value | Product / strategy |
 | [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md) | Defines BTC-only MVP inclusions, exclusions, runtime assumptions, and future structure | Product / engineering |
+| [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md) | Defines scaffold-only UP / DOWN / RANGE frontend surfaces while keeping BTC MOVE primary | Product / frontend |
 | [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md) | Defines VolSeries, MoveReceipt, ProtocolVault, PredictManager, transaction/readback/settlement paths | Protocol / architecture |
 | [DEEPVOL_DATA_MODEL.md](./DEEPVOL_DATA_MODEL.md) | Proposes VolSeries, MoveReceipt, and receipt lifecycle event fields | Move / SDK / product |
 | [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md) | Records source-confirmed binary entrypoints, MarketKey construction, events, and validation blockers | Protocol / SDK / PTB |
@@ -39,10 +41,10 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md) | Records the DeepVol Testnet package publish, AdminCap/UpgradeCap, and shared ProtocolVault<DUSDC> setup | Move / protocol / validation |
 | [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md) | Records the first deployed BTC VolSeries and buy_move_receipt<DUSDC> execution, receipt, mints, fee accounting, and later browser validation links | Move / protocol / validation |
 | [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md) | Records the manually validated browser wallet buy_move_receipt<DUSDC> transaction and portfolio receipt display | Frontend / protocol / validation |
-| [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md) | Defines post-buy redeem/settlement options, recommends guided non-custodial redeem for MVP, records DeepVol-11 source-confirmed redeem path, and records DeepVol-12 controlled browser redeem wiring/blocker scope | Product / frontend / protocol |
-| [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md) | Records DeepVol-11 source confirmation, known receipt readback, payout preview, devInspect redeem preflight, blockers, and no-real-redeem boundary | Protocol / frontend / validation |
-| [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md) | Records DeepVol-12 controlled browser redeem gates, fresh read/preflight evidence, browser smoke, and current missing-wallet blocker | Frontend / protocol / validation |
-| [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md) | Defines the `apps/deepvol-web` wallet-gated frontend, DeepVol-7 oceanic UI/UX foundation, DeepVol-8 browser flow repair, DeepVol-9 browser receipt preflight gate, DeepVol-10 browser buy validation, and DeepVol-11 guided redeem scaffold | Frontend / product / SDK |
+| [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md) | Defines post-buy redeem/settlement options, recommends guided non-custodial redeem for MVP, records DeepVol-11 source-confirmed redeem path, DeepVol-12 controlled browser wiring, and DeepVol-13 known-receipt redeem validation | Product / frontend / protocol |
+| [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md) | Records DeepVol-11 source confirmation, known receipt readback, payout preview, devInspect redeem preflight, DeepVol-12 wiring history, and DeepVol-13 execution cross-reference | Protocol / frontend / validation |
+| [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md) | Records DeepVol-13 successful controlled browser guided redeem digest, payouts, and position deltas for the known receipt | Frontend / protocol / validation |
+| [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md) | Defines the `apps/deepvol-web` wallet-gated frontend, DeepVol-7 oceanic UI/UX foundation, DeepVol-8 browser flow repair, DeepVol-9 browser receipt preflight gate, DeepVol-10 browser buy validation, DeepVol-13 redeem validation, and primitives scaffold | Frontend / product / SDK |
 | [DEEPVOL_MOVE_RECEIPT_CONTRACT.md](./DEEPVOL_MOVE_RECEIPT_CONTRACT.md) | Documents the Route B VolSeries, ProtocolVault, and protocol-enforced non-custodial MoveReceipt contract | Move / protocol / SDK |
 | [DEEPVOL_CONTRACT_BUILD_VALIDATION.md](./DEEPVOL_CONTRACT_BUILD_VALIDATION.md) | Records local DeepVol Route B contract build/test validation scope and non-actions | Move / validation |
 | [DEEPVOL_BUSINESS_MODEL.md](./DEEPVOL_BUSINESS_MODEL.md) | Defines Create Fee MVP model and V2-only Profit Fee / Creator Share | Product / business |
@@ -111,7 +113,8 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 7. [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md)
 8. [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md)
 9. [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md)
-10. [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md)
+10. [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md)
+11. [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md)
 11. [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md)
 12. [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md)
 13. [DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md](./DEEPBOOK_PREDICT_OFFICIAL_CONTRACT_INFO.md)
@@ -139,10 +142,11 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 3. [DEEPVOL_MVP_SCOPE.md](./DEEPVOL_MVP_SCOPE.md)
 4. [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md)
 5. [DEEPVOL_FRONTEND_MVP.md](./DEEPVOL_FRONTEND_MVP.md)
-6. [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md)
-7. [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md)
-8. [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md)
-9. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)
+6. [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md)
+7. [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md)
+8. [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md)
+9. [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md)
+10. [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)
 9. [GUIDED_RANGE_TRADING_MVP.md](./GUIDED_RANGE_TRADING_MVP.md) only as prior scaffold/reference, not current MVP direction
 
 ### Before agent-led implementation rounds
@@ -158,7 +162,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 
 | Category | Primary docs |
 |---|---|
-| DeepVol product | DeepVol product direction, primitives and receipts, MVP scope, frontend MVP, browser buy validation, redeem and settlement flow, redeem preflight validation, protocol architecture, data model, business model, ADR-0003 |
+| DeepVol product | DeepVol product direction, primitives and receipts, MVP scope, Predict primitives frontend, frontend MVP, browser buy validation, browser redeem validation, redeem and settlement flow, redeem preflight validation, protocol architecture, data model, business model, ADR-0003 |
 | Protocol | Protocol analysis, source documents, architecture map, protocol integration notes, official contract info, binary leg integration, wrapper contract architecture |
 | Protocol reference | Official contract info, entrypoint bindings plan, public server discovery, response shapes |
 | SDK / PTB | Binary leg integration, official contract info, PredictManager flow, PredictManager validation, range validation docs, entrypoint bindings plan, protocol integration notes |
@@ -175,7 +179,8 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | DeepVol Move/data model work | DeepVol protocol architecture, data model, MoveReceipt contract, contract build validation, Testnet publish result, buy receipt validation, binary leg integration, official contract info, entrypoint bindings plan |
 | DeepVol binary quote/mint/redeem validation | Binary leg integration, buy receipt validation, redeem preflight validation, official contract info, protocol integration notes, entrypoint bindings plan, PredictManager flow, range quote units and decoding |
 | DeepVol SDK transaction builders | Binary leg integration, buy receipt validation, official contract info, entrypoint bindings plan, protocol integration notes, Sui transaction-building docs/skills |
-| DeepVol portfolio/settlement UX | DeepVol frontend MVP, browser buy validation, redeem and settlement flow, redeem preflight validation, DeepVol protocol architecture, data model, binary leg integration, PredictManager validation, protocol integration notes |
+| DeepVol portfolio/settlement UX | DeepVol frontend MVP, browser buy validation, browser redeem validation, redeem and settlement flow, redeem preflight validation, DeepVol protocol architecture, data model, binary leg integration, PredictManager validation, protocol integration notes |
+| DeepVol Predict primitives frontend | DeepVol product direction, primitives and receipts, Predict primitives frontend, MVP scope, frontend MVP, protocol integration notes, entrypoint bindings plan |
 | Prior guided range UI maintenance | Guided range trading MVP, range mint validation, portfolio readback validation, range redeem validation, browser wallet fixes |
 | Prior wrapper/follow maintenance | Wrapper contract architecture, wrapper publish result, wrapper follow validation, ProtocolVault design, follow strategy transaction flow, strategy data model, ADR-0002 |
 | New ADR | Agent workflow, source documents, existing ADRs |

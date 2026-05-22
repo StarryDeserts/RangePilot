@@ -1,21 +1,7 @@
 import { BtcMoveCard } from "../components/BtcMoveCard";
+import { PredictPrimitiveCards } from "../components/PredictPrimitiveCards";
 import { PageHero } from "../components/ui/PageHero";
 import { StatusPill } from "../components/ui/StatusPill";
-
-const primitives = [
-  {
-    name: "UP",
-    description: "Binary leg that pays when BTC settles above the upper strike.",
-  },
-  {
-    name: "DOWN",
-    description: "Binary leg that pays when BTC settles below the lower strike.",
-  },
-  {
-    name: "RANGE",
-    description: "Primitive for inside-range exposure; not the primary BTC MOVE MVP product.",
-  },
-] as const;
 
 export function MarketsPage() {
   return (
@@ -63,23 +49,7 @@ export function MarketsPage() {
         </div>
       </section>
 
-      <section className="card primitiveSection">
-        <div className="cardHeader">
-          <div>
-            <div className="eyebrow">Advanced primitives</div>
-            <h2>Underlying building blocks</h2>
-          </div>
-          <StatusPill tone="neutral">Not the primary flow</StatusPill>
-        </div>
-        <div className="primitiveGrid">
-          {primitives.map((primitive) => (
-            <article className="primitiveCard" key={primitive.name}>
-              <span>{primitive.name}</span>
-              <p>{primitive.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      <PredictPrimitiveCards />
     </div>
   );
 }

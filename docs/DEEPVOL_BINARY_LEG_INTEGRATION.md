@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, and DeepVol-11 binary redeem read/preflight validated on Testnet without real redeem execution.
+Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, DeepVol-11 binary redeem read/preflight, and DeepVol-13 known-receipt browser redeem validated on Testnet.
 ---
 
 # DeepVol Binary Leg Integration
@@ -144,7 +144,7 @@ Safety properties:
 - `.env.local` is not read;
 - mint mode is dry-run-only by default;
 - real submission requires explicit sender/manager, Testnet CLI env/address, manager balance, gas balance, transaction-shape assertion, `devInspect`, SDK dry-run, CLI dry-run, and `--execute-real-mint`;
-- binary redeem remains not executed in this round.
+- binary redeem is not executed by the binary-leg mint harness; DeepVol-13 records a separate controlled browser redeem for the known receipt.
 
 Latest controlled mint-mode result from 2026-05-19 is recorded in [DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md](./DEEPVOL_BINARY_MINT_TESTNET_VALIDATION.md): the old `100000000` MIST gas budget reproduced `InsufficientGas in command 3`; raising the budget to `200000000` MIST passed SDK dry-run and CLI `serialized-tx-kind` dry-run, then one real Testnet two-leg mint executed with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`. UP and DOWN positions each increased by `1000`, and manager DUSDC decreased by `1003` atomic units.
 
@@ -184,7 +184,7 @@ public fun deepbook_predict::predict::redeem_permissionless<Quote>(
 
 Binary redeem is distinct from the validated range redeem entrypoint. BTC MOVE uses `predict::redeem<Quote>` with a binary `MarketKey`; it must not call `predict::redeem_range<Quote>` or construct a `RangeKey` for the receipt's UP/DOWN legs.
 
-DeepVol MVP can guide redeem, but non-custodial receipts cannot force users to redeem through DeepVol. DeepVol-11 adds read/devInspect preflight only; no real binary redeem was executed.
+DeepVol MVP can guide redeem, but non-custodial receipts cannot force users to redeem through DeepVol. DeepVol-11 added read/devInspect preflight only; DeepVol-13 later validated one controlled browser-wallet binary redeem for the known Testnet receipt with digest `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ`.
 
 ## Redeem read/preflight validation
 
@@ -194,6 +194,8 @@ DeepVol-11 adds `scripts/validate-deepvol-redeem-flow.mjs` with two modes:
 - `npm run validate:deepvol-redeem-preflight` runs read mode first, then uses `devInspectTransactionBlock` for `predict::redeem<DUSDC>` on each positive-quantity leg.
 
 The script has no execute mode and prints `No real redeem executed.` DeepVol-11 read mode observed UP and DOWN manager-level quantities of `20000` for the known manager/key pair, while the selected receipt quantity is `10000`. Preflight mode uses the receipt-scoped quantity `min(manager position, receipt quantity)`, passed devInspect for both legs, and labels manager quantity separately. Payout previews remain `MUST CONFIRM AT RUNTIME` before any future wallet prompt.
+
+DeepVol-13 used the browser-wallet path, not the read/preflight script, to validate one known-receipt redeem. Digest `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ` redeemed `10000` UP for `9727` atomic DUSDC and `10000` DOWN for `47` atomic DUSDC, reducing both manager-level positions from `20000` to `10000`. The remaining `10000` per leg is aggregate manager-level quantity for the same MarketKeys, not failed receipt quantity.
 
 ## Manager readback
 
@@ -254,7 +256,7 @@ DeepVol-specific validation status:
 
 - Manual DeepVol package publish and quote-asset `ProtocolVault<DUSDC>` setup are recorded in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - Deployed `buy_move_receipt<DUSDC>` preflight, execution, event parsing, and post-state validation are recorded in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md).
-- Binary redeem read/preflight validation exists for the known browser receipt; DeepVol-12 controlled browser execution is wired but real wallet approval remains pending an approved wallet in-browser.
+- Binary redeem read/preflight validation exists for the known browser receipt; DeepVol-13 validated one controlled browser-wallet redeem for that receipt with fresh gates and post-state readback.
 - Production SDK event normalization remains pending.
 - Production SDK binary direct readback helper exists for known keys; general position enumeration remains pending.
 
@@ -264,4 +266,4 @@ DeepVol-specific validation status:
 - Production DeepVol flows must preserve the validated two-leg mint gates before wallet approval.
 - DeepVol package, admin cap, upgrade cap, and DUSDC protocol vault IDs are configured after DeepVol-4; see [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - DeepVol-5 executed one real `VolSeries` creation and one deployed `buy_move_receipt<DUSDC>` validation; future buys still require fresh runtime gates.
-- Binary redeem signatures and read/preflight call shapes are source-confirmed and implemented for devInspect; DeepVol-12 wires controlled browser redeem execution, but real wallet approval and post-settlement reconciliation remain pending because the validation browser had no approved wallet extension/account.
+- Binary redeem signatures and read/preflight call shapes are source-confirmed and implemented for devInspect; DeepVol-13 validated one known-receipt browser redeem, but future redeems still require fresh runtime gates and event/readback reconciliation before any local receipt status is treated as payout evidence.

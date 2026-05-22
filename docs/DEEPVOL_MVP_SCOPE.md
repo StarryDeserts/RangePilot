@@ -1,7 +1,7 @@
 ---
 Purpose: Define the first DeepVol BTC MOVE MVP boundary.
 Audience: Project maintainers, Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-7 frontend UI/UX redesign.
+Status: Foundation MVP scope for the DeepVol refactor, updated for DeepVol-13 browser redeem validation and primitives frontend scaffold.
 ---
 
 # DeepVol MVP Scope
@@ -25,7 +25,7 @@ The user buys exposure to BTC movement rather than choosing direction.
 The MVP includes:
 
 - BTC MOVE Receipt only as the primary composed product.
-- Advanced UP / DOWN / RANGE primitive surfaces only for validation, diagnostics, or future composer groundwork.
+- Advanced UP / DOWN / RANGE primitive surfaces only for validation, diagnostics, education, or future composer groundwork.
 - One active BTC oracle / expiry selected at runtime.
 - `VolSeries` object for BTC MOVE series metadata and leg truth.
 - `MoveReceipt` object for non-custodial receipt metadata and Predict position linkage.
@@ -39,6 +39,7 @@ The MVP includes:
 - Portfolio readback that combines `MoveReceipt` metadata with `PredictManager` binary position readback.
 - A DeepVol-first wallet-gated frontend under `apps/deepvol-web/`, redesigned in DeepVol-7 as an oceanic BTC MOVE UX/demo foundation.
 - Guided redeem / settlement path that directs users through the official DeepBook Predict binary redeem flow.
+- DeepVol-13 frontend scaffold for UP / DOWN / RANGE primitives that keeps direct primitive execution disabled.
 
 ## Explicitly out of MVP
 
@@ -59,7 +60,7 @@ The MVP excludes:
 - Pro API.
 - Production UI polish beyond the BTC MOVE demo foundation.
 
-These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; DeepVol-3B added the Route B contract path; DeepVol-4 records the manual Testnet package publish plus shared `ProtocolVault<DUSDC>` setup in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md); and DeepVol-5 validates the first deployed BTC `VolSeries`, `buy_move_receipt<DUSDC>`, `MoveReceipt`, internal UP/DOWN mints, and Create Fee deposit in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md). Guided redeem remains future MVP work.
+These can be revisited after BTC MOVE binary mint, receipt creation, fee deposit, portfolio readback, and guided redeem are validated. The 2026-05-19 controlled binary mint round validated the direct two-leg BTC binary mint on Testnet with digest `4fMQtu8mFB6jLa5gtSWBsDj3gYp8u9AjQw3xs2VcNJoh`; DeepVol-3B added the Route B contract path; DeepVol-4 records the manual Testnet package publish plus shared `ProtocolVault<DUSDC>` setup in [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md); DeepVol-5 validates the first deployed BTC `VolSeries`, `buy_move_receipt<DUSDC>`, `MoveReceipt`, internal UP/DOWN mints, and Create Fee deposit in [DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md](./DEEPVOL_BUY_MOVE_RECEIPT_TESTNET_VALIDATION.md); DeepVol-10 validates the browser wallet buy path in [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md); and DeepVol-13 validates one controlled browser guided redeem for the known receipt in [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
 
 ## Runtime assumptions
 
@@ -82,7 +83,8 @@ The first implementation should prefer runtime discovery over hardcoded market a
 11. Add the DeepVol-6 wallet-gated frontend scaffold under `apps/deepvol-web/`, separate from the prior RangePilot `apps/web` validation UI.
 12. Apply DeepVol-7 BTC MOVE UX/demo polish to Markets, Buy, Portfolio, and the oceanic app shell without adding mainnet, redeem, withdraw, marketplace, or protocol changes.
 13. Add completed browser-safe portfolio readback and guided settlement UI.
-13. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
+14. Record controlled browser guided redeem validation for the known receipt and introduce scaffold-only UP / DOWN / RANGE primitive surfaces in `apps/deepvol-web/`.
+15. Revisit V2 custodial / escrow receipts and Profit Fee only after the non-custodial MVP is validated.
 
 ## Code organization
 

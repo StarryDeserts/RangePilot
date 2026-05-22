@@ -1,3 +1,4 @@
+import { PREDICT_PRIMITIVES } from "../components/PredictPrimitiveCards";
 import { ReceiptSummaryCard } from "../components/ReceiptSummaryCard";
 import { PageHero } from "../components/ui/PageHero";
 import { StateCallout } from "../components/ui/StateCallout";
@@ -55,17 +56,48 @@ export function PortfolioPage() {
         </StateCallout>
       )}
 
-      {portfolio.isLoading && <section className="card">Loading receipt readback...</section>}
-      {portfolio.error && (
-        <StateCallout tone="danger" title="Portfolio readback error">
-          {portfolio.error}
+      <section className="portfolioSection">
+        <div className="cardHeader portfolioSectionHeader">
+          <div>
+            <div className="eyebrow">MOVE Receipts</div>
+            <h2>Receipt-linked BTC MOVE positions</h2>
+          </div>
+          <StatusPill tone="success">Enabled receipt route</StatusPill>
+        </div>
+        {portfolio.isLoading && <section className="card">Loading receipt readback...</section>}
+        {portfolio.error && (
+          <StateCallout tone="danger" title="Portfolio readback error">
+            {portfolio.error}
+          </StateCallout>
+        )}
+        <div className="receiptList">
+          {portfolio.receipts.map((receipt) => (
+            <ReceiptSummaryCard key={`${receipt.source}:${receipt.receiptId}`} receipt={receipt} />
+          ))}
+        </div>
+      </section>
+
+      <section className="card primitiveSection">
+        <div className="cardHeader">
+          <div>
+            <div className="eyebrow">Primitive Positions</div>
+            <h2>Known-key readback groundwork</h2>
+          </div>
+          <StatusPill tone="neutral">Indexer future work</StatusPill>
+        </div>
+        <StateCallout tone="warning" title="Primitive trades do not create DeepVol MoveReceipt">
+          Only BTC MOVE creates a receipt in this app. General primitive position indexing is future work; known/selected key readback is the first supported path.
         </StateCallout>
-      )}
-      <div className="receiptList">
-        {portfolio.receipts.map((receipt) => (
-          <ReceiptSummaryCard key={`${receipt.source}:${receipt.receiptId}`} receipt={receipt} />
-        ))}
-      </div>
+        <div className="primitiveGrid">
+          {PREDICT_PRIMITIVES.map((primitive) => (
+            <article className="primitiveCard primitivePositionCard" key={primitive.kind}>
+              <span>{primitive.kind} positions</span>
+              <p>{primitive.kind === "RANGE" ? "General RANGE indexing is future work." : "Known-key binary position readback is future work."}</p>
+              <small>{primitive.riskCopy}</small>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

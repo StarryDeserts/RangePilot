@@ -1,7 +1,7 @@
 ---
 Purpose: Record DeepVol-11 source confirmation and read/preflight validation for guided BTC MOVE redeem.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: DeepVol-11 source-confirmed redeem preflight artifact, with DeepVol-12 controlled browser redeem wiring/blocker cross-reference; no real redeem executed in either validation artifact.
+Status: DeepVol-11 source-confirmed redeem preflight artifact, with DeepVol-12 controlled browser wiring history and DeepVol-13 successful browser redeem cross-reference.
 Source of truth relationship: Derived from local DeepBook Predict source snapshot, Sui Testnet read/devInspect evidence, and DeepVol browser buy validation; on-chain state and official source remain authoritative.
 ---
 
@@ -9,9 +9,9 @@ Source of truth relationship: Derived from local DeepBook Predict source snapsho
 
 ## Summary
 
-DeepVol-11 source-confirms the DeepBook Predict binary redeem path and adds read-only/devInspect validation for guided BTC MOVE redeem. The validated MVP direction remains guided non-custodial redeem: DeepVol can help users inspect and preflight the underlying UP and DOWN positions, but the positions remain in the user's `PredictManager` and real redeem execution is not enabled in this round.
+DeepVol-11 source-confirms the DeepBook Predict binary redeem path and adds read-only/devInspect validation for guided BTC MOVE redeem. The validated MVP direction remains guided non-custodial redeem: DeepVol can help users inspect and preflight the underlying UP and DOWN positions, but the positions remain in the user's `PredictManager`. Real redeem execution was intentionally not enabled in the DeepVol-11 preflight round.
 
-No real redeem, publish, withdraw, new buy, Move upgrade, or mainnet action was executed.
+No real redeem, publish, withdraw, new buy, Move upgrade, or mainnet action was executed in DeepVol-11.
 
 ## Known receipt under test
 
@@ -195,7 +195,7 @@ DeepVol must parse this event and reconcile before/after `PredictManager` positi
 | Runtime readback | Passed for the known browser receipt's UP/DOWN keys; manager-level quantity is displayed separately from receipt quantity. |
 | Runtime payout preview | Passed for receipt-scoped preflight quantity; values are runtime-dependent and must be refreshed at wallet-review time. |
 | Runtime redeem preflight | Passed for both receipt-scoped leg quantities by devInspect. |
-| Real browser wallet redeem | Not executed in DeepVol-11. Planned for DeepVol-12 only after explicit approval. |
+| Real browser wallet redeem | Not executed in DeepVol-11. DeepVol-12 later wired controlled browser execution, and DeepVol-13 validated one known-receipt browser redeem. |
 | Per-receipt settlement proof | Not implemented. Requires `PositionRedeemed` event parsing plus before/after position and DUSDC balance reconciliation. |
 | Profit Fee | Not enforceable in the non-custodial MVP. |
 | General receipt indexing | Not implemented. Portfolio remains known local/reference receipt based. |
@@ -204,17 +204,30 @@ DeepVol must parse this event and reconcile before/after `PredictManager` positi
 
 DeepVol-11 executed only object reads and `devInspectTransactionBlock` preflight calls. The validation script has no execute mode and prints `No real redeem executed.` No real redeem, buy, withdraw, publish, upgrade, or mainnet command was run.
 
-## DeepVol-12 controlled browser result
+## DeepVol-12 controlled browser wiring and DeepVol-13 execution result
 
-DeepVol-12 wires the Portfolio controlled browser redeem path for the known receipt and records the current blocker in [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
+DeepVol-12 wired the Portfolio controlled browser redeem path for the known receipt and originally stopped at the missing-wallet blocker. DeepVol-13 then completed one real browser-wallet guided redeem for that known receipt; the execution record is [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
 
-Current status:
+Historical DeepVol-12 wiring status:
 
-1. The known receipt readback remains open with receipt quantity `10000`.
-2. UP and DOWN manager-level positions read as `20000`, while the receipt-scoped redeem quantity remains `10000` per leg.
+1. The known receipt readback remained open with receipt quantity `10000`.
+2. UP and DOWN manager-level positions read as `20000`, while the receipt-scoped redeem quantity remained `10000` per leg.
 3. Fresh payout preview and `predict::redeem<DUSDC>` devInspect preflight passed immediately before browser validation.
-4. Portfolio now gates `Redeem both receipt legs` behind the exact receipt, exact owner wallet, Sui Testnet, both leg preflights, receipt-scoped quantities, fresh submit-time read/preflight, and a local one-shot attempt record.
-5. No real redeem was executed because the validation browser did not have the approved wallet extension/account installed and connected.
+4. Portfolio gated `Redeem both receipt legs` behind the exact receipt, exact owner wallet, Sui Testnet, both leg preflights, receipt-scoped quantities, fresh submit-time read/preflight, and a local one-shot attempt record.
+5. No real redeem was executed in DeepVol-12 because the validation browser did not have the approved wallet extension/account installed and connected.
 6. No script/private-key fallback was used.
 
-The next real validation must happen in a browser profile where the approved wallet is already installed, unlocked, and connected on Sui Testnet. After one wallet approval, the result still must be reconciled with exactly two `PositionRedeemed` events, UP/DOWN position deltas of `10000`, and manager DUSDC balance delta before any local receipt status is treated as redeemed.
+DeepVol-13 successful browser redeem result:
+
+| Field | Value |
+|---|---|
+| Browser redeem digest | `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ` |
+| UP quantity | `10000` |
+| UP payout | `9727` atomic DUSDC |
+| DOWN quantity | `10000` |
+| DOWN payout | `47` atomic DUSDC |
+| Total payout | `9774` atomic DUSDC |
+| UP position delta | `20000 -> 10000` |
+| DOWN position delta | `20000 -> 10000` |
+
+The remaining `10000` per leg is manager-level aggregate position quantity for the same MarketKeys, not unreconciled receipt quantity. Future guided redeems must still use fresh gates and reconcile `PositionRedeemed` events, UP/DOWN position deltas, and manager DUSDC balance delta before any local receipt status is treated as redeemed.

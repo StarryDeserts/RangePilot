@@ -1,17 +1,19 @@
 ---
-Purpose: Record DeepVol-12 controlled browser guided redeem wiring, fresh read/preflight evidence, and the current browser-wallet execution blocker.
+Purpose: Record DeepVol-13 controlled browser guided redeem validation for the known BTC MOVE receipt.
 Audience: Product engineers, protocol integrators, frontend developers, reviewers, and project planners.
-Status: Controlled browser redeem execution wired and gated; real wallet redeem not executed because the validation browser has no wallet extension/account available.
-Source of truth relationship: Derived from local DeepVol frontend wiring, Sui Testnet read/devInspect evidence, and browser smoke; on-chain state and official source remain authoritative.
+Status: Browser guided redeem validated on Sui Testnet for the known controlled receipt.
+Source of truth relationship: Derived from local DeepVol frontend wiring, Sui Testnet read/devInspect evidence, user-confirmed browser wallet execution, and post-redeem position readback; on-chain state and official source remain authoritative.
 ---
 
 # DeepVol Browser Redeem Validation
 
 ## Summary
 
-DeepVol-12 wires the Portfolio guided redeem path for the known BTC MOVE receipt behind strict controlled-Testnet gates. The browser UI now requires the exact known receipt, exact owner wallet, Sui Testnet, both receipt-scoped leg preflights, fresh read/preflight immediately before wallet review, and a local one-shot attempt record before it can submit one combined `predict::redeem<DUSDC>` PTB for the UP and DOWN legs.
+DeepVol-13 records one successful browser-wallet guided redeem for the known BTC MOVE receipt on Sui Testnet. The browser path used the DeepVol-12 controlled gates: exact known receipt, exact owner wallet, Sui Testnet, both receipt-scoped leg preflights, fresh read/preflight immediately before wallet review, and a local one-shot attempt record before submitting one combined `predict::redeem<DUSDC>` PTB for the UP and DOWN legs.
 
-No real redeem was executed in this validation run. The Playwright validation browser did not have the Slush wallet extension installed or the approved wallet account connected, so the real wallet-approved redeem remained blocked. No script/private-key fallback was used.
+The wallet-approved redeem succeeded with digest `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ`. It redeemed the receipt-scoped `10000` UP quantity and `10000` DOWN quantity. The remaining `10000` per leg is manager-level aggregate position quantity for the same MarketKeys, not unreconciled receipt quantity and not a failed receipt redeem.
+
+No additional buy, additional redeem, primitive mint, publish, upgrade, ProtocolVault withdraw, script/private-key fallback, or mainnet action was performed in DeepVol-13.
 
 ## Known controlled receipt
 
@@ -19,6 +21,7 @@ No real redeem was executed in this validation run. The Playwright validation br
 |---|---|
 | Network | Sui Testnet |
 | Browser buy digest | `A6YB62BqMmWsQeEZUoh4qYAA6n4RMqnih5TtHRdadfGn` |
+| Browser redeem digest | `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ` |
 | Owner / approved wallet | `0x60ce00b02feafce805f1c3c8a7beaf7db8e903d73610fb232ad928d31fcd9349` |
 | MoveReceipt | `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb` |
 | VolSeries | `0x57878763c144cabe06c86d7e02f168d6b42481d779434d8efc8146a10c1ba885` |
@@ -29,66 +32,41 @@ No real redeem was executed in this validation run. The Playwright validation br
 | UP strike | `76796000000000` |
 | DOWN strike | `76696000000000` |
 
-## Fresh read result
-
-Command:
-
-```bash
-npm run validate:deepvol-redeem-read
-```
-
-Observed immediately before browser validation:
+## Successful browser redeem result
 
 | Field | Value |
 |---|---|
-| Receipt exists | Yes |
-| Receipt owner | `0x60ce00b02feafce805f1c3c8a7beaf7db8e903d73610fb232ad928d31fcd9349` |
-| Receipt status | `0` / open |
-| Receipt quantity | `10000` |
-| UP manager position | `20000` |
-| DOWN manager position | `20000` |
-| UP receipt-scoped quantity | `10000` |
-| DOWN receipt-scoped quantity | `10000` |
-| UP payout preview | `6431` atomic DUSDC |
-| DOWN payout preview | `3111` atomic DUSDC |
+| Digest | `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ` |
+| UP quantity | `10000` |
+| UP payout | `9727` atomic DUSDC |
+| DOWN quantity | `10000` |
+| DOWN payout | `47` atomic DUSDC |
+| Total payout | `9774` atomic DUSDC |
+| UP position | `20000 -> 10000` |
+| DOWN position | `20000 -> 10000` |
 
-Payout previews are runtime-dependent and must be refreshed before any later wallet prompt.
+The payout values above are execution evidence for this transaction. Earlier payout previews from DeepVol-11 and DeepVol-12 were runtime-dependent read/devInspect estimates and must not be treated as final payout proof.
 
-## Fresh preflight result
+## Receipt-scoped interpretation
 
-Command:
+The known `MoveReceipt` quantity is `10000`, while the controlled wallet had manager-level UP and DOWN quantities of `20000` before redeem. DeepVol redeems the receipt-scoped quantity:
 
-```bash
-npm run validate:deepvol-redeem-preflight
+```text
+receipt-scoped redeem quantity = min(manager position, receipt quantity)
 ```
 
-Observed immediately before browser validation:
+Therefore the successful position deltas are interpreted as:
 
-| Leg | Receipt-scoped quantity | Result | Payout preview |
-|---|---:|---|---:|
-| UP | `10000` | Passed devInspect | `6519` atomic DUSDC |
-| DOWN | `10000` | Passed devInspect | `3019` atomic DUSDC |
+| Leg | Manager position before | Receipt-scoped redeem quantity | Manager position after | Interpretation |
+|---|---:|---:|---:|---|
+| UP | `20000` | `10000` | `10000` | Known receipt UP leg redeemed. |
+| DOWN | `20000` | `10000` | `10000` | Known receipt DOWN leg redeemed. |
 
-The validation script remained read/devInspect-only and printed `No real redeem executed.`
+The remaining `10000` UP and `10000` DOWN quantities belong to the wallet's aggregate manager-level position for the same MarketKeys. They are not evidence that the known receipt failed to redeem.
 
-## Browser validation result
+## Controlled execution gates used
 
-| Check | Result |
-|---|---|
-| `/portfolio` render | Passed after fixing the local storage snapshot loop. |
-| Known controlled receipt display | Passed. The Portfolio page displayed receipt `0xbbc2...35eb`, quantity `10000`, UP/DOWN strikes, owner, series, and manager. |
-| Disconnected-wallet blockers | Passed. Both `Run redeem preflight` and `Redeem both receipt legs` remained disabled while disconnected. |
-| Wallet availability | Blocked. The browser showed Slush as installable, not connected; no wallet extension/account was available in the validation browser. |
-| Real wallet redeem | Not executed. |
-| Digest | Not available; no transaction submitted. |
-| PositionRedeemed events | Not available; no transaction submitted. |
-| Manager balance after | Not available; no transaction submitted. |
-| UP/DOWN positions after | Not available; no transaction submitted. |
-| Portfolio local redeemed status | Not set; no transaction submitted. |
-
-## Implemented controlled execution gates
-
-The browser path now blocks execution unless all of these are true:
+The browser path blocks execution unless all of these are true:
 
 1. Wallet is connected.
 2. Wallet is on Sui Testnet.
@@ -101,12 +79,8 @@ The browser path now blocks execution unless all of these are true:
 
 The transaction builder creates one PTB with two `predict::redeem<DUSDC>` calls. It does not call DeepVol `receipt::mark_receipt_settled`.
 
-## Current blocker
+## MVP boundary after validation
 
-The real validation requires the approved wallet account to be connected in a browser with a Sui wallet extension. The available Playwright browser did not have the Slush extension installed, and installing/importing a wallet would require private key or seed handling that is explicitly out of scope.
+This validation proves the controlled browser guided redeem path for the known Sui Testnet receipt. It does not prove general wallet-wide receipt indexing, automatic settlement, Profit Fee enforcement, custodial receipt semantics, mainnet readiness, or generic primitive trading.
 
-DeepVol-12 therefore stopped before any real redeem execution. No retry, script execution, private-key use, publish, withdraw, buy, mint, Move upgrade, or mainnet action was performed.
-
-## Next step
-
-Run one controlled browser-wallet redeem only in a browser profile where the approved wallet is already installed, unlocked, and connected on Sui Testnet. After wallet approval, parse exactly two `PositionRedeemed` events, verify UP and DOWN positions decrease by `10000`, verify manager DUSDC balance increases by the summed payout, and then persist the local/indexer-limited redeemed status.
+Future guided redeems must still use fresh runtime gates: exact receipt/owner validation, current `PredictManager` position readback, fresh payout preview, full redeem preflight, wallet approval, `PositionRedeemed` event parsing, and before/after balance and position reconciliation.
