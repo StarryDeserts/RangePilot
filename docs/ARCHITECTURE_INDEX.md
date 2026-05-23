@@ -1,13 +1,13 @@
 ---
 Purpose: Navigation index for RangePilot and DeepVol architecture documentation.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol BTC MOVE, DeepVol-15 wallet-gated UP/DOWN primitive execution, and RANGE-disabled policy.
+Status: Updated for DeepVol BTC MOVE, DeepVol-16 browser-smoke validation of wallet-gated UP/DOWN primitive execution, the missing-wallet-extension blocker, and RANGE-disabled policy.
 Source of truth relationship: Indexes local source-of-truth documents, official-derived protocol references, generated companion docs, and pivot ADRs; does not replace source docs.
 ---
 
 # Architecture Index
 
-DeepVol BTC MOVE is the flagship structured product direction. DeepVol is a Predict-native primitive trading terminal and structured product layer on Sui: UP and DOWN can be wallet-gated raw primitives, RANGE remains quote/preflight-only until dedicated validation, and BTC MOVE Receipt is the primary composed product so users can trade movement, not direction.
+DeepVol BTC MOVE is the flagship structured product direction. DeepVol is a Predict-native primitive trading terminal and structured product layer on Sui: UP and DOWN can be wallet-gated raw primitives, RANGE remains quote/preflight-only until dedicated validation, and BTC MOVE Receipt is the primary composed product so users can trade movement, not direction. DeepVol-16 confirmed browser smoke and source/test gates for UP/DOWN primitive execution, but real browser execution remains blocked until validation runs in a browser profile with an installed Sui wallet extension.
 
 RangePilot's guided range trading and Route B creator-follow wrapper work remains preserved as validated prior infrastructure. The creator-follow strategy model is no longer the primary product direction because public on-chain strategy parameters can be copied and used to bypass a high follow fee.
 
@@ -38,6 +38,7 @@ Do not edit the original product or protocol-analysis source docs for normal imp
 | [DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md](./DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md) | Defines UP/DOWN execution gates, RANGE disabled policy, fee policy, and primitive portfolio boundaries | Product / frontend / SDK |
 | [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md) | Defines wallet-gated UP / DOWN frontend surfaces, RANGE quote/preflight-only UX, and BTC MOVE priority | Product / frontend |
 | [DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md](./DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md) | Defines the DeepVol-15 UP / DOWN / RANGE quote, preflight, and execution gate contract | Frontend / SDK / protocol |
+| [DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md](./DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md) | Records DeepVol-16 browser smoke, source/test verification, missing-wallet-extension blocker, and zero-count attestation for controlled UP/DOWN primitive execution validation | Frontend / protocol / validation |
 | [DEEPVOL_PROTOCOL_ARCHITECTURE.md](./DEEPVOL_PROTOCOL_ARCHITECTURE.md) | Defines VolSeries, MoveReceipt, ProtocolVault, PredictManager, transaction/readback/settlement paths | Protocol / architecture |
 | [DEEPVOL_DATA_MODEL.md](./DEEPVOL_DATA_MODEL.md) | Proposes VolSeries, MoveReceipt, and receipt lifecycle event fields | Move / SDK / product |
 | [DEEPVOL_BINARY_LEG_INTEGRATION.md](./DEEPVOL_BINARY_LEG_INTEGRATION.md) | Records source-confirmed binary entrypoints, MarketKey construction, events, and validation blockers | Protocol / SDK / PTB |

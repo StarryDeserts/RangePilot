@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol primitive quote, preflight, and execution gate contract for UP, DOWN, and RANGE.
 Audience: Frontend developers, SDK implementers, product maintainers, reviewers, and AI agents.
-Status: DeepVol-15 UP/DOWN wallet-gated terminal scope; RANGE execution remains disabled.
+Status: DeepVol-16 confirms the UP/DOWN gate contract by source review, tests, and browser smoke; real UP/DOWN execution remains blocked until validation runs in a browser profile with an installed Sui wallet extension. RANGE execution remains disabled.
 Source of truth relationship: Extends the DeepVol primitive execution policy, primitives/receipts model, frontend MVP, protocol integration, and binary leg integration docs; on-chain protocol behavior remains authoritative.
 ---
 
@@ -9,7 +9,7 @@ Source of truth relationship: Extends the DeepVol primitive execution policy, pr
 
 ## Scope
 
-DeepVol-15 advances UP and DOWN from static education and quote/preflight previews into wallet-gated primitive terminals under `apps/deepvol-web/`. RANGE stays quote/preflight-only until dedicated mintability validation.
+DeepVol-15 advances UP and DOWN from static education and quote/preflight previews into wallet-gated primitive terminals under `apps/deepvol-web/`. DeepVol-16 confirmed the gate contract through source review, tests, and disconnected-wallet browser smoke, but real UP/DOWN quote/preflight/execution was blocked because the Playwright browser had no installed Sui wallet extension. RANGE stays quote/preflight-only until dedicated mintability validation.
 
 The route flow is:
 

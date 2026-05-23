@@ -1,7 +1,7 @@
 ---
 Purpose: Record the DeepBook Predict binary-leg entrypoints DeepVol depends on.
 Audience: Move developers, SDK implementers, frontend developers, reviewers, and AI agents.
-Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, DeepVol-11 binary redeem read/preflight, DeepVol-13 known-receipt browser redeem, DeepVol-14 primitive quote/preflight previews, and DeepVol-15 guarded UP/DOWN primitive execution code validated or wired on Testnet.
+Status: Source-confirmed entrypoints; direct two-leg primitive mint, deployed DeepVol buy_move_receipt<DUSDC>, DeepVol-11 binary redeem read/preflight, DeepVol-13 known-receipt browser redeem, DeepVol-14 primitive quote/preflight previews, DeepVol-15 guarded UP/DOWN primitive execution code, and DeepVol-16 source/test/browser-smoke gate validation recorded. Real browser UP/DOWN primitive execution remains blocked until validation runs with an installed Sui wallet extension.
 ---
 
 # DeepVol Binary Leg Integration
@@ -107,7 +107,7 @@ Required objects and type parameters:
 
 The mint path checks manager ownership, trading pause state, positive quantity, quote asset, oracle/key match, live oracle state, mintable ask, manager balance, and vault exposure limits. DeepVol must not duplicate that pricing/risk logic.
 
-DeepVol-15 exposes a guarded direct binary primitive mint builder as `buildMintBinaryPrimitiveTransaction(...)`. The public builder constructs `predict::mint<DUSDC>` for UP or DOWN only when passed an explicit real-Testnet gate flag and only for Testnet config. `devInspectMintBinaryPreflight(...)` uses a private preflight transaction helper so preflight-only construction is not exposed as a signable public builder. The `/primitives` route and quote panel must not own signing logic; `usePrimitiveWalletExecution(...)` reruns quote, manager balance, binary position readback, and binary mint preflight immediately before building the real-Testnet wallet transaction. A passed direct primitive preflight alone does not unlock wallet review if quote, balance, freshness, Testnet, PredictManager, or in-flight gates fail.
+DeepVol-15 exposes a guarded direct binary primitive mint builder as `buildMintBinaryPrimitiveTransaction(...)`. The public builder constructs `predict::mint<DUSDC>` for UP or DOWN only when passed an explicit real-Testnet gate flag and only for Testnet config. `devInspectMintBinaryPreflight(...)` uses a private preflight transaction helper so preflight-only construction is not exposed as a signable public builder. The `/primitives` route and quote panel must not own signing logic; `usePrimitiveWalletExecution(...)` reruns quote, manager balance, binary position readback, and binary mint preflight immediately before building the real-Testnet wallet transaction. A passed direct primitive preflight alone does not unlock wallet review if quote, balance, freshness, Testnet, PredictManager, or in-flight gates fail. DeepVol-16 confirmed these gates by source review, tests, and disconnected-wallet browser smoke, but did not execute UP or DOWN because the validation browser had no installed Sui wallet extension.
 
 ## Route B DeepVol entrypoint
 
@@ -271,3 +271,4 @@ DeepVol-specific validation status:
 - DeepVol package, admin cap, upgrade cap, and DUSDC protocol vault IDs are configured after DeepVol-4; see [DEEPVOL_TESTNET_PUBLISH_RESULT.md](./DEEPVOL_TESTNET_PUBLISH_RESULT.md).
 - DeepVol-5 executed one real `VolSeries` creation and one deployed `buy_move_receipt<DUSDC>` validation; future buys still require fresh runtime gates.
 - Binary redeem signatures and read/preflight call shapes are source-confirmed and implemented for devInspect; DeepVol-13 validated one known-receipt browser redeem, but future redeems still require fresh runtime gates and event/readback reconciliation before any local receipt status is treated as payout evidence.
+- DeepVol-16 browser smoke passed for the UP/DOWN primitive route gates, RANGE disabled policy, BTC MOVE route, and Portfolio separation, but real UP/DOWN primitive execution remains blocked until a Sui wallet extension is installed in the validation browser profile.

@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol primitive execution policy for UP, DOWN, RANGE, and BTC MOVE.
 Audience: Product engineers, frontend developers, SDK implementers, reviewers, and AI agents.
-Status: DeepVol-15 policy for wallet-gated UP/DOWN primitive execution and RANGE quote/preflight-only scope.
+Status: DeepVol-16 records browser smoke and source/test verification for wallet-gated UP/DOWN primitive execution; real browser execution remains blocked until a Sui wallet extension is available in the validation browser profile. RANGE remains quote/preflight-only.
 Source of truth relationship: Extends the DeepVol primitives/receipts model, primitive quote/preflight contract, frontend MVP docs, and binary-leg integration notes; on-chain protocol behavior remains authoritative.
 ---
 
@@ -11,11 +11,11 @@ Source of truth relationship: Extends the DeepVol primitives/receipts model, pri
 
 DeepVol is expanding into a Predict-native primitive trading terminal while keeping BTC MOVE as the featured structured product.
 
-| Product | Product role | Creates `MoveReceipt` | DeepVol Create Fee | DeepVol-15 status |
+| Product | Product role | Creates `MoveReceipt` | DeepVol Create Fee | DeepVol-16 status |
 |---|---|---:|---:|---|
 | BTC MOVE | Featured DeepVol receipt product for outside-range movement exposure | Yes | Yes | Existing buy/redeem loop remains enabled behind receipt gates. |
-| UP | Raw DeepBook Predict primitive for upside exposure | No | No | Wallet-gated execution-ready after fresh quote, balance, and mint preflight. |
-| DOWN | Raw DeepBook Predict primitive for downside exposure | No | No | Wallet-gated execution-ready after fresh quote, balance, and mint preflight. |
+| UP | Raw DeepBook Predict primitive for upside exposure | No | No | Execution-ready in code after fresh quote, balance, and mint preflight; real browser execution is still unvalidated because the Playwright browser had no installed Sui wallet extension. |
+| DOWN | Raw DeepBook Predict primitive for downside exposure | No | No | Execution-ready in code after fresh quote, balance, and mint preflight; real browser execution is still unvalidated because the Playwright browser had no installed Sui wallet extension. |
 | RANGE | Raw DeepBook Predict primitive for inside-range exposure | No | No | Quote/preflight-only until dedicated mintability validation hardens execution gates. |
 
 BTC MOVE remains the primary DeepVol product narrative:
@@ -46,6 +46,8 @@ UP/DOWN wallet execution must remain disabled until every gate passes:
 - no in-flight primitive wallet submission.
 
 Clicking wallet review must rerun quote, manager balance readback, and binary mint preflight immediately before the wallet prompt. The app must not automatically execute primitive trades.
+
+DeepVol-16 confirmed the browser smoke and source/test gate review for this policy, but did not execute UP or DOWN because the Playwright browser profile had no installed Sui wallet extension. See [DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md](./DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md) for the blocker and zero-count attestation.
 
 RANGE execution stays quote/preflight-only. RANGE wins if BTC expires inside the selected lower / upper interval, but its mintability, ask-bounds, and runtime quoteability gates require a dedicated validation round before wallet execution can open. A passed RANGE quote or preflight is diagnostic only in DeepVol-15.
 

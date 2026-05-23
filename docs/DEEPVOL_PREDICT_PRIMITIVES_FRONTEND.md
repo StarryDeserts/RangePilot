@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol web information architecture for Predict primitives UP, DOWN, RANGE, and BTC MOVE.
 Audience: Product engineers, frontend developers, SDK implementers, reviewers, and AI agents.
-Status: DeepVol-15 primitive terminal scope; UP/DOWN are wallet-gated and RANGE remains quote/preflight-only.
+Status: DeepVol-16 primitive terminal validation status: UP/DOWN are wallet-gated in code and browser smoke passed, but real UP/DOWN execution remains blocked until validation runs in a browser profile with an installed Sui wallet extension. RANGE remains quote/preflight-only.
 Source of truth relationship: Extends the DeepVol primitives/receipts model, primitive execution policy, primitive quote/preflight contract, and frontend MVP docs; protocol docs and on-chain state remain authoritative for Predict semantics.
 ---
 
@@ -11,7 +11,7 @@ Source of truth relationship: Extends the DeepVol primitives/receipts model, pri
 
 DeepVol is expanding into a Predict-native primitive trading terminal while keeping BTC MOVE as the featured structured receipt product. BTC MOVE packages official DeepBook Predict UP and DOWN binary legs into one protocol-enforced, non-custodial `MoveReceipt` so users can trade movement, not direction.
 
-DeepVol-15 upgrades UP and DOWN from quote/preflight previews into wallet-gated primitive terminals. They can open wallet review only after fresh quote, PredictManager DUSDC balance, and binary mint preflight gates pass. RANGE remains quote/preflight-only until a dedicated mintability validation round hardens its execution gates.
+DeepVol-15 upgrades UP and DOWN from quote/preflight previews into wallet-gated primitive terminals. They can open wallet review only after fresh quote, PredictManager DUSDC balance, and binary mint preflight gates pass. DeepVol-16 confirmed the browser smoke and source/test gate review, but real UP/DOWN execution was blocked before quote/preflight because the Playwright browser profile had no installed Sui wallet extension; see [DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md](./DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md). RANGE remains quote/preflight-only until a dedicated mintability validation round hardens its execution gates.
 
 See [DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md](./DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md) for the execution, fee, and portfolio policy. See [DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md](./DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md) for the quote/preflight contract and blocker matrix.
 

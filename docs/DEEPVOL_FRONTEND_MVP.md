@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol wallet-gated frontend MVP scaffold, UI/UX foundation, and safety boundaries.
 Audience: Frontend developers, SDK implementers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol-15 wallet-gated UP/DOWN primitive execution and RANGE quote/preflight-only policy.
+Status: Updated for DeepVol-16 browser-smoke validation of wallet-gated UP/DOWN primitive execution and documented missing-wallet-extension blocker; RANGE remains quote/preflight-only.
 Source of truth relationship: Derived from DeepVol foundation docs, deployed receipt validation, and local frontend implementation; protocol docs and on-chain state remain authoritative for transaction semantics.
 ---
 
@@ -23,7 +23,7 @@ DeepVol-11 adds guided non-custodial redeem read/preflight scaffolding to Portfo
 
 DeepVol-12 wires controlled browser-wallet redeem execution for the known BTC MOVE receipt behind exact receipt, owner, Testnet, preflight, fresh submit-time read/preflight, and one-shot attempt gates. DeepVol-13 then validates one browser-wallet guided redeem for that known receipt with digest `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ`; see [DEEPVOL_BROWSER_REDEEM_VALIDATION.md](./DEEPVOL_BROWSER_REDEEM_VALIDATION.md).
 
-DeepVol-15 expands the Predict primitives information architecture into a guarded primitive terminal. UP and DOWN can open wallet review only after fresh quote, manager balance, and binary mint preflight gates pass; RANGE remains quote/preflight-only until dedicated mintability validation. BTC MOVE remains the flagship receipt product; see [DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md](./DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md), [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md), and [DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md](./DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md).
+DeepVol-15 expands the Predict primitives information architecture into a guarded primitive terminal. UP and DOWN can open wallet review only after fresh quote, manager balance, and binary mint preflight gates pass; RANGE remains quote/preflight-only until dedicated mintability validation. DeepVol-16 confirmed the browser smoke and source/test gate review, but real UP/DOWN execution stayed blocked because the Playwright browser profile had no installed Sui wallet extension; see [DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md](./DEEPVOL_PRIMITIVE_EXECUTION_VALIDATION.md). BTC MOVE remains the flagship receipt product; see [DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md](./DEEPVOL_PRIMITIVE_EXECUTION_POLICY.md), [DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md](./DEEPVOL_PREDICT_PRIMITIVES_FRONTEND.md), and [DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md](./DEEPVOL_PRIMITIVE_QUOTE_PREFLIGHT.md).
 
 ## App path
 
