@@ -89,7 +89,7 @@ export function useDeepVolPreflight({
     }
 
     if (!quote.series) {
-      blockers.push("Load the configured BTC MOVE VolSeries before running DeepVol preflight.");
+      blockers.push("Select an active BTC MOVE VolSeries before running DeepVol preflight.");
     }
 
     if (!quote.upQuoteAtomic || !quote.downQuoteAtomic || !quote.expectedPremiumAtomic || !quote.maxPremiumPaidAtomic) {

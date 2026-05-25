@@ -110,7 +110,7 @@ Phase 1D-2 added redeem transaction helpers, `RangeRedeemed` parsing, and `npm r
 
 ## DeepVol browser wallet gate policy
 
-DeepVol browser buy and primitive preview flows live under `apps/deepvol-web/`. The BTC MOVE buy flow must require a connected wallet, Sui Testnet, the configured `VolSeries`, fresh UP and DOWN quotes, PredictManager DUSDC balance readback, a prepared sender-owned `Coin<DUSDC>` for Create Fee, and browser `buy_move_receipt<DUSDC>` preflight before enabling wallet approval.
+DeepVol browser buy and primitive preview flows live under `apps/deepvol-web/`. The BTC MOVE buy flow must require a connected wallet, Sui Testnet, a selected `VolSeries` whose oracle/expiry matches the active BTC market, fresh UP and DOWN quotes, PredictManager DUSDC balance readback, a prepared sender-owned `Coin<DUSDC>` for Create Fee, and browser `buy_move_receipt<DUSDC>` preflight before enabling wallet approval.
 
 The app must not use mainnet, local private keys, `.env.local`, CLI signing, validation scripts, automatic execution, publish, withdraw, script/private-key redeem, or old RangePilot follow paths. Historical DeepVol-5 quotes are validation evidence only and are not live offers.
 

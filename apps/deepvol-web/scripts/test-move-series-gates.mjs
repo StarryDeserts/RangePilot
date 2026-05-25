@@ -65,7 +65,6 @@ for (const expected of [
   "useActiveBtcPredictMarket",
   "useActiveBtcMoveSeries",
   "useCreateVolSeries",
-  "seriesId: moveSeries.seriesId",
   "Create BTC MOVE Series",
   "Create or select a fresh BTC MOVE series for the active BTC market before buying.",
   "moveSeriesStatusTone",
@@ -91,10 +90,50 @@ for (const expected of [
 // --- useDeepVolQuote dynamic seriesId ---
 
 for (const expected of [
-  "seriesId?: string | null",
+  "seriesId: string | null",
   "effectiveSeriesId",
 ]) {
   assert.ok(quoteHookSource.includes(expected), `missing in useDeepVolQuote: ${expected}`);
+}
+assert.ok(
+  !quoteHookSource.includes("const effectiveSeriesId = seriesId ?? config.configuredSeriesId"),
+  "useDeepVolQuote must not fall back to configuredSeriesId when the active series is missing",
+);
+assert.ok(
+  quoteHookSource.includes("const effectiveSeriesId = seriesId;"),
+  "useDeepVolQuote must use only the caller-selected active series ID",
+);
+assert.ok(
+  quoteHookSource.includes("Select an active BTC MOVE VolSeries before preparing quotes."),
+  "useDeepVolQuote must expose a blocker when no active series is selected",
+);
+
+for (const expected of [
+  "const readySeriesId = moveSeries.status === \"ready\" ? moveSeries.seriesId : null;",
+  "seriesId: readySeriesId",
+  "const seriesGateBlockers = useMemo",
+  "const gatedQuote = useMemo",
+  "...seriesGateBlockers",
+  "quote: gatedQuote",
+  "<MoveQuotePanel quote={gatedQuote} preflight={preflight} />",
+  "quote={{ ...gatedQuote, preflight: preflight.preflight, blockers: [...gatedQuote.blockers, ...preflight.blockers] }}",
+  "createSeries.createdSeriesId !== selectedSeriesId",
+  "setMoveSeriesId(createSeries.createdSeriesId)",
+]) {
+  assert.ok(buyPageSource.includes(expected), `missing active series gate in BuyMovePage: ${expected}`);
+}
+
+assert.ok(
+  !buyPageSource.includes("moveSeries.seriesId ?? config.configuredSeriesId"),
+  "BuyMovePage must not display configuredSeriesId as the Active VolSeries fallback",
+);
+
+for (const expected of [
+  "Active VolSeries",
+  "Not selected",
+  "Create or select a fresh BTC MOVE series for the active BTC market before buying.",
+]) {
+  assert.ok(buyPageSource.includes(expected), `missing active VolSeries UI copy: ${expected}`);
 }
 
 // --- market.ts suggested range fix ---

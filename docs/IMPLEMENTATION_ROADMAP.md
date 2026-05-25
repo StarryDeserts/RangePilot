@@ -1,7 +1,7 @@
 ---
 Purpose: Define the phased implementation roadmap for DeepVol BTC MOVE while preserving RangePilot validation history.
 Audience: Product engineers, protocol integrators, frontend developers, and project planners.
-Status: Updated for DeepVol-17: active BTC MOVE VolSeries creation flow. BuyMovePage detects stale/missing series against active market, provides Create BTC MOVE Series CTA, gates buy behind fresh series. create_series confirmed permissionless.
+Status: Updated for DeepVol-18: BTC MOVE buy no longer falls back to the historical configured VolSeries when the active series is missing or stale; quote/preflight/wallet review are gated on a ready active VolSeries.
 Source of truth relationship: Derived from DeepVol foundation docs, local protocol docs, and official-derived Testnet integration references; implementation details remain subject to confirmation.
 ---
 
@@ -73,6 +73,8 @@ The prior creator-follow strategy model is not the primary product direction bec
 | Acceptance criteria | Users can connect a Testnet wallet, inspect the validated BTC MOVE VolSeries, understand `Trade movement, not direction.`, create or store a PredictManager, inspect wallet DUSDC funding, refresh quotes, run browser `buy_move_receipt<DUSDC>` preflight, understand why the buy button is disabled until receipt preflight and funding gates pass, execute `buy_move_receipt<DUSDC>` by explicit wallet approval after gates pass, view the browser-created receipt in portfolio without treating the receipt as custody truth, run explicit guided redeem preflight that reads UP/DOWN positions and payout estimates, execute the controlled known-receipt redeem only after exact known receipt/wallet/Testnet/fresh preflight gates pass, use UP/DOWN as wallet-gated primitive terminals only after fresh quote/balance/preflight gates pass, understand RANGE as quote/preflight-only, and understand that primitives do not create `MoveReceipt` or pay DeepVol Create Fee. Current status: DeepVol-10 manually validated browser digest `A6YB62BqMmWsQeEZUoh4qYAA6n4RMqnih5TtHRdadfGn`, receipt `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb`, actual premium `9973`, Create Fee `29`, and portfolio display; DeepVol-11 read/preflight validation observed current manager-level UP/DOWN quantities of `20000`, selected receipt quantity `10000`, and devInspect redeem preflight passed for both receipt-scoped legs; DeepVol-13 validated browser redeem digest `HeHNeZ95oymZzmA2ZpdjkvJgCaA9s5DzL7qs6aCgbJbJ`, UP payout `9727`, DOWN payout `47`, total payout `9774`, and UP/DOWN position deltas `20000 -> 10000`; DeepVol-15 adds execution-ready UP/DOWN primitive gates; DeepVol-16 browser smoke and source/test verification passed; follow-up wallet-enabled preflight exposed a stale/non-live oracle blocker, so DeepVol-16-fix adds active BTC market discovery and stale-oracle gating before renewed execution validation. |
 | Required docs | DeepVol frontend MVP; DeepVol protocol architecture; DeepVol data model; binary leg integration; PredictManager docs; protocol integration notes. |
 | Risks and fallback | Risk: users misunderstand receipts as tradable claims or assume the reference artifact is a live wallet position. Fallback: UI copy must state non-custodial receipt and local/indexer limitations clearly. |
+
+- DeepVol-18 fixes the active-series gate: `/buy/btc-move` passes quote/preflight only a `ready` active VolSeries and blocks historical configured-series fallback for new buys.
 
 ## Phase 5: Demo polish
 

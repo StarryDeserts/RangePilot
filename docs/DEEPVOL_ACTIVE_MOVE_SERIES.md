@@ -35,6 +35,19 @@ The SDK builder `buildCreateVolSeriesTransaction` in `packages/sdk/src/deepVol/t
 5. **If missing** — no series selected. User creates one via the "Create BTC MOVE Series" CTA.
 6. **After creation** — new series ID is stored in localStorage (`deepvol:created-series`) and auto-selected.
 
+## DeepVol-18 no-fallback buy gate
+
+The Buy page must not fall back to `CONFIGURED_BTC_MOVE_SERIES_ID` when `useActiveBtcMoveSeries` reports `missing`, `stale`, `loading`, or `idle`.
+
+For new BTC MOVE buys:
+
+1. `useActiveBtcPredictMarket` discovers the current active BTC market.
+2. `useActiveBtcMoveSeries` confirms the selected VolSeries matches that active market.
+3. `BuyMovePage` passes a series ID into quote/preflight only when `MoveSeriesStatus` is `ready`.
+4. Quote, receipt preflight, and wallet review all stay blocked when the active series is missing or stale.
+
+The historical configured VolSeries remains a validation/reference value and may still support old receipt display. It is not a live default for new buys.
+
 ## MoveSeriesStatus
 
 | Status | Meaning |
@@ -60,7 +73,7 @@ Active market discovery suggests lower/upper strikes from the quote scan. If `lo
 
 - `useActiveBtcMoveSeries` — series detection and status derivation
 - `useCreateVolSeries` — wallet execution for `create_series`
-- `useDeepVolQuote` — accepts dynamic `seriesId` parameter (falls back to configured constant)
+- `useDeepVolQuote` — accepts a selected active `seriesId` parameter and blocks when it is missing
 
 ## localStorage
 

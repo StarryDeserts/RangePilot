@@ -43,7 +43,7 @@ export function getBuyMoveReceiptBlockers({
   }
 
   if (!quote.series) {
-    entries.push("Configured VolSeries readback must complete before submitting.");
+    entries.push("Active BTC MOVE VolSeries readback must complete before submitting.");
   }
 
   if (!predictManagerId) {

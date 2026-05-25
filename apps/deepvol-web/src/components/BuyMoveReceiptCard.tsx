@@ -99,9 +99,9 @@ function buildChecklist({
         : "Run receipt preflight to confirm premium DUSDC inside PredictManager.",
     },
     {
-      label: "BTC MOVE Series loaded",
+      label: "Active BTC MOVE Series loaded",
       state: quote.series ? "complete" : quote.status === "loading" ? "pending" : "blocked",
-      detail: quote.series ? "Configured VolSeries available" : "Waiting for configured VolSeries readback",
+      detail: quote.series ? "Selected active VolSeries available" : "Waiting for active VolSeries readback",
     },
     {
       label: "UP quote ready",

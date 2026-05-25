@@ -47,6 +47,7 @@ const wallet = {
   predictManagerId: "0xmanager",
 };
 const receiptPreflightBlocker = "buy_move_receipt<DUSDC> preflight must pass before wallet prompt.";
+const activeSeriesReadbackBlocker = "Active BTC MOVE VolSeries readback must complete before submitting.";
 
 assert.ok(
   getBuyMoveReceiptBlockers({ quote: readyQuote, ...wallet }).includes(receiptPreflightBlocker),
@@ -115,6 +116,17 @@ assert.ok(
     ...wallet,
   }).includes("Fresh UP and DOWN quote data is required before submitting."),
   "missing quote must block submit",
+);
+assert.ok(
+  getBuyMoveReceiptBlockers({
+    quote: {
+      ...readyQuote,
+      series: null,
+      preflight: { ...readyQuote.preflight, buyReceiptPassed: true },
+    },
+    ...wallet,
+  }).includes(activeSeriesReadbackBlocker),
+  "missing active VolSeries must block wallet submission",
 );
 
 console.log("PASS buyMoveReceiptGate receipt preflight gating");

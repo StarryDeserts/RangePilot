@@ -103,7 +103,8 @@ Connect wallet
 → check / create PredictManager
 → check wallet DUSDC coins
 → deposit DUSDC to PredictManager if needed
-→ load configured BTC VolSeries
+→ discover active BTC market
+→ select or create a matching active BTC MOVE VolSeries
 → refresh UP quote
 → refresh DOWN quote
 → compute expected premium
@@ -115,9 +116,9 @@ Connect wallet
 → persist successful digest and receipt ID locally
 ```
 
-DeepVol-8 exposes `Create PredictManager`, `Deposit DUSDC to PredictManager`, `Refresh quote`, and `Run preflight` as visible browser actions. `Create PredictManager` and `Deposit DUSDC` are real Sui Testnet wallet actions guarded by wallet/Testnet checks. Quote refresh uses browser-safe devInspect helpers for the configured BTC VolSeries.
+DeepVol-8 exposes `Create PredictManager`, `Deposit DUSDC to PredictManager`, `Refresh quote`, and `Run preflight` as visible browser actions. `Create PredictManager`, `Deposit DUSDC`, and permissionless `Create BTC MOVE Series` are real Sui Testnet wallet actions guarded by wallet/Testnet checks. Quote refresh uses browser-safe devInspect helpers only after the selected VolSeries is confirmed ready for the active BTC market.
 
-The app reads the configured validated VolSeries and attempts browser-safe quote helpers. Historical DeepVol-5 quote values are not treated as live offers. Fresh quote, premium, fee, and fee coin values are runtime state.
+The app no longer falls back to the historical configured VolSeries for new buys. Historical DeepVol-5 quote values and configured IDs are validation evidence only, not live offers. Fresh active market, selected VolSeries, quote, premium, fee, and fee coin values are runtime state.
 
 The current frontend keeps final `buy_move_receipt<DUSDC>` submission blocked until receipt preflight succeeds in the browser. DeepVol-9 replaces the old placeholder blocker with real `devInspect`-based receipt preflight and PredictManager DUSDC balance readback. The main gate checks that the manager balance can cover the expected premium and that the wallet has a sender-owned `Coin<DUSDC>` covering the Create Fee; these are separate balances. Direct two-leg binary mint preflight is not a main blocker because the DeepVol receipt entrypoint internally mints both legs.
 

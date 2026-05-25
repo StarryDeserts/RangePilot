@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdvancedDetails } from "../components/AdvancedDetails";
 import { BuyMoveReceiptCard } from "../components/BuyMoveReceiptCard";
 import { DeepVolFlowChecklist, type DeepVolFlowStep } from "../components/DeepVolFlowChecklist";
@@ -37,13 +37,37 @@ export function BuyMovePage() {
   const [createUpperInput, setCreateUpperInput] = useState("");
   const normalizedQuantity = normalizePositiveIntegerInput(quantityInput) ?? quantityInput;
   const predictManagerId = manager.managerId;
+  const readySeriesId = moveSeries.status === "ready" ? moveSeries.seriesId : null;
+  const selectedSeriesId = moveSeries.seriesId;
+  const setMoveSeriesId = moveSeries.setSeriesId;
+  const seriesGateBlockers = useMemo(() => {
+    if (moveSeries.status === "ready") {
+      return [];
+    }
+
+    return [
+      "Create or select a fresh BTC MOVE series for the active BTC market before buying.",
+      ...moveSeries.blockers,
+    ];
+  }, [moveSeries.status, moveSeries.blockers]);
+
+  useEffect(() => {
+    if (createSeries.createdSeriesId && createSeries.createdSeriesId !== selectedSeriesId) {
+      setMoveSeriesId(createSeries.createdSeriesId);
+    }
+  }, [createSeries.createdSeriesId, selectedSeriesId, setMoveSeriesId]);
+
   const quote = useDeepVolQuote({
     quantityInput: normalizedQuantity,
     predictManagerId,
-    seriesId: moveSeries.seriesId,
+    seriesId: readySeriesId,
   });
+  const gatedQuote = useMemo(() => ({
+    ...quote,
+    blockers: [...new Set([...seriesGateBlockers, ...quote.blockers])],
+  }), [quote, seriesGateBlockers]);
   const preflight = useDeepVolPreflight({
-    quote,
+    quote: gatedQuote,
     predictManagerId,
     walletDusdcChecked: Boolean(dusdcBalance.data),
   });
@@ -51,7 +75,7 @@ export function BuyMovePage() {
     wallet,
     managerId: predictManagerId,
     walletDusdcChecked: Boolean(dusdcBalance.data),
-    quote,
+    quote: gatedQuote,
     moveSeries,
     preflightPassed: preflight.preflight.buyReceiptPassed,
   });
@@ -80,7 +104,7 @@ export function BuyMovePage() {
           </p>
         </PageHero>
         <DeepVolFlowChecklist steps={flowSteps} />
-        <MovePayoutDiagram lowerStrike={quote.series?.lowerStrike} upperStrike={quote.series?.upperStrike} />
+        <MovePayoutDiagram lowerStrike={gatedQuote.series?.lowerStrike} upperStrike={gatedQuote.series?.upperStrike} />
         <StateCallout tone="info" title="Non-custodial boundary">
           The receipt records the DeepVol-created legs; underlying Predict positions stay in your PredictManager.
         </StateCallout>
@@ -191,7 +215,7 @@ export function BuyMovePage() {
                         type="button"
                         onClick={() => {
                           if (createSeries.createdSeriesId) {
-                            moveSeries.setSeriesId(createSeries.createdSeriesId);
+                            setMoveSeriesId(createSeries.createdSeriesId);
                           }
                         }}
                       >
@@ -244,11 +268,11 @@ export function BuyMovePage() {
             items={[
               {
                 label: "Active VolSeries",
-                value: (
-                  <span className="mono" title={moveSeries.seriesId ?? config.configuredSeriesId}>
-                    {shortId(moveSeries.seriesId ?? config.configuredSeriesId)}
+                value: readySeriesId ? (
+                  <span className="mono" title={readySeriesId}>
+                    {shortId(readySeriesId)}
                   </span>
-                ),
+                ) : "Not selected",
               },
               {
                 label: "ProtocolVault",
@@ -302,13 +326,13 @@ export function BuyMovePage() {
           balance={dusdcBalance.data}
           isLoading={dusdcBalance.isLoading}
           error={dusdcBalance.error}
-          expectedPremiumAtomic={quote.expectedPremiumAtomic}
-          createFeeAtomic={quote.createFeeAtomic}
-          feeCoinReady={Boolean(quote.feeCoin)}
+          expectedPremiumAtomic={gatedQuote.expectedPremiumAtomic}
+          createFeeAtomic={gatedQuote.createFeeAtomic}
+          feeCoinReady={Boolean(gatedQuote.feeCoin)}
           onDeposited={() => void dusdcBalance.refetch()}
         />
-        <MoveQuotePanel quote={quote} preflight={preflight} />
-        <BuyMoveReceiptCard quote={{ ...quote, preflight: preflight.preflight, blockers: [...quote.blockers, ...preflight.blockers] }} predictManagerId={predictManagerId} walletDusdcChecked={Boolean(dusdcBalance.data)} />
+        <MoveQuotePanel quote={gatedQuote} preflight={preflight} />
+        <BuyMoveReceiptCard quote={{ ...gatedQuote, preflight: preflight.preflight, blockers: [...gatedQuote.blockers, ...preflight.blockers] }} predictManagerId={predictManagerId} walletDusdcChecked={Boolean(dusdcBalance.data)} />
       </section>
       <AdvancedDetails />
     </div>

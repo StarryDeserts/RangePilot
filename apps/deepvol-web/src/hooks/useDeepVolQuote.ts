@@ -54,7 +54,7 @@ export type DeepVolQuoteState = {
 type UseDeepVolQuoteParams = {
   quantityInput: string;
   predictManagerId: string | null;
-  seriesId?: string | null;
+  seriesId: string | null;
 };
 
 export function useDeepVolQuote({
@@ -65,7 +65,7 @@ export function useDeepVolQuote({
   const client = useSuiClient();
   const wallet = useSuiWallet();
   const config = useDeepVolConfig();
-  const effectiveSeriesId = seriesId ?? config.configuredSeriesId;
+  const effectiveSeriesId = seriesId;
   const quantity = normalizePositiveIntegerInput(quantityInput);
   const baseBlockers = useMemo(() => {
     const blockers: string[] = [];
@@ -82,6 +82,10 @@ export function useDeepVolQuote({
       blockers.push("Enter a positive integer quantity.");
     }
 
+    if (!effectiveSeriesId) {
+      blockers.push("Select an active BTC MOVE VolSeries before preparing quotes.");
+    }
+
     if (!predictManagerId) {
       blockers.push("Enter or store a PredictManager ID before preparing buy_move_receipt.");
     }
@@ -91,7 +95,7 @@ export function useDeepVolQuote({
     }
 
     return blockers;
-  }, [config.isDusdcConfigured, config.isPackageConfigured, config.isProtocolVaultConfigured, predictManagerId, quantity, wallet.isConnected, wallet.isTestnet]);
+  }, [config.isDusdcConfigured, config.isPackageConfigured, config.isProtocolVaultConfigured, effectiveSeriesId, predictManagerId, quantity, wallet.isConnected, wallet.isTestnet]);
 
   const query = useQuery({
     queryKey: [
@@ -104,16 +108,25 @@ export function useDeepVolQuote({
     ],
     enabled: Boolean(effectiveSeriesId && quantity),
     queryFn: async () => {
+      if (!effectiveSeriesId) {
+        return buildState({
+          status: "blocked",
+          quantity: quantity ?? quantityInput,
+          blockers: baseBlockers,
+          warnings: [],
+        });
+      }
+
       const series = await readVolSeries(client, effectiveSeriesId);
       const blockers = [...baseBlockers];
       const warnings: string[] = [];
 
       if (!series.active) {
-        blockers.push("Configured BTC MOVE VolSeries is inactive.");
+        blockers.push("Selected BTC MOVE VolSeries is inactive.");
       }
 
       if (BigInt(series.lowerStrike) >= BigInt(series.upperStrike)) {
-        blockers.push("Configured BTC MOVE VolSeries has invalid strike ordering.");
+        blockers.push("Selected BTC MOVE VolSeries has invalid strike ordering.");
       }
 
       if (!wallet.address || !wallet.isTestnet || !quantity) {
