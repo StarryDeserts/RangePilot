@@ -54,6 +54,19 @@ export const BTC_MOVE_BUY_NOT_MINTABLE_MESSAGE =
 export const PRIMITIVE_STRIKE_NOT_MINTABLE_MESSAGE =
   "Selected strike is not mintable for the current market. Try regenerating a mintable strike.";
 
+export const RANGE_PRIMITIVE_NOT_MINTABLE_MESSAGE =
+  "Selected RANGE interval is not mintable for the current market. Try regenerating a mintable interval.";
+
+export function formatRangePrimitiveMintabilityError(
+  errorOrAbort: unknown,
+): string | null {
+  const abort = isMintAbortClassification(errorOrAbort)
+    ? errorOrAbort
+    : classifyDeepBookPredictAbort(errorOrAbort);
+  if (!isAssertMintableAskAbort(abort)) return null;
+  return RANGE_PRIMITIVE_NOT_MINTABLE_MESSAGE;
+}
+
 export function formatPrimitiveMintabilityError(
   errorOrAbort: unknown,
 ): string | null {
@@ -460,8 +473,13 @@ export function isNonLiveOracleAbort(error: unknown): boolean {
 
 export function translateDeepBookPredictError(
   error: unknown,
-  context?: { family?: "btc_move" | "primitive" },
+  context?: { family?: "btc_move" | "primitive" | "range" },
 ): string {
+  if (context?.family === "range") {
+    const rangeMessage = formatRangePrimitiveMintabilityError(error);
+    if (rangeMessage) return rangeMessage;
+  }
+
   if (context?.family === "primitive") {
     const primitiveMintabilityMessage = formatPrimitiveMintabilityError(error);
     if (primitiveMintabilityMessage) {
