@@ -2,10 +2,16 @@ import type {
   DeepBookPredictNetworkConfig,
   FindMintableBinaryPrimitiveCandidateOptions,
   FindMintableBinaryPrimitiveCandidateResult,
+  FindMintableRangePrimitiveCandidateOptions,
+  FindMintableRangePrimitiveCandidateResult,
   MarketQuoteDirection,
   MarketQuotePreview,
   PrimitiveMintableStrikeAttempt,
   PrimitiveMintableStrikeCandidate,
+  RangePrimitiveMintableAttempt,
+  RangePrimitiveMintableCandidate,
+  RangeQuoteCandidateStrategy,
+  RangeQuotePreview,
 } from "@rangepilot/types/deepbookPredict";
 import { resolveDeepBookPredictConfig } from "./config.ts";
 import {
@@ -15,8 +21,9 @@ import {
 import {
   classifyQuoteAbort,
   devInspectBinaryQuote,
+  devInspectRangeQuote,
 } from "./quote.ts";
-import { devInspectMintBinaryPreflight } from "./trade.ts";
+import { devInspectMintBinaryPreflight, devInspectMintRangePreflight } from "./trade.ts";
 
 const DEFAULT_PRIMITIVE_OFFSET_MULTIPLIERS = [0n, 10n, 20n, 50n, 100n, 200n] as const;
 const DEFAULT_TICK_SIZE = 1_000_000_000n;
@@ -271,6 +278,11 @@ function roundDownToTick(value: bigint, minStrike: bigint, tickSize: bigint): bi
   return minStrike + ((value - minStrike) / tickSize) * tickSize;
 }
 
+function roundUpToTick(value: bigint, minStrike: bigint, tickSize: bigint): bigint {
+  const lower = roundDownToTick(value, minStrike, tickSize);
+  return lower === value ? lower : lower + tickSize;
+}
+
 function isPositiveAtomic(value: string): boolean {
   try {
     return BigInt(value) > 0n;
@@ -311,4 +323,246 @@ function integerStringOrNull(value: unknown): string | null {
   }
 
   return null;
+}
+
+const DEFAULT_RANGE_WIDTH_MULTIPLIERS = [10n, 20n, 50n, 100n, 200n, 500n] as const;
+const RANGE_STRATEGIES: RangeQuoteCandidateStrategy[] = ["centered", "below-anchor", "above-anchor"];
+
+export async function findMintableRangePrimitiveCandidate(
+  params: FindMintableRangePrimitiveCandidateOptions,
+): Promise<FindMintableRangePrimitiveCandidateResult> {
+  const config = resolveDeepBookPredictConfig(params.config);
+  const candidates = deriveRangePrimitiveMintableCandidates(params)
+    .slice(0, params.maxCandidates ?? DEFAULT_RANGE_WIDTH_MULTIPLIERS.length * RANGE_STRATEGIES.length);
+  const diagnostics = [
+    "Range primitive mintable interval search uses range quote and range mint preflight as authoritative gates.",
+  ];
+  const attempts: RangePrimitiveMintableAttempt[] = [];
+
+  if (candidates.length === 0) {
+    return {
+      status: "not_found",
+      candidate: null,
+      attempts,
+      blockers: ["No tick-aligned range interval candidates could be generated for the active market."],
+      diagnostics,
+    };
+  }
+
+  for (const candidate of candidates) {
+    const result = await inspectRangePrimitiveMintableCandidate({
+      params,
+      candidate,
+      config,
+    });
+
+    attempts.push(result);
+
+    if (
+      result.quote &&
+      result.mintPreflight?.status === "passed"
+    ) {
+      return {
+        status: "found",
+        candidate,
+        quote: result.quote,
+        preflight: result.mintPreflight,
+        attempts,
+        diagnostics,
+      };
+    }
+  }
+
+  return {
+    status: "not_found",
+    candidate: null,
+    attempts,
+    blockers: [...new Set(attempts
+      .filter((a) => a.blocker !== null)
+      .map((a) => a.message ?? a.blocker!))],
+    diagnostics,
+  };
+}
+
+function deriveRangePrimitiveMintableCandidates(
+  params: Pick<FindMintableRangePrimitiveCandidateOptions,
+    "oracleId" | "oracleObjectId" | "underlyingAsset" | "expiry" |
+    "spot" | "forward" | "tickSize" | "minStrike" | "widthMultipliers"
+  >,
+): RangePrimitiveMintableCandidate[] {
+  const minStrike = parseOptionalNonNegativeBigint(params.minStrike) ?? 0n;
+  const tickSize = parseOptionalPositiveBigint(params.tickSize) ?? DEFAULT_TICK_SIZE;
+  const forward = parseOptionalNonNegativeBigint(params.forward);
+  const spot = parseOptionalNonNegativeBigint(params.spot);
+  const anchor = forward ?? spot;
+  const anchorSource = forward !== null ? "forward" as const : "spot" as const;
+
+  if (anchor === null) {
+    return [];
+  }
+
+  const expiry = integerStringOrNull(params.expiry);
+
+  if (expiry === null) {
+    return [];
+  }
+
+  const multipliers = normalizeWidthMultipliers(params.widthMultipliers);
+  const seen = new Set<string>();
+  const candidates: RangePrimitiveMintableCandidate[] = [];
+
+  for (const widthTicks of multipliers) {
+    const widthAtomic = tickSize * widthTicks;
+
+    for (const strategy of RANGE_STRATEGIES) {
+      let lower: bigint;
+      let higher: bigint;
+
+      if (strategy === "centered") {
+        lower = roundDownToTick(anchor - widthAtomic / 2n, minStrike, tickSize);
+        higher = lower + widthAtomic;
+      } else if (strategy === "below-anchor") {
+        higher = roundDownToTick(anchor, minStrike, tickSize);
+        lower = higher - widthAtomic;
+      } else {
+        lower = roundUpToTick(anchor, minStrike, tickSize);
+        higher = lower + widthAtomic;
+      }
+
+      if (lower < minStrike) {
+        continue;
+      }
+
+      if (lower >= higher) {
+        continue;
+      }
+
+      const key = `${params.oracleId}:${expiry}:${lower}:${higher}`;
+
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+
+      candidates.push({
+        oracleId: params.oracleId,
+        oracleObjectId: params.oracleObjectId,
+        underlyingAsset: params.underlyingAsset ?? null,
+        expiry,
+        lowerStrike: lower.toString(),
+        higherStrike: higher.toString(),
+        widthTicks: widthTicks.toString(),
+        anchorSource,
+        anchorPrice: anchor.toString(),
+        strategy,
+      });
+    }
+  }
+
+  return candidates;
+}
+
+function normalizeWidthMultipliers(values: readonly (string | bigint)[] | undefined): bigint[] {
+  const unique = new Set<string>();
+
+  for (const value of values ?? DEFAULT_RANGE_WIDTH_MULTIPLIERS) {
+    const parsed = parseOptionalPositiveBigint(value);
+
+    if (parsed !== null) {
+      unique.add(parsed.toString());
+    }
+  }
+
+  return [...unique].map((v) => BigInt(v)).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+}
+
+async function inspectRangePrimitiveMintableCandidate({
+  params,
+  candidate,
+  config,
+}: {
+  params: FindMintableRangePrimitiveCandidateOptions;
+  candidate: RangePrimitiveMintableCandidate;
+  config: DeepBookPredictNetworkConfig;
+}): Promise<RangePrimitiveMintableAttempt> {
+  let quote: RangeQuotePreview;
+
+  try {
+    quote = await devInspectRangeQuote({
+      client: params.client,
+      sender: params.sender,
+      oracleId: params.oracleId,
+      oracleObjectId: params.oracleObjectId,
+      expiry: params.expiry,
+      lowerStrike: candidate.lowerStrike,
+      higherStrike: candidate.higherStrike,
+      quantity: params.quantity,
+      config,
+    });
+  } catch (error) {
+    const abort = classifyQuoteAbort(error);
+
+    return {
+      status: "failed",
+      candidate,
+      quote: null,
+      mintPreflight: null,
+      blocker: "quote_failed",
+      message: abort.likelyCause ?? translateDeepBookPredictError(error, { family: "range" }),
+      rawError: abort.message,
+    };
+  }
+
+  if (!isPositiveAtomic(quote.mintCostAtomic)) {
+    return {
+      status: "failed",
+      candidate,
+      quote,
+      mintPreflight: null,
+      blocker: "non_positive_quote",
+      message: "Range interval quote returned a non-positive mint cost.",
+      rawError: null,
+    };
+  }
+
+  const mintPreflight = await devInspectMintRangePreflight({
+    client: params.client,
+    sender: params.sender,
+    managerId: params.managerId,
+    oracleId: params.oracleId,
+    oracleObjectId: params.oracleObjectId,
+    expiry: params.expiry,
+    lowerStrike: candidate.lowerStrike,
+    higherStrike: candidate.higherStrike,
+    quantity: params.quantity,
+    config,
+    candidateParams: {
+      family: "range",
+      lowerStrike: candidate.lowerStrike,
+      higherStrike: candidate.higherStrike,
+    },
+  });
+
+  if (mintPreflight.status === "failed") {
+    return {
+      status: "failed",
+      candidate,
+      quote,
+      mintPreflight,
+      blocker: isAssertMintableAskAbort(mintPreflight.abort) ? "assert_mintable_ask" : "mint_preflight_failed",
+      message: mintPreflight.abort.likelyCause ?? mintPreflight.abort.message,
+      rawError: mintPreflight.abort.message,
+    };
+  }
+
+  return {
+    status: "passed",
+    candidate,
+    quote,
+    mintPreflight,
+    blocker: null,
+    message: null,
+    rawError: null,
+  };
 }
