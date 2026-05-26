@@ -543,6 +543,76 @@ export type FindMintableBinaryPrimitiveCandidateResult =
       diagnostics: string[];
     };
 
+export type RangePrimitiveMintableCandidate = {
+  oracleId: DeepBookPredictObjectId;
+  oracleObjectId: DeepBookPredictObjectId;
+  underlyingAsset: string | null;
+  expiry: string;
+  lowerStrike: string;
+  higherStrike: string;
+  widthTicks: string;
+  anchorSource: "forward" | "spot";
+  anchorPrice: string;
+  strategy: RangeQuoteCandidateStrategy;
+};
+
+export type RangePrimitiveMintabilityBlocker =
+  | "quote_failed"
+  | "non_positive_quote"
+  | "mint_preflight_failed"
+  | "assert_mintable_ask"
+  | "unknown";
+
+export type RangePrimitiveMintableAttempt = {
+  status: "passed" | "failed";
+  candidate: RangePrimitiveMintableCandidate;
+  quote: RangeQuotePreview | null;
+  mintPreflight: MintRangePreflightResult | null;
+  blocker: RangePrimitiveMintabilityBlocker | null;
+  message: string | null;
+  rawError: string | null;
+};
+
+export type FindMintableRangePrimitiveCandidateOptions = {
+  client: {
+    devInspectTransactionBlock(input: {
+      sender: string;
+      transactionBlock: unknown;
+    }): Promise<unknown>;
+  };
+  sender: string;
+  managerId: DeepBookPredictObjectId;
+  oracleId: DeepBookPredictObjectId;
+  oracleObjectId: DeepBookPredictObjectId;
+  expiry: string | bigint;
+  quantity: string | bigint;
+  underlyingAsset?: string | null;
+  spot?: string | bigint | null;
+  forward?: string | bigint | null;
+  tickSize?: string | bigint | null;
+  minStrike?: string | bigint | null;
+  widthMultipliers?: readonly (string | bigint)[];
+  maxCandidates?: number;
+  config?: DeepBookPredictNetworkConfig;
+};
+
+export type FindMintableRangePrimitiveCandidateResult =
+  | {
+      status: "found";
+      candidate: RangePrimitiveMintableCandidate;
+      quote: RangeQuotePreview;
+      preflight: MintRangePreflightPassed;
+      attempts: RangePrimitiveMintableAttempt[];
+      diagnostics: string[];
+    }
+  | {
+      status: "not_found";
+      candidate: null;
+      attempts: RangePrimitiveMintableAttempt[];
+      blockers: string[];
+      diagnostics: string[];
+    };
+
 export type RangeMintParams = RangeKeyInput & {
   managerId: DeepBookPredictObjectId;
   oracleObjectId: DeepBookPredictObjectId;
