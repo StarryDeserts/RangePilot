@@ -239,7 +239,6 @@ for (const filePath of [routePath, panelPath]) {
 
 assert.match(executionSource, /useSignAndExecuteTransaction/, "primitive execution hook may own wallet signing logic");
 for (const forbidden of [
-  "buildMintRangeTransaction",
   "buildBuyMoveReceiptTransaction",
   "buildRedeemBinaryPositionTransaction",
   "withdraw_protocol_fees",

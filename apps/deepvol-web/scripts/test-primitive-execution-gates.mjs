@@ -131,7 +131,6 @@ assert.ok(
 );
 
 for (const forbidden of [
-  "buildMintRangeTransaction",
   "buildBuyMoveReceiptTransaction",
   "buildRedeemBinaryPositionTransaction",
   "withdraw_protocol_fees",
@@ -192,5 +191,14 @@ assert.ok(
   !gateSource.includes('"no-redeem-payout"'),
   "preflight dependency key must NOT include volatile redeemPayoutAtomic",
 );
+
+// --- RANGE execution path assertions ---
+
+assert.ok(gateSource.includes('rangeMintabilityStatus'), "execution gate must accept rangeMintabilityStatus field");
+assert.ok(gateSource.includes('"Validate a mintable RANGE interval before buying."'), "RANGE execution must require interval validation");
+assert.ok(executionSource.includes("buildMintRangeTransaction"), "RANGE execution path must use buildMintRangeTransaction");
+assert.ok(executionSource.includes("readRangePositionQuantity"), "RANGE execution path must verify position via readRangePositionQuantity");
+assert.ok(executionSource.includes("devInspectRangeQuote"), "RANGE execution path must run fresh range quote");
+assert.ok(executionSource.includes("devInspectMintRangePreflight"), "RANGE execution path must run range mint preflight");
 
 console.log("PASS primitive execution gate source checks");

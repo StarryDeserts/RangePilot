@@ -20,10 +20,9 @@ assert.ok(
   gateSource.includes('Validate a mintable ${input.primitiveKind} strike before buying.'),
   "UP/DOWN execution must require mintability validation",
 );
-assert.match(
-  gateSource,
-  /input\.primitiveKind !== "RANGE" && input\.primitiveMintabilityStatus !== "passed"/,
-  "mintability gate must apply to UP/DOWN only, not RANGE",
+assert.ok(
+  gateSource.includes('input.primitiveMintabilityStatus !== "passed"'),
+  "UP/DOWN execution must require mintability validation",
 );
 
 // --- Error mapping tests ---
@@ -45,8 +44,8 @@ assert.ok(
   "BTC MOVE mintability message must still exist (regression check)",
 );
 assert.ok(
-  errorsSource.includes('context?: { family?: "btc_move" | "primitive" }'),
-  "translateDeepBookPredictError must accept context parameter with family",
+  errorsSource.includes('"btc_move" | "primitive" | "range"'),
+  "translateDeepBookPredictError must accept context parameter with family including range",
 );
 assert.ok(
   errorsSource.includes('context?.family === "primitive"'),
@@ -168,8 +167,8 @@ assert.ok(
   "hook invalidate must clear cache",
 );
 assert.ok(
-  hookSource.includes("RANGE mintability search is not available yet."),
-  "hook must block RANGE mintability search",
+  !hookSource.includes("RANGE mintability search is not available yet."),
+  "UP/DOWN mintability hook must no longer block RANGE (handled by separate hook)",
 );
 assert.ok(
   hookSource.includes('primitiveKind === "UP" ? "up"'),
@@ -199,8 +198,8 @@ assert.ok(
   "PrimitiveQuotePage must have Mintable strike validation section",
 );
 assert.ok(
-  routeSource.includes('primitiveKind !== "RANGE"'),
-  "PrimitiveQuotePage must hide mintability section for RANGE",
+  routeSource.includes('primitiveKind === "RANGE"'),
+  "PrimitiveQuotePage must conditionally render RANGE vs UP/DOWN mintability section",
 );
 assert.ok(
   routeSource.includes("primitiveMintabilityStatus: mintableStrike.status"),
