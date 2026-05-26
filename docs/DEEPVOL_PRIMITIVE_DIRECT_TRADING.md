@@ -1,7 +1,7 @@
 ---
 Purpose: Document UP/DOWN direct primitive trading model and mintable strike validation.
 Audience: Protocol integrators, frontend developers.
-Status: DeepVol-23 records UP/DOWN primitive Testnet validation success and adds RANGE execution path (pending validation). DeepVol-21 implementation record.
+Status: DeepVol-24-fix adds RANGE mintability diagnostics; DeepVol-23 records UP/DOWN primitive Testnet validation success and adds RANGE execution path (pending validation). DeepVol-21 implementation record.
 Source of truth relationship: Derived from implementation; does not override protocol or product specs.
 ---
 
@@ -75,6 +75,8 @@ The SDK generates symmetric interval candidates around the anchor price (forward
 2. Reject if mint cost <= 0
 3. Preflight via `devInspectMintRangePreflight()`
 4. Accept first passing candidate
+
+Failed RANGE searches now expose structured diagnostics: total candidates, quote/preflight counts, failure-family counts, representative candidate rows, and shortened advanced errors. See [DEEPVOL_RANGE_MINTABILITY_DIAGNOSTICS.md](./DEEPVOL_RANGE_MINTABILITY_DIAGNOSTICS.md).
 
 ### RANGE wallet execution path
 

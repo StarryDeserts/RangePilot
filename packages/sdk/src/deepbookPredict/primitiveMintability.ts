@@ -8,14 +8,20 @@ import type {
   MarketQuotePreview,
   PrimitiveMintableStrikeAttempt,
   PrimitiveMintableStrikeCandidate,
+  RangePrimitiveMintabilityFailureFamily,
+  RangePrimitiveMintabilitySummary,
   RangePrimitiveMintableAttempt,
   RangePrimitiveMintableCandidate,
+  RangePrimitiveMintableCandidateDiagnostic,
   RangeQuoteCandidateStrategy,
   RangeQuotePreview,
 } from "@rangepilot/types/deepbookPredict";
 import { resolveDeepBookPredictConfig } from "./config.ts";
 import {
   isAssertMintableAskAbort,
+  RANGE_KEY_BUILDER_FAILED_MESSAGE,
+  RANGE_PRIMITIVE_NOT_MINTABLE_MESSAGE,
+  RANGE_QUOTE_FAILED_MESSAGE,
   translateDeepBookPredictError,
 } from "./errors.ts";
 import {
@@ -340,10 +346,13 @@ export async function findMintableRangePrimitiveCandidate(
   const attempts: RangePrimitiveMintableAttempt[] = [];
 
   if (candidates.length === 0) {
+    const summary = buildRangeMintabilitySummary(attempts, candidates.length);
+
     return {
       status: "not_found",
       candidate: null,
       attempts,
+      summary,
       blockers: ["No tick-aligned range interval candidates could be generated for the active market."],
       diagnostics,
     };
@@ -362,24 +371,28 @@ export async function findMintableRangePrimitiveCandidate(
       result.quote &&
       result.mintPreflight?.status === "passed"
     ) {
+      const summary = buildRangeMintabilitySummary(attempts, candidates.length);
+
       return {
         status: "found",
         candidate,
         quote: result.quote,
         preflight: result.mintPreflight,
         attempts,
+        summary,
         diagnostics,
       };
     }
   }
 
+  const summary = buildRangeMintabilitySummary(attempts, candidates.length);
+
   return {
     status: "not_found",
     candidate: null,
     attempts,
-    blockers: [...new Set(attempts
-      .filter((a) => a.blocker !== null)
-      .map((a) => a.message ?? a.blocker!))],
+    summary,
+    blockers: buildRangeMintabilityBlockers(attempts, summary),
     diagnostics,
   };
 }
@@ -453,6 +466,7 @@ function deriveRangePrimitiveMintableCandidates(
         lowerStrike: lower.toString(),
         higherStrike: higher.toString(),
         widthTicks: widthTicks.toString(),
+        widthMultiplier: widthTicks.toString(),
         anchorSource,
         anchorPrice: anchor.toString(),
         strategy,
@@ -502,6 +516,8 @@ async function inspectRangePrimitiveMintableCandidate({
     });
   } catch (error) {
     const abort = classifyQuoteAbort(error);
+    const failureFamily = classifyRangeMintabilityFailure(error, "quote_failed");
+    const rawErrorSummary = summarizeRangeMintabilityError(error);
 
     return {
       status: "failed",
@@ -509,8 +525,13 @@ async function inspectRangePrimitiveMintableCandidate({
       quote: null,
       mintPreflight: null,
       blocker: "quote_failed",
+      quoteStatus: "failed",
+      quoteCostAtomic: null,
+      preflightStatus: "skipped",
+      failureFamily,
       message: abort.likelyCause ?? translateDeepBookPredictError(error, { family: "range" }),
       rawError: abort.message,
+      rawErrorSummary,
     };
   }
 
@@ -521,8 +542,13 @@ async function inspectRangePrimitiveMintableCandidate({
       quote,
       mintPreflight: null,
       blocker: "non_positive_quote",
+      quoteStatus: "passed",
+      quoteCostAtomic: quote.mintCostAtomic,
+      preflightStatus: "skipped",
+      failureFamily: "non_positive_quote",
       message: "Range interval quote returned a non-positive mint cost.",
       rawError: null,
+      rawErrorSummary: null,
     };
   }
 
@@ -545,14 +571,24 @@ async function inspectRangePrimitiveMintableCandidate({
   });
 
   if (mintPreflight.status === "failed") {
+    const failureFamily = classifyRangeMintabilityFailure(
+      mintPreflight.abort,
+      isAssertMintableAskAbort(mintPreflight.abort) ? "assert_mintable_ask" : "preflight_failed",
+    );
+
     return {
       status: "failed",
       candidate,
       quote,
       mintPreflight,
       blocker: isAssertMintableAskAbort(mintPreflight.abort) ? "assert_mintable_ask" : "mint_preflight_failed",
+      quoteStatus: "passed",
+      quoteCostAtomic: quote.mintCostAtomic,
+      preflightStatus: "failed",
+      failureFamily,
       message: mintPreflight.abort.likelyCause ?? mintPreflight.abort.message,
       rawError: mintPreflight.abort.message,
+      rawErrorSummary: summarizeRangeMintabilityError(mintPreflight.abort),
     };
   }
 
@@ -562,7 +598,153 @@ async function inspectRangePrimitiveMintableCandidate({
     quote,
     mintPreflight,
     blocker: null,
+    quoteStatus: "passed",
+    quoteCostAtomic: quote.mintCostAtomic,
+    preflightStatus: "passed",
+    failureFamily: null,
     message: null,
     rawError: null,
+    rawErrorSummary: null,
   };
+}
+
+function summarizeRangeMintabilityError(error: unknown): string {
+  if (typeof error === "string") return truncateDiagnostic(error);
+  if (error instanceof Error) return truncateDiagnostic(error.message);
+
+  if (typeof error === "object" && error !== null) {
+    const maybeMessage = (error as { message?: unknown }).message;
+    if (typeof maybeMessage === "string") return truncateDiagnostic(maybeMessage);
+
+    try {
+      return truncateDiagnostic(JSON.stringify(error));
+    } catch {
+      return "Unserializable RANGE mintability error.";
+    }
+  }
+
+  return error === null || error === undefined
+    ? "No RANGE mintability error detail."
+    : truncateDiagnostic(String(error));
+}
+
+function truncateDiagnostic(value: string): string {
+  return value.length > 300 ? `${value.slice(0, 300)}…` : value;
+}
+
+function classifyRangeMintabilityFailure(
+  errorOrMessage: unknown,
+  fallback: RangePrimitiveMintabilityFailureFamily,
+): RangePrimitiveMintabilityFailureFamily {
+  const detail = summarizeRangeMintabilityError(errorOrMessage).toLowerCase();
+
+  if (
+    detail.includes("rangekey") ||
+    detail.includes("range key") ||
+    detail.includes("range_key") ||
+    detail.includes("could not construct")
+  ) {
+    return "key_builder_failed";
+  }
+
+  if (
+    detail.includes("assert_mintable_ask") ||
+    detail.includes("easkpriceoutofbounds") ||
+    detail.includes("ask price out of bounds")
+  ) {
+    return "assert_mintable_ask";
+  }
+
+  if (
+    detail.includes("oracle") &&
+    (
+      detail.includes("stale") ||
+      detail.includes("expired") ||
+      detail.includes("inactive") ||
+      detail.includes("settled") ||
+      detail.includes("live")
+    )
+  ) {
+    return "assert_live_oracle";
+  }
+
+  if (
+    detail.includes("invalid bounds") ||
+    detail.includes("lowerstrike") ||
+    detail.includes("higherstrike") ||
+    detail.includes("lower strike") ||
+    detail.includes("higher strike")
+  ) {
+    return "invalid_bounds";
+  }
+
+  return fallback;
+}
+
+function buildRangeMintabilitySummary(
+  attempts: RangePrimitiveMintableAttempt[],
+  totalCandidates = attempts.length,
+): RangePrimitiveMintabilitySummary {
+  const diagnostics = attempts.map(toRangeCandidateDiagnostic);
+  const failures = diagnostics.filter((diagnostic) => diagnostic.failureFamily !== null);
+  const failureCountsByFamily: Partial<Record<RangePrimitiveMintabilityFailureFamily, number>> = {};
+
+  for (const failure of failures) {
+    if (!failure.failureFamily) continue;
+    failureCountsByFamily[failure.failureFamily] = (failureCountsByFamily[failure.failureFamily] ?? 0) + 1;
+  }
+
+  return {
+    totalCandidates,
+    quotedCandidates: diagnostics.filter((diagnostic) => diagnostic.quoteStatus === "passed").length,
+    preflightPassedCandidates: diagnostics.filter((diagnostic) => diagnostic.preflightStatus === "passed").length,
+    failureCountsByFamily,
+    firstFewFailures: failures.slice(0, 5),
+    lastFailure: failures.length > 0 ? failures[failures.length - 1] : null,
+  };
+}
+
+function toRangeCandidateDiagnostic(
+  attempt: RangePrimitiveMintableAttempt,
+): RangePrimitiveMintableCandidateDiagnostic {
+  return {
+    candidate: attempt.candidate,
+    quoteStatus: attempt.quoteStatus,
+    quoteCostAtomic: attempt.quoteCostAtomic,
+    preflightStatus: attempt.preflightStatus,
+    failureFamily: attempt.failureFamily,
+    message: attempt.message,
+    rawErrorSummary: attempt.rawErrorSummary,
+  };
+}
+
+function buildRangeMintabilityBlockers(
+  attempts: RangePrimitiveMintableAttempt[],
+  summary: RangePrimitiveMintabilitySummary,
+): string[] {
+  if (summary.totalCandidates === 0) {
+    return ["No tick-aligned range interval candidates could be generated for the active market."];
+  }
+
+  if (summary.failureCountsByFamily.key_builder_failed) {
+    return [RANGE_KEY_BUILDER_FAILED_MESSAGE];
+  }
+
+  if (summary.quotedCandidates === 0) {
+    return [RANGE_QUOTE_FAILED_MESSAGE];
+  }
+
+  if (summary.failureCountsByFamily.assert_mintable_ask) {
+    return [RANGE_PRIMITIVE_NOT_MINTABLE_MESSAGE];
+  }
+
+  if (summary.failureCountsByFamily.assert_live_oracle) {
+    return ["Active BTC market may be stale or no longer live for RANGE minting."];
+  }
+
+  const blockers = [...new Set(attempts
+    .filter((attempt) => attempt.blocker !== null)
+    .map((attempt) => attempt.message ?? attempt.blocker!))];
+
+  return blockers.length > 0 ? blockers : ["No RANGE candidate passed mint preflight."];
 }

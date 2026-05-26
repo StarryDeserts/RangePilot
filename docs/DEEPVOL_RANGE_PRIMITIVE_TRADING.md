@@ -1,7 +1,7 @@
 ---
 Purpose: Document RANGE primitive trading model, mintable interval search, execution gates, and validation status.
 Audience: Protocol integrators, frontend developers, SDK implementers.
-Status: DeepVol-23 adds RANGE primitive execution path. Real RANGE mint NOT yet validated on Testnet.
+Status: DeepVol-24-fix adds structured mintability diagnostics on top of the DeepVol-23 RANGE primitive execution path. Real RANGE mint NOT yet validated on Testnet.
 Source of truth relationship: Derived from implementation; does not override protocol or product specs.
 ---
 
@@ -51,6 +51,8 @@ For each candidate interval (lower, upper):
 2. Reject if mint cost <= 0
 3. Preflight via `devInspectMintRangePreflight()`
 4. Accept first candidate where both pass
+
+DeepVol-24-fix adds structured candidate diagnostics for failed searches: total candidates, successful quotes, passed preflights, dominant failure family, first failures, and last failure. See [DEEPVOL_RANGE_MINTABILITY_DIAGNOSTICS.md](./DEEPVOL_RANGE_MINTABILITY_DIAGNOSTICS.md).
 
 ## Execution gate hierarchy
 

@@ -1,10 +1,12 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { DEEPBOOK_PREDICT_TESTNET } from "@rangepilot/config/deepbookPredictTestnet";
 import { findMintableRangePrimitiveCandidate } from "@rangepilot/sdk/deepbookPredict";
 import type {
   RangePrimitiveMintableCandidate,
   RangePrimitiveMintableAttempt,
+  RangePrimitiveMintableCandidateDiagnostic,
+  RangePrimitiveMintabilitySummary,
   PrimitiveActiveMarketContext,
 } from "@rangepilot/types/deepbookPredict";
 import {
@@ -22,12 +24,52 @@ export type RangePrimitiveMintableController = {
   candidate: RangePrimitiveMintableCandidate | null;
   validationRecord: PrimitiveMintabilityRecord | null;
   attempts: RangePrimitiveMintableAttempt[];
+  diagnosticSummary: RangePrimitiveMintabilitySummary | null;
+  candidateDiagnostics: RangePrimitiveMintableCandidateDiagnostic[];
   blockers: string[];
   advancedDiagnostics: string[];
   quoteAtomic: string | null;
   regenerate: () => Promise<void>;
   invalidate: () => void;
 };
+
+type RangePrimitiveMintableState = Omit<RangePrimitiveMintableController, "regenerate" | "invalidate">;
+
+const EMPTY_RANGE_MINTABILITY_STATE: RangePrimitiveMintableState = {
+  status: "idle",
+  candidate: null,
+  validationRecord: null,
+  attempts: [],
+  diagnosticSummary: null,
+  candidateDiagnostics: [],
+  blockers: [],
+  advancedDiagnostics: [],
+  quoteAtomic: null,
+};
+
+function collectCandidateDiagnostics(
+  summary: RangePrimitiveMintabilitySummary | null,
+): RangePrimitiveMintableCandidateDiagnostic[] {
+  if (!summary) return [];
+
+  const diagnostics = [...summary.firstFewFailures];
+  if (summary.lastFailure && !diagnostics.some((diagnostic) => sameCandidateDiagnostic(diagnostic, summary.lastFailure!))) {
+    diagnostics.push(summary.lastFailure);
+  }
+
+  return diagnostics;
+}
+
+function sameCandidateDiagnostic(
+  left: RangePrimitiveMintableCandidateDiagnostic,
+  right: RangePrimitiveMintableCandidateDiagnostic,
+): boolean {
+  return left.candidate.lowerStrike === right.candidate.lowerStrike &&
+    left.candidate.higherStrike === right.candidate.higherStrike &&
+    left.candidate.strategy === right.candidate.strategy &&
+    left.candidate.widthMultiplier === right.candidate.widthMultiplier &&
+    left.failureFamily === right.failureFamily;
+}
 
 export function usePrimitiveMintableRange({
   activeMarket,
@@ -40,23 +82,7 @@ export function usePrimitiveMintableRange({
 }): RangePrimitiveMintableController {
   const client = useSuiClient();
   const wallet = useSuiWallet();
-  const [state, setState] = useState<{
-    status: RangePrimitiveMintableStatus;
-    candidate: RangePrimitiveMintableCandidate | null;
-    validationRecord: PrimitiveMintabilityRecord | null;
-    attempts: RangePrimitiveMintableAttempt[];
-    blockers: string[];
-    advancedDiagnostics: string[];
-    quoteAtomic: string | null;
-  }>({
-    status: "idle",
-    candidate: null,
-    validationRecord: null,
-    attempts: [],
-    blockers: [],
-    advancedDiagnostics: [],
-    quoteAtomic: null,
-  });
+  const [state, setState] = useState<RangePrimitiveMintableState>(EMPTY_RANGE_MINTABILITY_STATE);
 
   const prerequisiteBlockers = useMemo(() => {
     const blockers: string[] = [];
@@ -70,6 +96,41 @@ export function usePrimitiveMintableRange({
     return blockers;
   }, [activeMarket, predictManagerId, wallet.address, wallet.isConnected, wallet.isTestnet]);
 
+  const resetValidationScopeKey = useMemo(() => [
+    wallet.address ?? "",
+    wallet.isConnected ? "connected" : "disconnected",
+    wallet.isTestnet ? "testnet" : "non-testnet",
+    predictManagerId ?? "",
+    quantity,
+    activeMarket?.oracleId ?? "",
+    activeMarket?.expiry ?? "",
+    activeMarket?.status ?? "",
+  ].join(":"), [
+    activeMarket?.expiry,
+    activeMarket?.oracleId,
+    activeMarket?.status,
+    predictManagerId,
+    quantity,
+    wallet.address,
+    wallet.isConnected,
+    wallet.isTestnet,
+  ]);
+
+  useEffect(() => {
+    setState((current) => {
+      if (
+        current.status === "idle" &&
+        !current.candidate &&
+        current.attempts.length === 0 &&
+        current.blockers.length === 0
+      ) {
+        return current;
+      }
+
+      return EMPTY_RANGE_MINTABILITY_STATE;
+    });
+  }, [resetValidationScopeKey]);
+
   const invalidate = useCallback(() => {
     if (state.candidate) {
       clearRangePrimitiveMintabilityRecord({
@@ -82,35 +143,22 @@ export function usePrimitiveMintableRange({
       });
     }
 
-    setState({
-      status: "idle",
-      candidate: null,
-      validationRecord: null,
-      attempts: [],
-      blockers: [],
-      advancedDiagnostics: [],
-      quoteAtomic: null,
-    });
+    setState(EMPTY_RANGE_MINTABILITY_STATE);
   }, [predictManagerId, quantity, state.candidate]);
 
   const regenerate = useCallback(async () => {
     if (prerequisiteBlockers.length > 0 || !activeMarket || !wallet.address || !predictManagerId) {
-      setState((current) => ({
-        ...current,
+      setState({
+        ...EMPTY_RANGE_MINTABILITY_STATE,
         status: "blocked",
         blockers: prerequisiteBlockers,
-      }));
+      });
       return;
     }
 
     setState({
+      ...EMPTY_RANGE_MINTABILITY_STATE,
       status: "running",
-      candidate: null,
-      validationRecord: null,
-      attempts: [],
-      blockers: [],
-      advancedDiagnostics: [],
-      quoteAtomic: null,
     });
 
     const result = await findMintableRangePrimitiveCandidate({
@@ -149,9 +197,12 @@ export function usePrimitiveMintableRange({
         candidate: result.candidate,
         validationRecord,
         attempts: result.attempts,
+        diagnosticSummary: result.summary,
+        candidateDiagnostics: collectCandidateDiagnostics(result.summary),
         blockers: [],
         advancedDiagnostics: [
           ...result.diagnostics,
+          `rangeSummary totalCandidates=${result.summary.totalCandidates} quotedCandidates=${result.summary.quotedCandidates} preflightPassedCandidates=${result.summary.preflightPassedCandidates}`,
           `validationKey=${buildRangePrimitiveMintabilityKey(cacheInput)}`,
         ],
         quoteAtomic: result.quote.mintCostAtomic,
@@ -164,10 +215,15 @@ export function usePrimitiveMintableRange({
       candidate: null,
       validationRecord: null,
       attempts: result.attempts,
+      diagnosticSummary: result.summary,
+      candidateDiagnostics: collectCandidateDiagnostics(result.summary),
       blockers: result.blockers.length > 0
         ? result.blockers
         : ["No mintable RANGE interval was found for the current market. Try refreshing the active BTC market."],
-      advancedDiagnostics: result.diagnostics,
+      advancedDiagnostics: [
+        ...result.diagnostics,
+        `rangeSummary totalCandidates=${result.summary.totalCandidates} quotedCandidates=${result.summary.quotedCandidates} preflightPassedCandidates=${result.summary.preflightPassedCandidates}`,
+      ],
       quoteAtomic: null,
     });
   }, [activeMarket, client, predictManagerId, prerequisiteBlockers, quantity, wallet.address]);

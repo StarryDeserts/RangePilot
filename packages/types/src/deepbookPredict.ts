@@ -551,10 +551,23 @@ export type RangePrimitiveMintableCandidate = {
   lowerStrike: string;
   higherStrike: string;
   widthTicks: string;
+  widthMultiplier: string;
   anchorSource: "forward" | "spot";
   anchorPrice: string;
   strategy: RangeQuoteCandidateStrategy;
 };
+
+export type RangePrimitiveMintabilityFailureFamily =
+  | "invalid_bounds"
+  | "quote_failed"
+  | "non_positive_quote"
+  | "preflight_failed"
+  | "assert_mintable_ask"
+  | "assert_live_oracle"
+  | "key_builder_failed"
+  | "unknown";
+
+export type RangePrimitiveMintabilityStepStatus = "skipped" | "passed" | "failed";
 
 export type RangePrimitiveMintabilityBlocker =
   | "quote_failed"
@@ -563,14 +576,38 @@ export type RangePrimitiveMintabilityBlocker =
   | "assert_mintable_ask"
   | "unknown";
 
+export type RangePrimitiveMintableCandidateDiagnostic = {
+  candidate: RangePrimitiveMintableCandidate;
+  quoteStatus: RangePrimitiveMintabilityStepStatus;
+  quoteCostAtomic: string | null;
+  preflightStatus: RangePrimitiveMintabilityStepStatus;
+  failureFamily: RangePrimitiveMintabilityFailureFamily | null;
+  message: string | null;
+  rawErrorSummary: string | null;
+};
+
+export type RangePrimitiveMintabilitySummary = {
+  totalCandidates: number;
+  quotedCandidates: number;
+  preflightPassedCandidates: number;
+  failureCountsByFamily: Partial<Record<RangePrimitiveMintabilityFailureFamily, number>>;
+  firstFewFailures: RangePrimitiveMintableCandidateDiagnostic[];
+  lastFailure: RangePrimitiveMintableCandidateDiagnostic | null;
+};
+
 export type RangePrimitiveMintableAttempt = {
   status: "passed" | "failed";
   candidate: RangePrimitiveMintableCandidate;
   quote: RangeQuotePreview | null;
   mintPreflight: MintRangePreflightResult | null;
   blocker: RangePrimitiveMintabilityBlocker | null;
+  quoteStatus: RangePrimitiveMintabilityStepStatus;
+  quoteCostAtomic: string | null;
+  preflightStatus: RangePrimitiveMintabilityStepStatus;
+  failureFamily: RangePrimitiveMintabilityFailureFamily | null;
   message: string | null;
   rawError: string | null;
+  rawErrorSummary: string | null;
 };
 
 export type FindMintableRangePrimitiveCandidateOptions = {
@@ -603,12 +640,14 @@ export type FindMintableRangePrimitiveCandidateResult =
       quote: RangeQuotePreview;
       preflight: MintRangePreflightPassed;
       attempts: RangePrimitiveMintableAttempt[];
+      summary: RangePrimitiveMintabilitySummary;
       diagnostics: string[];
     }
   | {
       status: "not_found";
       candidate: null;
       attempts: RangePrimitiveMintableAttempt[];
+      summary: RangePrimitiveMintabilitySummary;
       blockers: string[];
       diagnostics: string[];
     };

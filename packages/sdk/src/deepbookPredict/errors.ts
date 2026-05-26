@@ -57,6 +57,12 @@ export const PRIMITIVE_STRIKE_NOT_MINTABLE_MESSAGE =
 export const RANGE_PRIMITIVE_NOT_MINTABLE_MESSAGE =
   "Selected RANGE interval is not mintable for the current market. Try regenerating a mintable interval.";
 
+export const RANGE_KEY_BUILDER_FAILED_MESSAGE =
+  "RANGE transaction builder could not construct a valid Predict range key.";
+
+export const RANGE_QUOTE_FAILED_MESSAGE =
+  "RANGE quote failed for all candidate intervals.";
+
 export function formatRangePrimitiveMintabilityError(
   errorOrAbort: unknown,
 ): string | null {

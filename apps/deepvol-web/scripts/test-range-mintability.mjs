@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const sdkSource = readFileSync("../../packages/sdk/src/deepbookPredict/primitiveMintability.ts", "utf8");
+const rangeKeySource = readFileSync("../../packages/sdk/src/deepbookPredict/rangeKey.ts", "utf8");
+const quoteSource = readFileSync("../../packages/sdk/src/deepbookPredict/quote.ts", "utf8");
+const tradeSource = readFileSync("../../packages/sdk/src/deepbookPredict/trade.ts", "utf8");
 const errorsSource = readFileSync("../../packages/sdk/src/deepbookPredict/errors.ts", "utf8");
 const typesSource = readFileSync("../../packages/types/src/deepbookPredict.ts", "utf8");
 const cacheSource = readFileSync("src/lib/primitiveMintability.ts", "utf8");
@@ -45,6 +48,62 @@ assert.ok(
   'SDK range candidate search must tag candidateParams with family: "range"',
 );
 
+// --- RANGE source confirmation assertions ---
+
+assert.ok(
+  rangeKeySource.includes("::range_key::new"),
+  "RANGE key builder must call deepbook_predict::range_key::new",
+);
+assert.ok(
+  !rangeKeySource.includes("market_key::range"),
+  "RANGE key builder must not use a non-existent market_key::range path",
+);
+{
+  const oracleIndex = rangeKeySource.indexOf("tx.pure.id(normalized.oracleId)");
+  const expiryIndex = rangeKeySource.indexOf("tx.pure.u64(normalized.expiry)");
+  const lowerIndex = rangeKeySource.indexOf("tx.pure.u64(normalized.lowerStrike)");
+  const higherIndex = rangeKeySource.indexOf("tx.pure.u64(normalized.higherStrike)");
+
+  assert.ok(oracleIndex !== -1, "RANGE key builder must pass oracleId first");
+  assert.ok(expiryIndex > oracleIndex, "RANGE key builder must pass expiry after oracleId");
+  assert.ok(lowerIndex > expiryIndex, "RANGE key builder must pass lowerStrike after expiry");
+  assert.ok(higherIndex > lowerIndex, "RANGE key builder must pass higherStrike after lowerStrike");
+}
+assert.ok(
+  quoteSource.includes("::predict::get_range_trade_amounts"),
+  "RANGE quote helper must call predict::get_range_trade_amounts",
+);
+assert.ok(
+  tradeSource.includes("::predict::mint_range"),
+  "RANGE mint builder must call predict::mint_range",
+);
+assert.ok(
+  tradeSource.includes("::predict::mint`") || tradeSource.includes("::predict::mint"),
+  "UP/DOWN mint builder must still call predict::mint",
+);
+assert.ok(
+  tradeSource.includes("allowRealTestnetMint: true"),
+  "RANGE preflight path must build mint_range transactions only through explicit Testnet devInspect gating",
+);
+
+for (const expected of [
+  "buildRangeMintabilitySummary",
+  "classifyRangeMintabilityFailure",
+  "summarizeRangeMintabilityError",
+  "totalCandidates",
+  "quotedCandidates",
+  "preflightPassedCandidates",
+  "failureCountsByFamily",
+  "firstFewFailures",
+  "lastFailure",
+  "quoteStatus",
+  "preflightStatus",
+  "failureFamily",
+  "rawErrorSummary",
+]) {
+  assert.ok(sdkSource.includes(expected), `SDK must emit RANGE diagnostic field ${expected}`);
+}
+
 // --- Error mapping assertions ---
 
 assert.ok(
@@ -71,6 +130,14 @@ assert.ok(
   errorsSource.includes("Selected BTC MOVE range is not mintable"),
   "BTC MOVE mintability message must still exist (regression check)",
 );
+assert.ok(
+  errorsSource.includes("RANGE transaction builder could not construct a valid Predict range key."),
+  "RANGE key builder failures must have dedicated user-safe copy",
+);
+assert.ok(
+  errorsSource.includes("RANGE quote failed for all candidate intervals."),
+  "RANGE all-quote-failed diagnostics must have dedicated user-safe copy",
+);
 
 // --- Types assertions ---
 
@@ -94,6 +161,26 @@ assert.ok(
   typesSource.includes("FindMintableRangePrimitiveCandidateResult"),
   "types must define FindMintableRangePrimitiveCandidateResult",
 );
+
+for (const expected of [
+  "RangePrimitiveMintabilityFailureFamily",
+  "RangePrimitiveMintabilityStepStatus",
+  "RangePrimitiveMintableCandidateDiagnostic",
+  "RangePrimitiveMintabilitySummary",
+  "totalCandidates",
+  "quotedCandidates",
+  "preflightPassedCandidates",
+  "failureCountsByFamily",
+  "firstFewFailures",
+  "lastFailure",
+  "quoteStatus",
+  "preflightStatus",
+  "failureFamily",
+  "rawErrorSummary",
+  "widthMultiplier",
+]) {
+  assert.ok(typesSource.includes(expected), `types must define RANGE diagnostic field ${expected}`);
+}
 
 // --- Cache assertions ---
 
@@ -148,6 +235,18 @@ assert.ok(
   !hookSource.includes("RANGE mintability search is not available yet."),
   "RANGE mintability hook must not contain old blocker message",
 );
+assert.ok(
+  hookSource.includes("diagnosticSummary"),
+  "RANGE mintability hook must expose diagnosticSummary",
+);
+assert.ok(
+  hookSource.includes("candidateDiagnostics"),
+  "RANGE mintability hook must expose candidateDiagnostics",
+);
+assert.ok(
+  hookSource.includes("resetValidationScopeKey"),
+  "RANGE mintability hook must reset stale validation when input scope changes",
+);
 
 // --- UI assertions ---
 
@@ -175,6 +274,16 @@ assert.ok(
   routeSource.includes("wins if BTC expires inside the selected interval"),
   "RANGE primitive copy must describe RANGE win condition",
 );
+for (const expected of [
+  "Tried",
+  "quoted successfully",
+  "preflight passed",
+  "Most common reason",
+  "Advanced RANGE diagnostics",
+  "candidateDiagnostics",
+]) {
+  assert.ok(routeSource.includes(expected), `RANGE UI must render diagnostics copy: ${expected}`);
+}
 
 // --- Gate assertions ---
 

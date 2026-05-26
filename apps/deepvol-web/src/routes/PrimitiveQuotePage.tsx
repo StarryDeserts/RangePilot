@@ -12,7 +12,11 @@ import type { DiscoveryPhase } from "../hooks/useActiveBtcPredictMarket";
 import { usePrimitiveMintableStrike } from "../hooks/usePrimitiveMintableStrike";
 import { usePrimitiveMintableRange } from "../hooks/usePrimitiveMintableRange";
 import { usePrimitiveWalletExecution } from "../hooks/usePrimitiveWalletExecution";
-import type { PrimitiveMarketStatus } from "@rangepilot/types/deepbookPredict";
+import type {
+  PrimitiveMarketStatus,
+  RangePrimitiveMintabilityFailureFamily,
+  RangePrimitiveMintabilitySummary,
+} from "@rangepilot/types/deepbookPredict";
 import type { PrimitiveKind } from "../hooks/primitiveQuoteGate";
 import { DEFAULT_MOVE_QUANTITY } from "../lib/constants";
 import { formatTimestampMs, shortId } from "../lib/format";
@@ -384,9 +388,18 @@ export function PrimitiveQuotePage() {
             )}
 
             {mintableRange.status === "failed" && (
-              <StateCallout tone="danger" title="No mintable RANGE interval was found for the current market.">
-                Try refreshing the active BTC market or adjusting the interval.
-              </StateCallout>
+              <>
+                <StateCallout tone="danger" title="No mintable RANGE interval was found for the current market.">
+                  Try refreshing the active BTC market or adjusting the interval.
+                </StateCallout>
+                {mintableRange.diagnosticSummary && (
+                  <StateCallout tone="warning" title="RANGE mintability diagnostics">
+                    <ul>
+                      {formatRangeDiagnosticSummary(mintableRange.diagnosticSummary).map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </StateCallout>
+                )}
+              </>
             )}
 
             <div className="actionRow">
@@ -408,13 +421,24 @@ export function PrimitiveQuotePage() {
               </StateCallout>
             )}
 
-            {mintableRange.advancedDiagnostics.length > 0 && (
+            {(mintableRange.advancedDiagnostics.length > 0 || mintableRange.candidateDiagnostics.length > 0) && (
               <details className="advancedDetails">
-                <summary>Advanced: RANGE mintability diagnostics</summary>
+                <summary>Advanced RANGE diagnostics</summary>
                 <div className="advancedContent">
-                  <ul>
-                    {mintableRange.advancedDiagnostics.map((d) => <li key={d}>{d}</li>)}
-                  </ul>
+                  {mintableRange.candidateDiagnostics.length > 0 && (
+                    <ul>
+                      {mintableRange.candidateDiagnostics.map((diagnostic, index) => (
+                        <li key={`${diagnostic.candidate.lowerStrike}:${diagnostic.candidate.higherStrike}:${diagnostic.candidate.strategy}:${index}`}>
+                          {diagnostic.candidate.strategy} width x{diagnostic.candidate.widthMultiplier}: {diagnostic.candidate.lowerStrike} / {diagnostic.candidate.higherStrike}; quote {diagnostic.quoteStatus}{diagnostic.quoteCostAtomic ? ` cost ${diagnostic.quoteCostAtomic}` : ""}; preflight {diagnostic.preflightStatus}; reason {diagnostic.failureFamily ?? "none"}{diagnostic.message ? ` — ${diagnostic.message}` : ""}{diagnostic.rawErrorSummary ? ` (${diagnostic.rawErrorSummary})` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {mintableRange.advancedDiagnostics.length > 0 && (
+                    <ul>
+                      {mintableRange.advancedDiagnostics.map((d) => <li key={d}>{d}</li>)}
+                    </ul>
+                  )}
                 </div>
               </details>
             )}
@@ -550,6 +574,51 @@ function activeMarketStatusCalloutTone(discoveryPhase: DiscoveryPhase) {
   }
 
   return "warning" as const;
+}
+
+function formatRangeDiagnosticSummary(summary: RangePrimitiveMintabilitySummary): string[] {
+  const dominant = getDominantRangeFailure(summary.failureCountsByFamily);
+  const lines = [
+    `Tried ${summary.totalCandidates} candidates.`,
+    `${summary.quotedCandidates} quoted successfully.`,
+    `${summary.preflightPassedCandidates} preflight passed.`,
+  ];
+
+  if (dominant) {
+    lines.push(`Most common reason: ${formatRangeFailureFamily(dominant.family)} (${dominant.count}).`);
+    lines.push(getRangeFailureGuidance(dominant.family));
+  }
+
+  return lines;
+}
+
+function getDominantRangeFailure(
+  counts: Partial<Record<RangePrimitiveMintabilityFailureFamily, number>>,
+): { family: RangePrimitiveMintabilityFailureFamily; count: number } | null {
+  let dominant: { family: RangePrimitiveMintabilityFailureFamily; count: number } | null = null;
+
+  for (const [family, count] of Object.entries(counts) as [RangePrimitiveMintabilityFailureFamily, number][]) {
+    if (!dominant || count > dominant.count) {
+      dominant = { family, count };
+    }
+  }
+
+  return dominant;
+}
+
+function formatRangeFailureFamily(family: RangePrimitiveMintabilityFailureFamily): string {
+  return family.replaceAll("_", " ");
+}
+
+function getRangeFailureGuidance(family: RangePrimitiveMintabilityFailureFamily): string {
+  if (family === "quote_failed") return "RANGE quote failed for candidate intervals. Refresh the active BTC market and retry.";
+  if (family === "key_builder_failed") return "RANGE transaction builder could not construct a valid Predict range key.";
+  if (family === "non_positive_quote") return "Candidate intervals quoted with non-positive mint cost.";
+  if (family === "assert_mintable_ask") return "Current market did not expose a mintable RANGE ask for the attempted intervals.";
+  if (family === "assert_live_oracle") return "Active BTC market may be stale or no longer live.";
+  if (family === "preflight_failed") return "RANGE mint preflight failed for quoted intervals.";
+  if (family === "invalid_bounds") return "Candidate interval bounds were rejected before quote/preflight.";
+  return "Inspect advanced RANGE diagnostics.";
 }
 
 function getPrimitiveCopy(kind: PrimitiveKind) {
