@@ -1,7 +1,7 @@
 ---
 Purpose: Document the BTC MOVE mintable range validation gate before VolSeries creation and buy preflight.
 Audience: Frontend developers, SDK implementers, protocol integrators, reviewers, and AI agents.
-Status: Added for DeepVol-18-fix-2: Create BTC MOVE Series is gated by quote plus UP/DOWN mint devInspect validation.
+Status: Updated for DeepVol-20: mintable range validated in real wallet buy flow.
 Source of truth relationship: Derived from DeepVol frontend/SDK implementation and DeepBook Predict mintability investigations; runtime market state remains authoritative.
 ---
 
@@ -123,3 +123,9 @@ It does not:
 - withdraw ProtocolVault funds;
 - use mainnet;
 - read `.env.local`, `.trace/`, or `.traces/`.
+
+## Validation
+
+DeepVol-20 validated mintable range candidate search in a real browser wallet flow. The generated range (UP strike 76818000000000 / DOWN strike 76797000000000) passed quote and mint preflight, was used to create a fresh VolSeries, and the subsequent `buy_move_receipt<DUSDC>` succeeded with both legs minting. Digest: `6sq8ZydZS3sLXNU6Y31gxSqBniVdf7SEXMwiKzJmjbXg`.
+
+The previous `assert_mintable_ask::7` issue is confirmed resolved by the mintable range gate.

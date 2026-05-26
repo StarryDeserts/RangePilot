@@ -38,6 +38,8 @@ The SDK builder `buildCreateVolSeriesTransaction` in `packages/sdk/src/deepVol/t
 8. **If missing** — no series selected. User can regenerate a mintable range, then create one via the "Create BTC MOVE Series" CTA.
 9. **After creation** — new series ID is stored in localStorage (`deepvol:created-series`), attached to the validation record, and auto-selected.
 
+DeepVol-20 validated the full active series lifecycle on Testnet: active BTC market discovery → mintable range → fresh VolSeries creation → `buy_move_receipt<DUSDC>` with UP/DOWN leg mints and create fee deposit. Digest: `6sq8ZydZS3sLXNU6Y31gxSqBniVdf7SEXMwiKzJmjbXg`. The fresh VolSeries (`0x227c2436f3f111e41a78967faaca9c5e9dc5f3074959b720efc86f70fba7006d`) was used instead of a stale configured series.
+
 ## DeepVol-18 no-fallback buy gate
 
 The Buy page must not fall back to `CONFIGURED_BTC_MOVE_SERIES_ID` when `useActiveBtcMoveSeries` reports `missing`, `stale`, `loading`, or `idle`.

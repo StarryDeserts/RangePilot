@@ -1,7 +1,7 @@
 ---
 Purpose: Document the DeepVol Route B VolSeries, ProtocolVault, and MoveReceipt contract.
 Audience: Move developers, SDK implementers, protocol integrators, reviewers, and AI agents.
-Status: DeepVol-5 Testnet reference; package, DUSDC ProtocolVault, first BTC VolSeries, and first buy_move_receipt<DUSDC> are validated.
+Status: Updated for DeepVol-20: fresh VolSeries buy validated on Testnet. Package, DUSDC ProtocolVault, first BTC VolSeries, and first buy_move_receipt<DUSDC> are validated.
 ---
 
 # DeepVol MoveReceipt Contract
@@ -208,3 +208,14 @@ Current deployment state:
 - No DeepVol withdrawal was executed in DeepVol-5.
 
 The next phase is wallet-gated DeepVol receipt UX and guided settlement work using the validated deployed `buy_move_receipt<DUSDC>` path with fresh runtime market discovery, quote previews, fee coin preparation, full preflight, wallet approval, and post-transaction receipt/position/event checks.
+
+## Fresh buy validation (DeepVol-20)
+
+The full `buy_move_receipt<DUSDC>` flow was validated on Testnet using a freshly created VolSeries (not the original DeepVol-5 configured series). Transaction digest `6sq8ZydZS3sLXNU6Y31gxSqBniVdf7SEXMwiKzJmjbXg` confirmed:
+
+- Both UP and DOWN Predict legs minted successfully.
+- Create fee (28 atomic DUSDC) deposited to `ProtocolVault<DUSDC>`.
+- `MoveReceiptCreated` event emitted.
+- MoveReceipt object `0x85d803ae6b8a66f6d0e0772e8906d8076dea210de3eaa322d712db58eb6ff869` transferred to sender.
+
+This validates the Route B receipt creation sequence (steps 1–15) end-to-end. Prior validation used the DeepVol-5 configured series; this validates the full active-market → mintable-range → create-series → buy path.

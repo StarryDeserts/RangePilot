@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol wallet-gated frontend MVP scaffold, UI/UX foundation, and safety boundaries.
 Audience: Frontend developers, SDK implementers, product contributors, reviewers, and AI agents.
-Status: Updated for DeepVol-18-fix-2: BuyMovePage detects stale/missing/validation-required/non-mintable VolSeries, provides Regenerate mintable range, and gates Create BTC MOVE Series plus buy behind mintability validation. See DEEPVOL_ACTIVE_MOVE_SERIES.md and DEEPVOL_MINTABLE_MOVE_RANGE.md.
+Status: Updated for DeepVol-20: fresh BTC MOVE buy validated on Testnet with active VolSeries. BuyMovePage detects stale/missing/validation-required/non-mintable VolSeries, provides Regenerate mintable range, and gates Create BTC MOVE Series plus buy behind mintability validation. See DEEPVOL_ACTIVE_MOVE_SERIES.md and DEEPVOL_MINTABLE_MOVE_RANGE.md.
 Source of truth relationship: Derived from DeepVol foundation docs, deployed receipt validation, and local frontend implementation; protocol docs and on-chain state remain authoritative for transaction semantics.
 ---
 
@@ -166,6 +166,8 @@ Current Portfolio behavior:
 - Separates MOVE Receipts from primitive local trade records and Primitive Positions known-key readback groundwork.
 - States that primitive trades do not create DeepVol `MoveReceipt` objects.
 - Labels primitive local records as browser hints only, not wallet-wide indexer truth.
+
+DeepVol-20 validated a fresh BTC MOVE buy through the browser wallet flow. The resulting MoveReceipt (`0x85d803ae6b8a66f6d0e0772e8906d8076dea210de3eaa322d712db58eb6ff869`) should appear in Portfolio via localStorage persistence when the buy was performed in the same browser session. General receipt indexing across sessions or browsers is not yet available.
 
 General receipt enumeration remains unimplemented. Receipt status cannot be treated as payout proof without `PositionRedeemed` event parsing and before/after `PredictManager` position and DUSDC balance reconciliation. See [DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md](./DEEPVOL_REDEEM_AND_SETTLEMENT_FLOW.md) and [DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md](./DEEPVOL_REDEEM_PREFLIGHT_VALIDATION.md).
 
