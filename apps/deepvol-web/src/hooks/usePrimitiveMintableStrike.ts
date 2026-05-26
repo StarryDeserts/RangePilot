@@ -68,7 +68,6 @@ export function usePrimitiveMintableStrike({
     if (!predictManagerId) blockers.push("Create or store a PredictManager before validating a mintable primitive strike.");
     if (!activeMarket) blockers.push("Discover an active BTC market first.");
     if (activeMarket && activeMarket.status !== "live") blockers.push("Active BTC market must be live before validating a mintable primitive strike.");
-    if (primitiveKind === "RANGE") blockers.push("RANGE mintability search is not available yet.");
 
     return blockers;
   }, [activeMarket, predictManagerId, wallet.address, wallet.isConnected, wallet.isTestnet, primitiveKind]);
@@ -102,15 +101,6 @@ export function usePrimitiveMintableStrike({
         ...current,
         status: "blocked",
         blockers: prerequisiteBlockers,
-      }));
-      return;
-    }
-
-    if (primitiveKind === "RANGE") {
-      setState((current) => ({
-        ...current,
-        status: "blocked",
-        blockers: ["RANGE mintability search is not available yet."],
       }));
       return;
     }
