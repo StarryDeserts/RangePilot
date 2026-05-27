@@ -5,6 +5,7 @@ import { formatTimestampMs } from "../lib/format";
 import { MoveExecutionPanel } from "../components/trade/MoveExecutionPanel";
 import { BinaryPrimitiveExecutionPanel } from "../components/trade/BinaryPrimitiveExecutionPanel";
 import { RangeExecutionPanel } from "../components/trade/RangeExecutionPanel";
+import { PredictManagerSetup } from "../components/trade/PredictManagerSetup";
 
 type Product = "MOVE" | "UP" | "DOWN" | "RANGE";
 
@@ -436,13 +437,6 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
                   <h3 className="font-display text-lg text-white">Trade</h3>
                   <span className="chip">SLIPPAGE &middot; 0.5%</span>
                 </div>
-                {manager.status !== "ready" && manager.blockers.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-1.5">
-                    {manager.blockers.map((b) => (
-                      <span key={b} className="pill pill-warn text-[10px]">&bull; {b}</span>
-                    ))}
-                  </div>
-                )}
                 <div className="flex items-center gap-6">
                   {tabs.map((t) => (
                     <button
@@ -464,6 +458,8 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
                   ))}
                 </div>
               </div>
+
+              <PredictManagerSetup manager={manager} />
 
               {/* MOVE PANEL */}
               {activeTab === "MOVE" && (

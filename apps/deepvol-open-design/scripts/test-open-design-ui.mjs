@@ -80,6 +80,24 @@ assert(
     !btcMarket.includes("Manual manager ID"),
 );
 
+// ── PredictManager setup CTA ──
+console.log("\nPredictManager setup CTA:");
+assert("PredictManagerSetup exists", fileExists("components/trade/PredictManagerSetup.tsx"));
+const pmSetup = fileContent("components/trade/PredictManagerSetup.tsx");
+assert("PredictManagerSetup imports PredictManagerSession type", pmSetup.includes("PredictManagerSession"));
+assert("PredictManagerSetup calls createManager", pmSetup.includes("createManager"));
+assert("PredictManagerSetup handles wallet_required", pmSetup.includes("wallet_required"));
+assert("PredictManagerSetup handles wrong_network", pmSetup.includes("wrong_network"));
+assert("PredictManagerSetup handles missing status", pmSetup.includes('"missing"'));
+assert("PredictManagerSetup handles loading status", pmSetup.includes('"loading"'));
+assert("PredictManagerSetup handles invalid status", pmSetup.includes('"invalid"'));
+assert("PredictManagerSetup handles error status", pmSetup.includes('"error"'));
+assert("PredictManagerSetup returns null when ready", pmSetup.includes("ready") && pmSetup.includes("return null"));
+assert("PredictManagerSetup has manual override under details", pmSetup.includes("<details") && pmSetup.includes("setManualManager"));
+assert("BtcMarketPage imports PredictManagerSetup", btcMarket.includes("PredictManagerSetup"));
+assert("BtcMarketPage renders PredictManagerSetup", btcMarket.includes("<PredictManagerSetup"));
+assert("BtcMarketPage no longer has passive blocker pills", !btcMarket.includes('pill pill-warn text-[10px]'));
+
 // ── AdvancedDetails exists ──
 assert("AdvancedDetails exists", fileExists("components/organisms/AdvancedDetails.tsx"));
 const advDetails = fileContent("components/organisms/AdvancedDetails.tsx");

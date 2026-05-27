@@ -112,13 +112,31 @@ Execution panels: `MoveExecutionPanel`, `BinaryPrimitiveExecutionPanel`, `RangeE
 
 Landing page blank section fixed (`.reveal` CSS default visibility changed from hidden to visible).
 
+## DeepVol-30: PredictManager setup CTA
+
+DeepVol-29 showed blocker text when PredictManager was missing but provided no actionable button.
+DeepVol-30 adds `PredictManagerSetup` component with status-driven CTA:
+
+| Session status | UI |
+|---|---|
+| `wallet_required` | "Connect wallet" guidance |
+| `wrong_network` | "Switch to Sui Testnet" guidance |
+| `missing` | **"Create PredictManager" CTA button** (calls real `signAndExecuteTransaction`) |
+| `loading` | Spinner + "Validating..." |
+| `ready` | Hidden (returns null) |
+| `invalid` / `error` | Error message + Refresh / Clear + Advanced manual override |
+
+Manual object ID entry remains under collapsed Advanced/Developer section only.
+
+Passive blocker pills removed from BtcMarketPage — replaced by actionable setup card.
+
 ## Verification
 
 | Check | Result |
 |-------|--------|
 | `npm run typecheck:open-design` | Pass |
 | `npm run build:open-design` | Pass |
-| `test:open-design-ui` (47 assertions) | Pass |
+| `test:open-design-ui` (61 assertions) | Pass |
 | All 12 old app gate tests | Pass |
 | Browser smoke (all routes) | Pass, 0 console errors |
 | Responsive 375px | Columns stack, no overflow |
@@ -129,3 +147,7 @@ Landing page blank section fixed (`.reveal` CSS default visibility changed from 
 | RANGE NOT hardcoded disabled | Yes |
 | Disabled buttons show human-readable blocker | Yes |
 | Landing page content visible by default | Yes |
+| Missing PredictManager shows Create CTA | Yes |
+| CTA calls real `createManager()` on click | Yes |
+| No passive blocker pills remain | Yes |
+| Manual override Advanced-only | Yes |
