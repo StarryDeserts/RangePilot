@@ -4,7 +4,7 @@ import { useActiveBtcMoveSeries } from "../../hooks/useActiveBtcMoveSeries";
 import { useBtcMoveMintableRange } from "../../hooks/useBtcMoveMintableRange";
 import { useDeepVolQuote } from "../../hooks/useDeepVolQuote";
 import { useBuyMoveReceipt } from "../../hooks/useBuyMoveReceipt";
-import { formatAtomicAmount } from "../../lib/format";
+import { formatAtomicAmount, formatTimestampMs } from "../../lib/format";
 import { WalletActionButton } from "./WalletActionButton";
 
 type Props = {
@@ -52,6 +52,32 @@ export function MoveExecutionPanel({ predictManagerId, activeMarket, navigate }:
       </div>
 
       <div className="mt-5 space-y-4">
+        {/* Active market context */}
+        <div className="glass-inner p-4">
+          <div className="label">Active market</div>
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            {activeMarket ? (
+              <>
+                <span className={`pill ${activeMarket.status === "live" ? "pill-pass" : "pill-idle"}`}>
+                  {activeMarket.status === "live" ? "Live" : activeMarket.status === "stale" ? "Stale" : activeMarket.status === "expired" ? "Expired" : "Discovered"}
+                </span>
+                {activeMarket.expiry && (
+                  <span className="text-[12px] text-ink-mid font-mono">
+                    Expiry {formatTimestampMs(activeMarket.expiry)}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="pill pill-idle">Awaiting discovery</span>
+            )}
+          </div>
+          {activeMarket && moveSeries.status === "idle" && (
+            <p className="text-[12px] text-ink-mid mt-2">
+              BTC market discovered. Select or create a VolSeries to enable MOVE trading.
+            </p>
+          )}
+        </div>
+
         {/* VolSeries status */}
         <div className="glass-inner p-4">
           <div className="label">VolSeries</div>

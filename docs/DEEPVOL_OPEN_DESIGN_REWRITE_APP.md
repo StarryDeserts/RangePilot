@@ -130,6 +130,18 @@ Manual object ID entry remains under collapsed Advanced/Developer section only.
 
 Passive blocker pills removed from BtcMarketPage — replaced by actionable setup card.
 
+## DeepVol-31: Connected-wallet UX fixes
+
+Three P0 issues found during connected-wallet testing:
+
+1. **MOVE active market context:** MoveExecutionPanel now shows the active market status separately from VolSeries status. Users see "Live" market indicator even when VolSeries is "Idle" or "Missing". VolSeries idle message softened from imperative "Discover an active BTC market first" to "Awaiting active BTC market context."
+
+2. **DUSDC deposit flow:** `PredictManagerSetup` no longer returns null when manager status is "ready". If the PredictManager has zero DUSDC balance, it shows `ManagerFundingCard` with wallet DUSDC balance, deposit amount input, and "Deposit DUSDC to PredictManager" CTA wired to real `buildDepositDusdcTransaction` → `signAndExecuteTransaction`. When funded, shows compact ready strip with balance.
+
+3. **Funding vs quote separation:** Deposit status (in PredictManagerSetup area) is visually separate from quote/preflight errors (inside execution panels). "Non-positive mint cost" from quote is not confused with "insufficient DUSDC balance" from funding.
+
+`TransactionStatusStrip` extracted as shared component used by both `PredictManagerSetup` and `ManagerFundingCard`.
+
 ## Verification
 
 | Check | Result |

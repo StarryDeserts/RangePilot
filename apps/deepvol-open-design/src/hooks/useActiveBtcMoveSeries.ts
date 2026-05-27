@@ -41,7 +41,7 @@ export function useActiveBtcMoveSeries(
 
   const { status, blockers } = useMemo(() => {
     if (!activeMarket) {
-      return { status: "idle" as MoveSeriesStatus, blockers: ["Discover an active BTC market first."] };
+      return { status: "idle" as MoveSeriesStatus, blockers: ["Awaiting active BTC market context."] };
     }
 
     if (!selectedSeriesId) {
@@ -172,7 +172,7 @@ function moveSeriesStatusMessage(status: MoveSeriesStatus, blockers: string[]): 
     case "loading":
       return "Loading VolSeries from Sui Testnet...";
     case "idle":
-      return "Discover an active BTC market first.";
+      return "Awaiting active BTC market context.";
     case "validationRequired":
       return "Series found, validation required.";
     case "nonMintable":

@@ -92,11 +92,36 @@ assert("PredictManagerSetup handles missing status", pmSetup.includes('"missing"
 assert("PredictManagerSetup handles loading status", pmSetup.includes('"loading"'));
 assert("PredictManagerSetup handles invalid status", pmSetup.includes('"invalid"'));
 assert("PredictManagerSetup handles error status", pmSetup.includes('"error"'));
-assert("PredictManagerSetup returns null when ready", pmSetup.includes("ready") && pmSetup.includes("return null"));
+assert("PredictManagerSetup handles ready status with funding check", pmSetup.includes('"ready"') && pmSetup.includes("ManagerFundingCard"));
 assert("PredictManagerSetup has manual override under details", pmSetup.includes("<details") && pmSetup.includes("setManualManager"));
 assert("BtcMarketPage imports PredictManagerSetup", btcMarket.includes("PredictManagerSetup"));
 assert("BtcMarketPage renders PredictManagerSetup", btcMarket.includes("<PredictManagerSetup"));
 assert("BtcMarketPage no longer has passive blocker pills", !btcMarket.includes('pill pill-warn text-[10px]'));
+
+// ── TransactionStatusStrip ──
+console.log("\nTransactionStatusStrip:");
+assert("TransactionStatusStrip exists", fileExists("components/trade/TransactionStatusStrip.tsx"));
+const txStrip = fileContent("components/trade/TransactionStatusStrip.tsx");
+assert("TransactionStatusStrip handles idle state", txStrip.includes('"idle"'));
+assert("TransactionStatusStrip handles success state", txStrip.includes("toast-pass"));
+assert("TransactionStatusStrip handles failed state", txStrip.includes("toast-fail"));
+
+// ── ManagerFundingCard ──
+console.log("\nManagerFundingCard:");
+assert("ManagerFundingCard exists", fileExists("components/trade/ManagerFundingCard.tsx"));
+const fundingCard = fileContent("components/trade/ManagerFundingCard.tsx");
+assert("ManagerFundingCard calls buildDepositDusdcTransaction", fundingCard.includes("buildDepositDusdcTransaction"));
+assert("ManagerFundingCard calls selectDusdcCoinsForAmount", fundingCard.includes("selectDusdcCoinsForAmount"));
+assert("ManagerFundingCard uses useDeepVolDusdcBalance", fundingCard.includes("useDeepVolDusdcBalance"));
+assert("ManagerFundingCard uses translateDeepBookPredictError", fundingCard.includes("translateDeepBookPredictError"));
+assert("ManagerFundingCard has deposit CTA", fundingCard.includes("Deposit DUSDC"));
+assert("ManagerFundingCard is wired to action handler", fundingCard.includes("depositDusdc"));
+
+// ── PredictManagerSetup funding integration ──
+console.log("\nPredictManagerSetup funding:");
+assert("PredictManagerSetup no longer returns null when ready", !pmSetup.includes('if (status === "ready") return null'));
+assert("PredictManagerSetup imports ManagerFundingCard", pmSetup.includes("ManagerFundingCard"));
+assert("PredictManagerSetup checks balance for funding state", pmSetup.includes("isFunded"));
 
 // ── AdvancedDetails exists ──
 assert("AdvancedDetails exists", fileExists("components/organisms/AdvancedDetails.tsx"));
@@ -140,6 +165,12 @@ assert("MoveExecutionPanel imports useBuyMoveReceipt", movePanel.includes("useBu
 assert("MoveExecutionPanel imports useDeepVolQuote", movePanel.includes("useDeepVolQuote"));
 assert("MoveExecutionPanel imports useActiveBtcMoveSeries", movePanel.includes("useActiveBtcMoveSeries"));
 assert("MoveExecutionPanel has submit handler", movePanel.includes(".submit") || movePanel.includes("onSubmit"));
+
+// ── MOVE active market context ──
+console.log("\nMOVE active market context:");
+assert("MoveExecutionPanel shows active market section", movePanel.includes("Active market"));
+assert("MoveExecutionPanel imports formatTimestampMs", movePanel.includes("formatTimestampMs"));
+assert("MoveExecutionPanel shows market help for idle series", movePanel.includes("BTC market discovered"));
 
 assert("BinaryPrimitiveExecutionPanel exists", fileExists("components/trade/BinaryPrimitiveExecutionPanel.tsx"));
 const binaryPanel = fileContent("components/trade/BinaryPrimitiveExecutionPanel.tsx");
