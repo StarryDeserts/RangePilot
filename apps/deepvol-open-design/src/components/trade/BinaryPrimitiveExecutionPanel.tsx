@@ -47,6 +47,7 @@ export function BinaryPrimitiveExecutionPanel({ kind, predictManagerId, activeMa
   const preflight = usePrimitivePreflight({
     quote,
     predictManagerId,
+    primitiveMintabilityStatus: mintableStrike.status,
   });
 
   const execution = usePrimitiveWalletExecution({

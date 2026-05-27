@@ -121,13 +121,13 @@ export function MoveExecutionPanel({ predictManagerId, activeMarket, navigate }:
             <div className="glass-inner p-3">
               <div className="label">Lower</div>
               <div className="font-mono text-sm text-white mt-0.5">
-                {moveSeries.series?.lowerStrike ?? mintableRange.candidate?.lowerStrike ?? "TBD"}
+                {moveSeries.series?.lowerStrike ?? mintableRange.candidate?.lowerStrike ?? activeMarket?.suggestedLowerStrike ?? "TBD"}
               </div>
             </div>
             <div className="glass-inner p-3">
               <div className="label">Upper</div>
               <div className="font-mono text-sm text-white mt-0.5">
-                {moveSeries.series?.upperStrike ?? mintableRange.candidate?.upperStrike ?? "TBD"}
+                {moveSeries.series?.upperStrike ?? mintableRange.candidate?.upperStrike ?? activeMarket?.suggestedUpperStrike ?? "TBD"}
               </div>
             </div>
           </div>

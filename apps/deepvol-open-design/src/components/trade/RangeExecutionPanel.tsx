@@ -49,6 +49,7 @@ export function RangeExecutionPanel({ predictManagerId, activeMarket, navigate }
   const preflight = usePrimitivePreflight({
     quote,
     predictManagerId,
+    rangeMintabilityStatus: mintableRange.status,
   });
 
   const execution = usePrimitiveWalletExecution({

@@ -23,6 +23,8 @@ export type PrimitiveInputState = {
   redeemPayoutAtomic?: string | null;
   quoteDependencyKey?: string | null;
   preflightQuoteDependencyKey?: string | null;
+  primitiveMintabilityStatus?: "idle" | "blocked" | "running" | "passed" | "failed" | null;
+  rangeMintabilityStatus?: "idle" | "blocked" | "running" | "passed" | "failed" | null;
 };
 
 export type PrimitiveExecutionInput = PrimitiveInputState & {
@@ -75,11 +77,11 @@ export function buildPrimitiveQuoteBlockers(input: PrimitiveInputState): string[
   blockers.push(...buildPrimitiveMarketBlockers(input));
 
   if (input.series && !input.series.active) {
-    blockers.push("Configured BTC MOVE VolSeries is inactive.");
+    blockers.push("Configured VolSeries is inactive.");
   }
 
   if (input.series && BigInt(input.series.lowerStrike) >= BigInt(input.series.upperStrike)) {
-    blockers.push("Configured BTC MOVE VolSeries has invalid strike ordering.");
+    blockers.push("Configured VolSeries has invalid strike ordering.");
   }
 
   if (!input.quantity) {
@@ -114,6 +116,16 @@ export function buildPrimitivePreflightBlockers(input: PrimitiveInputState): str
 
   if (input.quoteDependencyKey && input.preflightQuoteDependencyKey && input.quoteDependencyKey !== input.preflightQuoteDependencyKey) {
     blockers.push("Run primitive mint preflight again for the current quote and wallet state.");
+  }
+
+  if (input.primitiveKind === "RANGE") {
+    if (input.rangeMintabilityStatus && input.rangeMintabilityStatus !== "passed") {
+      blockers.push("Validate a mintable RANGE interval before running preflight.");
+    }
+  } else {
+    if (input.primitiveMintabilityStatus && input.primitiveMintabilityStatus !== "passed") {
+      blockers.push(`Validate a mintable ${input.primitiveKind} strike before running preflight.`);
+    }
   }
 
   return [...new Set(blockers)];

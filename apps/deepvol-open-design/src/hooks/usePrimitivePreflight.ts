@@ -35,6 +35,8 @@ export type PrimitivePreflightController = {
 type UsePrimitivePreflightParams = {
   quote: PrimitiveQuoteState;
   predictManagerId: string | null;
+  primitiveMintabilityStatus?: "idle" | "blocked" | "running" | "passed" | "failed" | null;
+  rangeMintabilityStatus?: "idle" | "blocked" | "running" | "passed" | "failed" | null;
 };
 
 type PrimitivePreflightRunState = {
@@ -61,7 +63,7 @@ const EMPTY_PREFLIGHT_STATE: PrimitivePreflightRunState = {
   abortKnownReason: null,
 };
 
-export function usePrimitivePreflight({ quote, predictManagerId }: UsePrimitivePreflightParams): PrimitivePreflightController {
+export function usePrimitivePreflight({ quote, predictManagerId, primitiveMintabilityStatus, rangeMintabilityStatus }: UsePrimitivePreflightParams): PrimitivePreflightController {
   const client = useSuiClient();
   const wallet = useSuiWallet();
   const latestRunId = useRef(0);
@@ -85,7 +87,9 @@ export function usePrimitivePreflight({ quote, predictManagerId }: UsePrimitiveP
     redeemPayoutAtomic: quote.redeemPayoutAtomic,
     quoteDependencyKey: quote.dependencyKey,
     preflightQuoteDependencyKey: quote.dependencyKey,
-  }), [predictManagerId, quote.dependencyKey, quote.lowerStrike, quote.marketStatus, quote.marketStatusMessage, quote.mintCostAtomic, quote.oracleObjectId, quote.primitiveKind, quote.quantity, quote.redeemPayoutAtomic, quote.series, quote.strike, quote.upperStrike, wallet.address, wallet.isConnected, wallet.isTestnet]);
+    primitiveMintabilityStatus,
+    rangeMintabilityStatus,
+  }), [predictManagerId, primitiveMintabilityStatus, rangeMintabilityStatus, quote.dependencyKey, quote.lowerStrike, quote.marketStatus, quote.marketStatusMessage, quote.mintCostAtomic, quote.oracleObjectId, quote.primitiveKind, quote.quantity, quote.redeemPayoutAtomic, quote.series, quote.strike, quote.upperStrike, wallet.address, wallet.isConnected, wallet.isTestnet]);
 
   const dependencyKey = useMemo(() => buildPrimitivePreflightDependencyKey(input), [input]);
   const blockers = useMemo(() => buildPrimitivePreflightBlockers(input), [input]);

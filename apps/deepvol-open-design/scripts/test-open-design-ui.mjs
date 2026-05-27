@@ -225,6 +225,69 @@ assert(
   isolationClean,
 );
 
+// ── DeepVol-32: Product context isolation ──
+console.log("\nProduct context isolation (DeepVol-32):");
+const gateFile = fileContent("hooks/primitiveQuoteGate.ts");
+assert(
+  "primitiveQuoteGate does not use MOVE-specific VolSeries text",
+  !gateFile.includes("BTC MOVE VolSeries"),
+);
+assert(
+  "primitiveQuoteGate buildPrimitivePreflightBlockers checks mintability",
+  gateFile.includes("primitiveMintabilityStatus") && gateFile.includes("rangeMintabilityStatus"),
+);
+assert(
+  "PrimitiveInputState has primitiveMintabilityStatus field",
+  gateFile.includes("primitiveMintabilityStatus?:"),
+);
+assert(
+  "PrimitiveInputState has rangeMintabilityStatus field",
+  gateFile.includes("rangeMintabilityStatus?:"),
+);
+
+console.log("\nPreflight mintability threading:");
+const preflightHook = fileContent("hooks/usePrimitivePreflight.ts");
+assert(
+  "usePrimitivePreflight accepts primitiveMintabilityStatus param",
+  preflightHook.includes("primitiveMintabilityStatus"),
+);
+assert(
+  "usePrimitivePreflight accepts rangeMintabilityStatus param",
+  preflightHook.includes("rangeMintabilityStatus"),
+);
+
+console.log("\nCaller wiring:");
+assert(
+  "BinaryPrimitiveExecutionPanel passes primitiveMintabilityStatus to preflight",
+  binaryPanel.includes("primitiveMintabilityStatus: mintableStrike.status") ||
+    (binaryPanel.includes("primitiveMintabilityStatus") && binaryPanel.includes("mintableStrike.status")),
+);
+assert(
+  "RangeExecutionPanel passes rangeMintabilityStatus to preflight",
+  rangePanel.includes("rangeMintabilityStatus: mintableRange.status") ||
+    (rangePanel.includes("rangeMintabilityStatus") && rangePanel.includes("mintableRange.status")),
+);
+
+console.log("\nMOVE range band fallback:");
+assert(
+  "MoveExecutionPanel uses suggestedLowerStrike fallback",
+  movePanel.includes("suggestedLowerStrike"),
+);
+assert(
+  "MoveExecutionPanel uses suggestedUpperStrike fallback",
+  movePanel.includes("suggestedUpperStrike"),
+);
+
+console.log("\nBinary panel does not use MOVE copy:");
+assert(
+  "BinaryPrimitiveExecutionPanel has no BTC MOVE range text",
+  !binaryPanel.includes("BTC MOVE range"),
+);
+assert(
+  "RangeExecutionPanel has no BTC MOVE range text",
+  !rangePanel.includes("BTC MOVE range"),
+);
+
 // ── Summary ──
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail > 0) {

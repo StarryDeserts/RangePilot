@@ -142,6 +142,20 @@ Three P0 issues found during connected-wallet testing:
 
 `TransactionStatusStrip` extracted as shared component used by both `PredictManagerSetup` and `ManagerFundingCard`.
 
+## DeepVol-32: Product context, mintability gates, and preflight wiring
+
+Five root causes fixed after connected-wallet testing:
+
+1. **Shared blocker text fixed:** `buildPrimitiveQuoteBlockers()` in `primitiveQuoteGate.ts` used "Configured BTC MOVE VolSeries" text for all products. Replaced with product-neutral "Configured VolSeries" copy. UP/DOWN no longer show MOVE-specific error messages.
+
+2. **Preflight gated on mintability:** `buildPrimitivePreflightBlockers()` now checks `primitiveMintabilityStatus` (for UP/DOWN) and `rangeMintabilityStatus` (for RANGE). `PrimitiveInputState` extended with optional mintability status fields. Prevents preflight from running when mintability search has failed.
+
+3. **MOVE range band TBD fixed:** Range band fallback chain now includes `activeMarket?.suggestedLowerStrike` / `suggestedUpperStrike` before falling through to "TBD". When active market provides suggested strikes, they display immediately.
+
+4. **RANGE ARITHMETIC_ERROR prevented:** Consequence of fix #2 — RANGE preflight no longer runs with invalid parameters from failed mintability search, preventing `vault::set_mtm_with_curve ARITHMETIC_ERROR`.
+
+5. **Mintability threading:** `usePrimitivePreflight` hook now accepts `primitiveMintabilityStatus` and `rangeMintabilityStatus` params. `BinaryPrimitiveExecutionPanel` and `RangeExecutionPanel` pass their respective mintability statuses through to preflight.
+
 ## Verification
 
 | Check | Result |
