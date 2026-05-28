@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useActiveBtcPredictMarket } from "../hooks/useActiveBtcPredictMarket";
 import { formatTimestampMs } from "../lib/format";
+import { verifiedTradingHref } from "../lib/productRoute";
 
 type Props = { navigate: (to: string) => void };
 
@@ -251,8 +252,8 @@ export function MarketsPage({ navigate }: Props) {
 
                 <p className="mt-6 text-ink-mid max-w-lg leading-relaxed">
                   One BTC volatility market exposing four Predict-native
-                  products. Trade BTC MOVE for packaged volatility, or use UP,
-                  DOWN, RANGE for raw directional and interval exposure.
+                  products. Explore BTC MOVE for packaged volatility, or use UP,
+                  DOWN, RANGE for raw directional and interval exposure in the verified app.
                 </p>
 
                 <div className="mt-7 flex items-center gap-3 flex-wrap">
@@ -267,14 +268,10 @@ export function MarketsPage({ navigate }: Props) {
                     View BTC market &rarr;
                   </a>
                   <a
-                    href="/markets/btc?product=MOVE"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/markets/btc?product=MOVE");
-                    }}
+                    href={verifiedTradingHref("MOVE")}
                     className="rounded-full border border-white/10 bg-white/[0.04] px-6 py-3 text-white/90 hover:border-aqua-400/40 transition ring-aqua"
                   >
-                    Trade BTC MOVE
+                    Open verified DeepVol app to trade BTC MOVE
                   </a>
                 </div>
               </div>

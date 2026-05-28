@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { verifiedTradingHref } from "../lib/productRoute";
 
 type Props = { navigate: (to: string) => void };
 
@@ -32,9 +33,9 @@ export function LandingPage({ navigate }: Props) {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 wave-texture pointer-events-none" />
 
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-20 lg:pt-28 pb-24 lg:pb-32 grid grid-cols-12 gap-10 items-center relative">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-20 lg:pt-28 pb-24 lg:pb-32 grid grid-cols-1 gap-10 lg:grid-cols-12 items-center relative">
           {/* Copy */}
-          <div className="col-span-12 lg:col-span-7">
+          <div className="lg:col-span-7">
             <div
               className="reveal inline-flex items-center gap-2 chip"
               style={{
@@ -66,24 +67,20 @@ export function LandingPage({ navigate }: Props) {
 
             <p className="reveal mt-7 max-w-xl text-lg text-ink-mid leading-relaxed">
               DeepVol turns DeepBook Predict primitives into a clean volatility
-              trading terminal. Buy{" "}
-              <span className="text-white">BTC MOVE</span> to trade whether
+              trading terminal. Use{" "}
+              <span className="text-white">BTC MOVE</span> to express whether
               Bitcoin exits a range, or use{" "}
               <span className="text-white">UP</span>,{" "}
               <span className="text-white">DOWN</span>, and{" "}
-              <span className="text-white">RANGE</span> primitives directly.
+              <span className="text-white">RANGE</span> primitives through the verified app.
             </p>
 
             <div className="reveal mt-10 flex flex-wrap items-center gap-4">
               <a
-                href="/markets/btc"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/markets/btc");
-                }}
-                className="bg-cta rounded-full px-7 py-3.5 font-medium text-white shadow-cta ring-aqua"
+                href={verifiedTradingHref("MOVE")}
+                className="bg-cta block w-full min-w-0 max-w-full rounded-full px-5 py-3.5 text-center text-sm font-medium leading-snug text-white shadow-cta ring-aqua sm:inline-block sm:w-auto sm:px-7 sm:text-base"
               >
-                Start Trading
+                Open verified DeepVol app to trade BTC MOVE
               </a>
               <a
                 href="/markets"
@@ -127,7 +124,7 @@ export function LandingPage({ navigate }: Props) {
           </div>
 
           {/* Hero Visual */}
-          <div className="col-span-12 lg:col-span-5 relative">
+          <div className="lg:col-span-5 relative">
             <div className="relative aspect-[5/5] max-w-[560px] mx-auto reveal">
               {/* Outer glow */}
               <div
@@ -534,14 +531,10 @@ export function LandingPage({ navigate }: Props) {
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a
-                  href="/markets/btc?product=MOVE"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/markets/btc?product=MOVE");
-                  }}
+                  href={verifiedTradingHref("MOVE")}
                   className="bg-cta rounded-full px-5 py-3 text-sm font-medium text-white shadow-cta ring-aqua"
                 >
-                  Trade BTC MOVE
+                  Open verified DeepVol app to trade BTC MOVE
                 </a>
                 <a
                   href="/markets/btc"
@@ -854,20 +847,16 @@ export function LandingPage({ navigate }: Props) {
                 Volatility, packaged into one receipt.
               </h3>
               <p className="mt-3 text-ink-mid max-w-xl">
-                Connect a Sui wallet and start trading BTC MOVE on testnet
-                today.
+                Trading execution is handled by the verified DeepVol app.
+                Open it to trade BTC MOVE on testnet.
               </p>
             </div>
             <div className="relative flex flex-wrap items-center gap-3">
               <a
-                href="/markets/btc"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/markets/btc");
-                }}
-                className="bg-cta rounded-full px-7 py-3.5 font-medium text-white shadow-cta ring-aqua"
+                href={verifiedTradingHref("MOVE")}
+                className="bg-cta block w-full min-w-0 max-w-full rounded-full px-5 py-3.5 text-center text-sm font-medium leading-snug text-white shadow-cta ring-aqua sm:inline-block sm:w-auto sm:px-7 sm:text-base"
               >
-                Launch app
+                Open verified trading app
               </a>
               <a
                 href="#"

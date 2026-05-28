@@ -1,7 +1,7 @@
 ---
 Purpose: Document the DeepVol-28 Open Design frontend rewrite as a standalone app.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: DeepVol-33 adds normalized runtime mintability context and diagnostics to `apps/deepvol-open-design/`. DeepVol-28 created the visual-fidelity Open Design frontend. The old `apps/deepvol-web/` remains for functional validation and logic reference only.
+Status: DeepVol-37 makes `apps/deepvol-open-design/` a presentation and verified-app handoff surface. It preserves landing, markets, BTC product explanation/status, and portfolio readback, but executable trading remains in the verified `apps/deepvol-web/` app. Earlier direct-execution parity work is historical context, not the active Open Design execution path.
 Source of truth relationship: Companion to DEEPVOL_FRONTEND_MVP.md; records the Open Design rewrite rationale, architecture, and boundaries.
 ---
 
@@ -86,19 +86,36 @@ Tailwind v4 `@theme` tokens extracted from the HTML mockups:
 - `apps/deepvol-web/src/App.tsx`
 - `apps/deepvol-web/src/routes/**`
 
-## What the old app remains for
+## Verified execution handoff
+
+DeepVol-37 stops exposing local Open Design trading execution. `apps/deepvol-web/` is the verified executable trading app for BTC MOVE and primitives. `apps/deepvol-open-design/` keeps product education, market/status context, and portfolio readback presentation, then sends execution-intent CTAs to verified app routes.
+
+`VITE_DEEPVOL_VERIFIED_APP_URL` may point Open Design CTAs at a deployed verified app host. The value is trimmed of a trailing slash before route concatenation. If unset, CTAs use relative paths. Same-origin relative paths assume hosting/routing sends those paths to the verified `apps/deepvol-web/` app; if they resolve inside Open Design, compatibility routes remain non-executing presentation pages.
+
+Verified trading route mapping:
+
+| Product | Verified app path |
+|---|---|
+| MOVE | `/buy/btc-move` |
+| UP | `/primitives?type=UP` |
+| DOWN | `/primitives?type=DOWN` |
+| RANGE | `/primitives?type=RANGE` |
+
+The BTC market page must state that trading execution is handled by the verified DeepVol app and that no wallet action is initiated from Open Design.
+
+## What the verified app remains for
 
 `apps/deepvol-web/` is preserved as:
 
-- Functional validation reference (all 12 gate tests pass)
+- Verified executable trading app and state machine
 - Logic reference for hook behavior and SDK integration patterns
 - Historical Testnet validation evidence (browser buy, redeem, primitive execution)
 
-It is not the production UI direction.
+It is not the Open Design presentation surface.
 
-## DeepVol-29: Execution parity
+## DeepVol-29: Historical execution parity
 
-DeepVol-28 shipped the visual shell with static trade buttons. DeepVol-29 wires real chain execution:
+DeepVol-28 shipped the visual shell with static trade buttons. DeepVol-29 previously wired real chain execution in Open Design:
 
 - **MOVE:** `useActiveBtcMoveSeries` → `useBtcMoveMintableRange` → `useDeepVolQuote` → `useBuyMoveReceipt` → `useSignAndExecuteTransaction` → wallet prompt
 - **UP/DOWN:** `usePrimitiveMintableStrike` → `usePrimitiveQuote` → `usePrimitivePreflight` → `usePrimitiveWalletExecution` → wallet prompt
@@ -110,73 +127,76 @@ Wallet prompt only appears when all gates pass. No static fake buttons.
 
 Execution panels: `MoveExecutionPanel`, `BinaryPrimitiveExecutionPanel`, `RangeExecutionPanel`, `WalletActionButton` (shared).
 
+DeepVol-37 supersedes this as an active Open Design path: those local execution panels, wallet prompts, PredictManager setup/funding, quote, preflight, VolSeries creation, mint, redeem, deposit, and withdraw controls are historical context for why the handoff boundary exists.
+
 Landing page blank section fixed (`.reveal` CSS default visibility changed from hidden to visible).
 
-## DeepVol-30: PredictManager setup CTA
+## DeepVol-30: Historical PredictManager setup CTA
 
-DeepVol-29 showed blocker text when PredictManager was missing but provided no actionable button.
-DeepVol-30 adds `PredictManagerSetup` component with status-driven CTA:
+DeepVol-29 showed blocker text when PredictManager was missing but provided no actionable button. DeepVol-30 previously added local Open Design setup controls as part of the now-superseded direct-execution parity path. Under DeepVol-37, these details are historical only; Open Design no longer exposes PredictManager creation, funding, quote, preflight, wallet execution, or SDK candidate-search controls.
+
+Historical `PredictManagerSetup` statuses:
 
 | Session status | UI |
 |---|---|
 | `wallet_required` | "Connect wallet" guidance |
 | `wrong_network` | "Switch to Sui Testnet" guidance |
-| `missing` | **"Create PredictManager" CTA button** (calls real `signAndExecuteTransaction`) |
+| `missing` | **"Create PredictManager" CTA button** (historically called real `signAndExecuteTransaction`; no longer active in Open Design) |
 | `loading` | Spinner + "Validating..." |
 | `ready` | Hidden (returns null) |
 | `invalid` / `error` | Error message + Refresh / Clear + Advanced manual override |
 
-Manual object ID entry remains under collapsed Advanced/Developer section only.
+Manual object ID entry remained under collapsed Advanced/Developer section only in the historical implementation.
 
-Passive blocker pills removed from BtcMarketPage — replaced by actionable setup card.
+Passive blocker pills were removed from BtcMarketPage and replaced by an actionable setup card in that superseded path.
 
-## DeepVol-31: Connected-wallet UX fixes
+## DeepVol-31: Historical connected-wallet UX fixes
 
-Three P0 issues found during connected-wallet testing:
+Three P0 issues found during connected-wallet testing of the superseded local Open Design execution path:
 
 1. **MOVE active market context:** MoveExecutionPanel now shows the active market status separately from VolSeries status. Users see "Live" market indicator even when VolSeries is "Idle" or "Missing". VolSeries idle message softened from imperative "Discover an active BTC market first" to "Awaiting active BTC market context."
 
-2. **DUSDC deposit flow:** `PredictManagerSetup` no longer returns null when manager status is "ready". If the PredictManager has zero DUSDC balance, it shows `ManagerFundingCard` with wallet DUSDC balance, deposit amount input, and "Deposit DUSDC to PredictManager" CTA wired to real `buildDepositDusdcTransaction` → `signAndExecuteTransaction`. When funded, shows compact ready strip with balance.
+2. **DUSDC deposit flow:** `PredictManagerSetup` no longer returned null when manager status was "ready". In the historical local execution path, if the PredictManager had zero DUSDC balance, it showed `ManagerFundingCard` with wallet DUSDC balance, deposit amount input, and "Deposit DUSDC to PredictManager" CTA wired to real `buildDepositDusdcTransaction` → `signAndExecuteTransaction`. Under DeepVol-37, Open Design no longer exposes this deposit CTA.
 
 3. **Funding vs quote separation:** Deposit status (in PredictManagerSetup area) is visually separate from quote/preflight errors (inside execution panels). "Non-positive mint cost" from quote is not confused with "insufficient DUSDC balance" from funding.
 
 `TransactionStatusStrip` extracted as shared component used by both `PredictManagerSetup` and `ManagerFundingCard`.
 
-## DeepVol-32: Product context, mintability gates, and preflight wiring
+## DeepVol-32: Historical product context, mintability gates, and preflight wiring
 
-Five root causes fixed after connected-wallet testing:
+Five root causes were fixed after connected-wallet testing of the now-superseded Open Design local execution path:
 
-1. **Shared blocker text fixed:** `buildPrimitiveQuoteBlockers()` in `primitiveQuoteGate.ts` used "Configured BTC MOVE VolSeries" text for all products. Replaced with product-neutral "Configured VolSeries" copy. UP/DOWN no longer show MOVE-specific error messages.
+1. **Shared blocker text fixed:** `buildPrimitiveQuoteBlockers()` in `primitiveQuoteGate.ts` used "Configured BTC MOVE VolSeries" text for all products. It was replaced with product-neutral "Configured VolSeries" copy so UP/DOWN no longer showed MOVE-specific error messages.
 
-2. **Preflight gated on mintability:** `buildPrimitivePreflightBlockers()` now checks `primitiveMintabilityStatus` (for UP/DOWN) and `rangeMintabilityStatus` (for RANGE). `PrimitiveInputState` extended with optional mintability status fields. Prevents preflight from running when mintability search has failed.
+2. **Preflight gated on mintability:** `buildPrimitivePreflightBlockers()` checked `primitiveMintabilityStatus` (for UP/DOWN) and `rangeMintabilityStatus` (for RANGE). `PrimitiveInputState` was extended with optional mintability status fields to prevent preflight from running when mintability search had failed.
 
-3. **MOVE range band TBD fixed:** Range band fallback chain now includes `activeMarket?.suggestedLowerStrike` / `suggestedUpperStrike` before falling through to "TBD". When active market provides suggested strikes, they display immediately.
+3. **MOVE range band TBD fixed:** The range band fallback chain included `activeMarket?.suggestedLowerStrike` / `suggestedUpperStrike` before falling through to "TBD". When the active market provided suggested strikes, they displayed immediately.
 
-4. **RANGE ARITHMETIC_ERROR prevented:** Consequence of fix #2 — RANGE preflight no longer runs with invalid parameters from failed mintability search, preventing `vault::set_mtm_with_curve ARITHMETIC_ERROR`.
+4. **RANGE ARITHMETIC_ERROR prevented:** Consequence of fix #2 — RANGE preflight no longer ran with invalid parameters from failed mintability search, preventing `vault::set_mtm_with_curve ARITHMETIC_ERROR`.
 
-5. **Mintability threading:** `usePrimitivePreflight` hook now accepts `primitiveMintabilityStatus` and `rangeMintabilityStatus` params. `BinaryPrimitiveExecutionPanel` and `RangeExecutionPanel` pass their respective mintability statuses through to preflight.
+5. **Mintability threading:** `usePrimitivePreflight` hook accepted `primitiveMintabilityStatus` and `rangeMintabilityStatus` params. `BinaryPrimitiveExecutionPanel` and `RangeExecutionPanel` passed their respective mintability statuses through to preflight.
 
-## DeepVol-33: Runtime mintability input parity
+## DeepVol-33: Historical runtime mintability input parity
 
-DeepVol-33 fixes the next connected-wallet diagnostic gap: all Open Design products could fail mintability search with non-positive mint cost while the UI lacked enough runtime evidence to distinguish input mismatch, quote economics, and funding/preflight failures.
+DeepVol-33 fixed a connected-wallet diagnostic gap in the now-superseded local Open Design execution path: all products could fail mintability search with non-positive mint cost while the UI lacked enough runtime evidence to distinguish input mismatch, quote economics, and funding/preflight failures. Under DeepVol-37, these diagnostics preserve historical parity context and are not active Open Design quote, preflight, or SDK candidate-search controls.
 
-Key changes:
+Key historical changes:
 
-1. **Shared runtime input builder:** `buildTradeRuntimeContext()` validates wallet address, Testnet network, PredictManager, live active market, oracle ID, oracle object ID, expiry, normalized quantity, forward/spot anchor, tick size, min strike, and underlying asset before SDK candidate search.
+1. **Shared runtime input builder:** `buildTradeRuntimeContext()` validated wallet address, Testnet network, PredictManager, live active market, oracle ID, oracle object ID, expiry, normalized quantity, forward/spot anchor, tick size, min strike, and underlying asset before SDK candidate search.
 
-2. **Normalized SDK inputs:** MOVE, UP, DOWN, and RANGE mintability hooks pass `runtimeContext.sdkInput.quantity` and other validated `sdkInput` fields into SDK candidate helpers. Candidate state resets when the runtime dependency key changes, including oracle object, spot/forward, tick grid, quantity, manager, and wallet state.
+2. **Normalized SDK inputs:** MOVE, UP, DOWN, and RANGE mintability hooks passed `runtimeContext.sdkInput.quantity` and other validated `sdkInput` fields into SDK candidate helpers. Candidate state reset when the runtime dependency key changed, including oracle object, spot/forward, tick grid, quantity, manager, and wallet state.
 
-3. **MOVE quote oracle object fixed:** `useDeepVolQuote()` now accepts active market context and uses `activeMarket.oracleObjectId` for UP/DOWN leg quotes instead of reusing `series.oracleId` as the OracleSVI object ID. It also blocks stale VolSeries when oracle or expiry differs from the active BTC market.
+3. **MOVE quote oracle object fixed:** `useDeepVolQuote()` accepted active market context and used `activeMarket.oracleObjectId` for UP/DOWN leg quotes instead of reusing `series.oracleId` as the OracleSVI object ID. It also blocked stale VolSeries when oracle or expiry differed from the active BTC market.
 
-4. **Shared diagnostics panel:** `TradeRuntimeDiagnostics` renders in MOVE, UP/DOWN, and RANGE panels. It shows runtime input fields, anchor source, quote/preflight status, candidate counts, dominant failure, raw failure summary, Wallet DUSDC, and PredictManager DUSDC.
+4. **Shared diagnostics panel:** `TradeRuntimeDiagnostics` rendered in MOVE, UP/DOWN, and RANGE panels. It showed runtime input fields, anchor source, quote/preflight status, candidate counts, dominant failure, raw failure summary, Wallet DUSDC, and PredictManager DUSDC.
 
-5. **Balance vs quote separation:** Wallet DUSDC remains a deposit/create-fee source; PredictManager DUSDC remains mint collateral/premium balance. Non-positive quotes are not labeled as balance failures unless raw diagnostics contain balance/deposit evidence.
+5. **Balance vs quote separation:** Wallet DUSDC remained a deposit/create-fee source; PredictManager DUSDC remained mint collateral/premium balance. Non-positive quotes were not labeled as balance failures unless raw diagnostics contained balance/deposit evidence.
 
-Suggested strikes seed UI fields only; mintability candidate search uses `forward` or `spot` plus the tick grid. See [DEEPVOL_MINTABILITY_RUNTIME_DIAGNOSTICS.md](./DEEPVOL_MINTABILITY_RUNTIME_DIAGNOSTICS.md).
+In that historical implementation, suggested strikes seeded UI fields only; mintability candidate search used `forward` or `spot` plus the tick grid. See [DEEPVOL_MINTABILITY_RUNTIME_DIAGNOSTICS.md](./DEEPVOL_MINTABILITY_RUNTIME_DIAGNOSTICS.md).
 
-## DeepVol-34: Verified state-machine parity
+## DeepVol-34: Historical verified state-machine parity
 
-DeepVol-34 stops treating the Open Design app as an independent trading implementation. The old `apps/deepvol-web` app remains the verified functional state-machine reference, and Open Design is the view layer over the same sequence.
+DeepVol-34 stopped treating the Open Design app as an independent trading implementation. The old `apps/deepvol-web` app remained the verified functional state-machine reference, and Open Design was aligned to the same sequence. Under DeepVol-37, this parity history remains useful, but executable trading is delegated to `apps/deepvol-web` routes instead of exposed locally in Open Design.
 
 Canonical orders:
 
@@ -196,22 +216,17 @@ See [DEEPVOL_OLD_UI_TRADING_STATE_MACHINE.md](./DEEPVOL_OLD_UI_TRADING_STATE_MAC
 
 ## Verification
 
-| Check | Result |
-|-------|--------|
+| Check | Expected |
+|-------|----------|
 | `npm run typecheck:open-design` | Pass |
 | `npm run build:open-design` | Pass |
-| `test:open-design-ui` (124 assertions, including DeepVol-33 runtime input parity checks) | Pass |
-| All 12 old app gate tests | Pass |
-| Browser smoke (all routes) | Pass, 0 console errors |
+| `npm --workspace apps/deepvol-open-design run test:open-design-ui` | Pass, including verified-app handoff boundary assertions |
+| Browser smoke (all routes) | Landing, markets, BTC products, and portfolio render without console errors |
 | Responsive 375px | Columns stack, no overflow |
-| Import isolation | No forbidden imports |
-| MOVE button wired to `useBuyMoveReceipt.submit` | Yes |
-| UP/DOWN buttons wired to `usePrimitiveWalletExecution.submit` | Yes |
-| RANGE button wired to `usePrimitiveWalletExecution.submit` | Yes |
-| RANGE NOT hardcoded disabled | Yes |
-| Disabled buttons show human-readable blocker | Yes |
-| Landing page content visible by default | Yes |
-| Missing PredictManager shows Create CTA | Yes |
-| CTA calls real `createManager()` on click | Yes |
-| No passive blocker pills remain | Yes |
-| Manual override Advanced-only | Yes |
+| Import isolation | No forbidden imports from `apps/deepvol-web` UI or CSS |
+| MOVE verified CTA | Uses `/buy/btc-move`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| UP verified CTA | Uses `/primitives?type=UP`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| DOWN verified CTA | Uses `/primitives?type=DOWN`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| RANGE verified CTA | Uses `/primitives?type=RANGE`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| Open Design wallet boundary | No local wallet prompt, PredictManager setup/funding, quote, preflight, VolSeries creation, mint, redeem, deposit, or withdraw control is exposed |
+| BTC market copy | States that trading execution is handled by the verified DeepVol app and no wallet action is initiated from Open Design |

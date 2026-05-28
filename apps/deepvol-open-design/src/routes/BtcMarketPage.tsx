@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { useActiveBtcPredictMarket } from "../hooks/useActiveBtcPredictMarket";
-import { usePredictManagerSession } from "../hooks/usePredictManagerSession";
 import { formatTimestampMs } from "../lib/format";
-import { MoveExecutionPanel } from "../components/trade/MoveExecutionPanel";
-import { BinaryPrimitiveExecutionPanel } from "../components/trade/BinaryPrimitiveExecutionPanel";
-import { RangeExecutionPanel } from "../components/trade/RangeExecutionPanel";
-import { PredictManagerSetup } from "../components/trade/PredictManagerSetup";
+import { type MarketProduct, verifiedTradingHref } from "../lib/productRoute";
 
-type Product = "MOVE" | "UP" | "DOWN" | "RANGE";
+type Product = MarketProduct;
 
 type Props = {
   navigate: (to: string) => void;
@@ -19,9 +15,40 @@ function Skel({ className = "" }: { className?: string }) {
   return <div className={`skel ${className}`} />;
 }
 
+const productCopy: Record<Product, {
+  title: string;
+  description: string;
+  flow: string[];
+  cta: string;
+}> = {
+  MOVE: {
+    title: "BTC MOVE",
+    description: "Win if BTC expires outside the market range. MOVE trading creates a DeepVol receipt in the verified app.",
+    flow: ["Validate BTC market", "Create or select VolSeries", "Quote", "Preflight", "Wallet execution"],
+    cta: "Open verified DeepVol app to trade BTC MOVE",
+  },
+  UP: {
+    title: "Primitive · UP",
+    description: "Win if BTC expires above the selected strike. Execution happens in the verified primitive flow.",
+    flow: ["Find mintable strike", "Quote", "Preflight", "Wallet execution"],
+    cta: "Open verified DeepVol app to trade UP",
+  },
+  DOWN: {
+    title: "Primitive · DOWN",
+    description: "Win if BTC expires below the selected strike. Execution happens in the verified primitive flow.",
+    flow: ["Find mintable strike", "Quote", "Preflight", "Wallet execution"],
+    cta: "Open verified DeepVol app to trade DOWN",
+  },
+  RANGE: {
+    title: "Primitive · RANGE",
+    description: "Win if BTC expires inside the interval. Execution happens in the verified primitive flow.",
+    flow: ["Find mintable interval", "Quote", "Preflight", "Wallet execution"],
+    cta: "Open verified DeepVol app to trade RANGE",
+  },
+};
+
 export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
   const market = useActiveBtcPredictMarket();
-  const manager = usePredictManagerSession();
   const [activeTab, setActiveTab] = useState<Product>(defaultProduct);
 
   const dotClass =
@@ -429,15 +456,15 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
               </div>
             </div>
 
-            {/* RIGHT: Trade panel */}
+            {/* RIGHT: Verified app handoff */}
             <div className="col-span-12 lg:col-span-4 glass p-0 overflow-hidden self-start">
               {/* Tabs */}
               <div className="px-6 pt-5 border-b hairline">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-display text-lg text-white">Trade</h3>
-                  <span className="chip">SLIPPAGE &middot; 0.5%</span>
+                <div className="flex items-center justify-between mb-3 gap-3">
+                  <h3 className="font-display text-lg text-white">Product action</h3>
+                  <span className="chip">VERIFIED APP</span>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6 overflow-x-auto pb-1">
                   {tabs.map((t) => (
                     <button
                       key={t.key}
@@ -459,42 +486,70 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
                 </div>
               </div>
 
-              <PredictManagerSetup manager={manager} />
+              <div className="p-6 space-y-5">
+                <div className="rounded-2xl border border-aqua-400/25 bg-aqua-400/[0.06] p-4">
+                  <div className="label text-aqua-200">Verified execution</div>
+                  <p className="mt-2 text-sm text-ink-mid leading-relaxed">
+                    Trading execution is handled by the verified DeepVol app.
+                  </p>
+                </div>
 
-              {/* MOVE PANEL */}
-              {activeTab === "MOVE" && (
-                <MoveExecutionPanel
-                  predictManagerId={manager.predictManagerId}
-                  activeMarket={market.market}
-                  navigate={navigate}
-                />
-              )}
+                <div>
+                  <div className="label">
+                    {activeTab === "MOVE" ? "Packaged volatility" : "Predict primitive"}
+                  </div>
+                  <h3 className="mt-2 font-display text-2xl text-white">
+                    {productCopy[activeTab].title}
+                  </h3>
+                  <p className="mt-2 text-sm text-ink-mid leading-relaxed">
+                    {productCopy[activeTab].description}
+                  </p>
+                </div>
 
-              {activeTab === "UP" && (
-                <BinaryPrimitiveExecutionPanel
-                  kind="UP"
-                  predictManagerId={manager.predictManagerId}
-                  activeMarket={market.market}
-                  navigate={navigate}
-                />
-              )}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="glass-inner p-3">
+                    <div className="label">Market status</div>
+                    <div className="mt-1.5 text-white">{market.statusLabel}</div>
+                  </div>
+                  <div className="glass-inner p-3">
+                    <div className="label">Expiry</div>
+                    <div className="mt-1.5 font-mono text-white">
+                      {expiryDisplay ?? "TBD"}
+                    </div>
+                  </div>
+                  <div className="glass-inner p-3 col-span-2">
+                    <div className="label">Reference range</div>
+                    <div className="mt-1.5 font-mono text-white">
+                      {market.market?.suggestedDownStrike ?? "TBD"} &#8212; {market.market?.suggestedUpStrike ?? "TBD"}
+                    </div>
+                  </div>
+                </div>
 
-              {activeTab === "DOWN" && (
-                <BinaryPrimitiveExecutionPanel
-                  kind="DOWN"
-                  predictManagerId={manager.predictManagerId}
-                  activeMarket={market.market}
-                  navigate={navigate}
-                />
-              )}
+                <div>
+                  <div className="label">High-level verified flow</div>
+                  <ol className="mt-3 space-y-2">
+                    {productCopy[activeTab].flow.map((step, index) => (
+                      <li key={step} className="flex items-center gap-3 text-sm text-ink-mid">
+                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-[11px] text-white">
+                          {index + 1}
+                        </span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
 
-              {activeTab === "RANGE" && (
-                <RangeExecutionPanel
-                  predictManagerId={manager.predictManagerId}
-                  activeMarket={market.market}
-                  navigate={navigate}
-                />
-              )}
+                <a
+                  href={verifiedTradingHref(activeTab)}
+                  className="bg-cta block w-full rounded-2xl py-4 text-center font-medium text-white shadow-cta ring-aqua"
+                >
+                  {productCopy[activeTab].cta}
+                </a>
+
+                <p className="text-xs text-ink-low leading-relaxed">
+                  Testnet only. No wallet action is initiated from this Open Design page.
+                </p>
+              </div>
             </div>
           </div>
         </div>

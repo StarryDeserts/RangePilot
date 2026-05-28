@@ -3,6 +3,7 @@ import { useDeepVolPortfolio } from "../hooks/useDeepVolPortfolio";
 import { useDeepVolPrimitiveRecords } from "../hooks/useDeepVolPrimitiveRecords";
 import { usePrimitiveRecordPositionReadback } from "../hooks/usePrimitiveRecordPositionReadback";
 import { shortId, formatTimestampMs, formatAtomicAmount } from "../lib/format";
+import { verifiedTradingHref } from "../lib/productRoute";
 import type { DeepVolPortfolioReceipt } from "../hooks/useDeepVolPortfolio";
 import type { StoredDeepVolPrimitiveTrade } from "../lib/deepVolPrimitiveStorage";
 
@@ -742,18 +743,14 @@ export function PortfolioPage({ navigate }: Props) {
                     No MOVE receipts yet
                   </h4>
                   <p className="text-[13px] text-ink-mid mt-1.5 max-w-xs mx-auto">
-                    Mint your first BTC MOVE to start tracking structured
-                    volatility positions.
+                    Open the verified DeepVol app to create positions; this page
+                    displays positions visible to this app and browser.
                   </p>
                   <a
-                    href="/markets/btc"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/markets/btc");
-                    }}
+                    href={verifiedTradingHref("MOVE")}
                     className="inline-block mt-5 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm hover:border-aqua-400/40 ring-aqua"
                   >
-                    Trade BTC MOVE
+                    Open verified DeepVol app to trade BTC MOVE
                   </a>
                 </div>
               ) : (
@@ -797,19 +794,20 @@ export function PortfolioPage({ navigate }: Props) {
                     No primitive positions yet
                   </h4>
                   <p className="text-[13px] text-ink-mid mt-1.5 max-w-xs mx-auto">
-                    Trade UP, DOWN, or RANGE primitives to start tracking raw
-                    Predict positions.
+                    Open the verified DeepVol app to create primitive positions;
+                    this page displays positions visible to this app and browser.
                   </p>
-                  <a
-                    href="/markets/btc?product=UP"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/markets/btc?product=UP");
-                    }}
-                    className="inline-block mt-5 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm hover:border-aqua-400/40 ring-aqua"
-                  >
-                    Trade primitives
-                  </a>
+                  <div className="mt-5 flex flex-wrap justify-center gap-2">
+                    {(["UP", "DOWN", "RANGE"] as const).map((product) => (
+                      <a
+                        key={product}
+                        href={verifiedTradingHref(product)}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm hover:border-aqua-400/40 ring-aqua"
+                      >
+                        Trade {product} in verified app
+                      </a>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -977,8 +975,8 @@ export function PortfolioPage({ navigate }: Props) {
 
                 {portfolio.receipts.length === 0 && records.length === 0 && (
                   <div className="px-6 py-8 text-center text-ink-mid text-sm">
-                    No history yet. Trade BTC MOVE or primitives to see activity
-                    here.
+                    No history yet. Open the verified DeepVol app to create
+                    positions, then return here to review records visible to this browser.
                   </div>
                 )}
               </div>
@@ -1011,18 +1009,14 @@ export function PortfolioPage({ navigate }: Props) {
                   No positions yet
                 </h4>
                 <p className="text-[13px] text-ink-mid mt-1.5 max-w-xs mx-auto">
-                  Trade BTC MOVE or raw primitives to start building your
-                  portfolio.
+                  Open the verified DeepVol app to create positions; this page
+                  displays positions visible to this app and browser.
                 </p>
                 <a
-                  href="/markets/btc"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/markets/btc");
-                  }}
+                  href={verifiedTradingHref("MOVE")}
                   className="inline-block mt-5 bg-cta rounded-full px-5 py-2.5 text-sm font-medium text-white shadow-cta ring-aqua"
                 >
-                  Trade BTC MOVE
+                  Open verified DeepVol app to trade BTC MOVE
                 </a>
               </div>
             </div>
