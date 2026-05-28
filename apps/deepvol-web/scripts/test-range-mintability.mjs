@@ -1,16 +1,17 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+const sharedRoot = "../../packages/deepvol-trading-react/src";
 const sdkSource = readFileSync("../../packages/sdk/src/deepbookPredict/primitiveMintability.ts", "utf8");
 const rangeKeySource = readFileSync("../../packages/sdk/src/deepbookPredict/rangeKey.ts", "utf8");
 const quoteSource = readFileSync("../../packages/sdk/src/deepbookPredict/quote.ts", "utf8");
 const tradeSource = readFileSync("../../packages/sdk/src/deepbookPredict/trade.ts", "utf8");
 const errorsSource = readFileSync("../../packages/sdk/src/deepbookPredict/errors.ts", "utf8");
 const typesSource = readFileSync("../../packages/types/src/deepbookPredict.ts", "utf8");
-const cacheSource = readFileSync("src/lib/primitiveMintability.ts", "utf8");
-const hookSource = readFileSync("src/hooks/usePrimitiveMintableRange.ts", "utf8");
-const gateSource = readFileSync("src/hooks/primitiveQuoteGate.ts", "utf8");
-const executionSource = readFileSync("src/hooks/usePrimitiveWalletExecution.ts", "utf8");
+const cacheSource = readFileSync(`${sharedRoot}/primitives/primitiveMintability.ts`, "utf8");
+const hookSource = readFileSync(`${sharedRoot}/primitives/usePrimitiveMintableRange.ts`, "utf8");
+const gateSource = readFileSync(`${sharedRoot}/primitives/primitiveQuoteGate.ts`, "utf8");
+const executionSource = readFileSync(`${sharedRoot}/primitives/usePrimitiveWalletExecution.ts`, "utf8");
 const routeSource = readFileSync("src/routes/PrimitiveQuotePage.tsx", "utf8");
 
 // --- SDK assertions ---
@@ -205,13 +206,10 @@ assert.ok(
   'cache RANGE key builder must use "RANGE" prefix',
 );
 
-{
-  const ttlMatches = cacheSource.match(/5 \* 60 \* 1000/g);
-  assert.ok(
-    ttlMatches && ttlMatches.length === 1,
-    "cache must have exactly one 5-min TTL constant (not duplicated for RANGE)",
-  );
-}
+assert.ok(
+  cacheSource.includes("DEEPVOL_MINTABILITY_PASS_TTL_MS"),
+  "RANGE cache must use the shared 5-minute mintability TTL",
+);
 
 // --- Hook assertions ---
 

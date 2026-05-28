@@ -1,7 +1,7 @@
 ---
 Purpose: Define the DeepVol wallet-gated frontend MVP scaffold, UI/UX foundation, and safety boundaries.
 Audience: Frontend developers, SDK implementers, product contributors, reviewers, and AI agents.
-Status: DeepVol-37 clarifies that verified executable trading remains in `apps/deepvol-web/`, while `apps/deepvol-open-design/` is now a presentation and verified-app handoff surface. Earlier Open Design runtime parity and diagnostics work remains historical context; execution gates, wallet prompts, PredictManager setup/funding, quotes, preflights, VolSeries creation, mint, redeem, deposit, and withdraw controls are not active Open Design behavior. See DEEPVOL_OPEN_DESIGN_REWRITE_APP.md, DEEPVOL_ACTIVE_MOVE_SERIES.md, DEEPVOL_MINTABLE_MOVE_RANGE.md, DEEPVOL_PREDICT_MANAGER_UX.md, DEEPVOL_PORTFOLIO_PRIMITIVE_POSITIONS.md, and DEEPVOL_MINTABILITY_RUNTIME_DIAGNOSTICS.md.
+Status: DeepVol-38 extracts verified trading logic into `packages/deepvol-trading-react/`. `apps/deepvol-web/` remains the verified executable app through compatibility wrappers, while `apps/deepvol-open-design/` is a view layer over shared MOVE / UP / DOWN / RANGE machines with the DeepVol-37 verified-app handoff retained as a secondary fallback. See DEEPVOL_SHARED_TRADING_STATE_MACHINE.md, DEEPVOL_OPEN_DESIGN_REWRITE_APP.md, DEEPVOL_ACTIVE_MOVE_SERIES.md, DEEPVOL_MINTABLE_MOVE_RANGE.md, DEEPVOL_PREDICT_MANAGER_UX.md, DEEPVOL_PORTFOLIO_PRIMITIVE_POSITIONS.md, and DEEPVOL_MINTABILITY_RUNTIME_DIAGNOSTICS.md.
 Source of truth relationship: Derived from DeepVol foundation docs, deployed receipt validation, and local frontend implementation; protocol docs and on-chain state remain authoritative for transaction semantics.
 ---
 
@@ -31,9 +31,9 @@ DeepVol-15 expands the Predict primitives information architecture into a guarde
 apps/deepvol-web/
 ```
 
-`apps/deepvol-web/` is the verified executable DeepVol frontend. It owns wallet-gated trading execution, PredictManager setup/funding, quote, preflight, VolSeries creation, buy/mint/redeem/deposit/withdraw controls, and the validated trading state machine.
+`apps/deepvol-web/` is the verified executable DeepVol frontend. It keeps the validated trading UX while its old hook/lib paths wrap `@rangepilot/deepvol-trading-react` for wallet-gated trading execution, PredictManager setup/funding, quote, preflight, VolSeries creation, buy/mint/redeem/deposit/withdraw controls, and portfolio readback.
 
-`apps/deepvol-open-design/` is the Open Design presentation and handoff surface. Its BTC product pages explain MOVE, UP, DOWN, and RANGE, show read-only market/status and portfolio context, and send execution-intent CTAs to verified `apps/deepvol-web/` routes. It must not initiate wallet prompts or expose local execution controls.
+`apps/deepvol-open-design/` is the Open Design view layer over the same shared machines. Its BTC product pages explain MOVE, UP, DOWN, and RANGE, show market/status and portfolio context, render shared-machine steps/blockers/actions, and retain verified `apps/deepvol-web/` route CTAs as secondary fallback. It must not fork local execution state or synthesize gate pass states.
 
 Both are separate from `apps/web/`, which remains the prior RangePilot/browser validation UI and should not become the primary DeepVol UX through incremental patches.
 
@@ -76,12 +76,12 @@ DeepVol-7 used it only for interaction and layout patterns: app shell rhythm, fo
 
 | Route | Purpose |
 |---|---|
-| `/` | Open Design landing page explaining BTC MOVE, UP, DOWN, RANGE, Testnet status, and CTAs to markets or verified execution handoff. |
-| `/markets` | Open Design market overview with BTC / DUSDC as the active market, BTC MOVE featured first, primitive product entry cards, and verified-app handoff CTAs for execution intent. |
-| `/markets/btc?product=MOVE` | Open Design BTC MOVE explanation/status page: read-only active BTC market context, high-level verified flow, and handoff CTA to `/buy/btc-move`; no wallet prompt is initiated here. |
-| `/markets/btc?product=UP` | Open Design BTC UP explanation/status page: product context and handoff CTA to `/primitives?type=UP`; no local quote, preflight, or wallet execution. |
-| `/markets/btc?product=DOWN` | Open Design BTC DOWN explanation/status page: product context and handoff CTA to `/primitives?type=DOWN`; no local quote, preflight, or wallet execution. |
-| `/markets/btc?product=RANGE` | Open Design BTC RANGE explanation/status page: interval concept and handoff CTA to `/primitives?type=RANGE`; no local quote, preflight, or wallet execution. |
+| `/` | Open Design landing page explaining BTC MOVE, UP, DOWN, RANGE, Testnet status, and CTAs to markets or verified fallback routes. |
+| `/markets` | Open Design market overview with BTC / DUSDC as the active market, BTC MOVE featured first, primitive product entry cards, and verified-app fallback CTAs for execution intent. |
+| `/markets/btc?product=MOVE` | Open Design BTC MOVE shared-machine page: active BTC market context, MOVE steps/blockers/actions, `Review in wallet` through the shared machine, and fallback CTA to `/buy/btc-move`. |
+| `/markets/btc?product=UP` | Open Design BTC UP shared-machine page: product context, mintable strike/quote/preflight/wallet steps from the shared machine, and fallback CTA to `/primitives?type=UP`. |
+| `/markets/btc?product=DOWN` | Open Design BTC DOWN shared-machine page: product context, mintable strike/quote/preflight/wallet steps from the shared machine, and fallback CTA to `/primitives?type=DOWN`. |
+| `/markets/btc?product=RANGE` | Open Design BTC RANGE shared-machine page: interval concept, mintable interval/quote/preflight/wallet steps from the shared machine, and fallback CTA to `/primitives?type=RANGE`. |
 | `/portfolio` | Open Design Portfolio presentation with summary cards, MOVE Receipts, Primitive Positions, recent local primitive activity, local/indexer limitations, and readback context. |
 | `/buy/btc-move` | Verified executable BTC MOVE route in `apps/deepvol-web`; Open Design CTAs can target this route directly or through `VITE_DEEPVOL_VERIFIED_APP_URL`. |
 | `/primitives?type=UP|DOWN|RANGE` | Verified executable primitive routes in `apps/deepvol-web`; Open Design CTAs can target these routes directly or through `VITE_DEEPVOL_VERIFIED_APP_URL`. |
@@ -131,7 +131,7 @@ The app no longer falls back to the historical configured VolSeries for new buys
 
 The current frontend keeps final `buy_move_receipt<DUSDC>` submission blocked until receipt preflight succeeds in the browser. DeepVol-9 replaces the old placeholder blocker with real `devInspect`-based receipt preflight and PredictManager DUSDC balance readback. The main gate checks that the manager balance can cover the expected premium and that the wallet has a sender-owned `Coin<DUSDC>` covering the Create Fee; these are separate balances. DeepVol-18-fix-2 also requires a recent mintability validation before a VolSeries can be `ready`; if receipt preflight still hits `predict::assert_mintable_ask::7`, the UI shows friendly non-mintable BTC MOVE copy instead of raw VM output as the primary message.
 
-DeepVol-33 previously added Open Design runtime input parity diagnostics around this same gate discipline as part of the now-superseded local execution parity work. MOVE, UP, DOWN, and RANGE mintability hooks built normalized runtime context before SDK candidate search, reset stale candidates when wallet/manager/market/anchor/grid inputs changed, and exposed collapsed diagnostics with candidate counts, quote/preflight pass counts, dominant failure, raw failure summary, Wallet DUSDC, and PredictManager DUSDC. Under DeepVol-37, those Open Design diagnostics are historical context only; Open Design no longer runs local mintability, quote, preflight, or SDK-facing candidate diagnostics.
+DeepVol-33 previously added Open Design runtime input parity diagnostics around this same gate discipline as part of local execution parity work. DeepVol-38 replaces local Open Design execution state with `@rangepilot/deepvol-trading-react`; MOVE, UP, DOWN, and RANGE diagnostics shown in Open Design must be read from `machine.diagnostics` and remain display-only.
 
 DeepVol-10 confirms this flow manually in the browser: `Run preflight` passed, browser wallet `buy_move_receipt<DUSDC>` execution succeeded, receipt `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb` was created, and the portfolio displayed it. See [DEEPVOL_BROWSER_BUY_VALIDATION.md](./DEEPVOL_BROWSER_BUY_VALIDATION.md).
 
@@ -213,6 +213,8 @@ The DeepVol frontend does not:
 Run these before treating the frontend as ready for review:
 
 ```bash
+npm --workspace packages/deepvol-trading-react run typecheck
+npm --workspace packages/deepvol-trading-react run test
 npm run typecheck:open-design
 npm run build:open-design
 npm --workspace apps/deepvol-open-design run test:open-design-ui
@@ -233,11 +235,11 @@ npm --workspace apps/deepvol-web run test:predict-manager-session
 npm --workspace apps/deepvol-web run test:portfolio-primitives
 ```
 
-Manual browser checks for `apps/deepvol-open-design/` should cover `/`, `/markets`, `/markets/btc`, `/markets/btc?product=MOVE`, `/markets/btc?product=UP`, `/markets/btc?product=DOWN`, `/markets/btc?product=RANGE`, `/portfolio`, verified CTA targets for MOVE/UP/DOWN/RANGE, visible handoff copy, visible focus states, responsive layouts at 375/768/1024/1440, no Open Design wallet prompt, no local PredictManager setup/funding, no local quote/preflight, no local VolSeries creation, no local buy/mint/redeem/deposit/withdraw controls, and absence of historical validation quote values as live quotes.
+Manual browser checks for `apps/deepvol-open-design/` should cover `/`, `/markets`, `/markets/btc`, `/markets/btc?product=MOVE`, `/markets/btc?product=UP`, `/markets/btc?product=DOWN`, `/markets/btc?product=RANGE`, `/portfolio`, shared-machine step/blocker/action rendering for MOVE/UP/DOWN/RANGE, verified fallback targets for MOVE/UP/DOWN/RANGE, visible shared-machine and fallback copy, visible focus states, responsive layouts at 375/768/1024/1440, no Open Design-local mintability/quote/preflight/wallet state machine, no synthesized pass states, no historical validation quote values as live quotes, and no wallet prompt unless a human intentionally clicks `Review in wallet`. Automated smoke must not click `Review in wallet` or approve wallet prompts.
 
 Manual browser checks for verified execution in `apps/deepvol-web/` should cover `/buy/btc-move`, `/primitives?type=UP`, `/primitives?type=DOWN`, `/primitives?type=RANGE`, disconnected wallet gating, wrong-network gating, wallet-scoped PredictManager restore, Create PredictManager CTA when missing, Advanced / Developer manual manager fallback collapsed by default, DUSDC balance/deposit visibility, Regenerate mintable range visibility, Create BTC MOVE Series disabled before mintability validation, validation-required/non-mintable series copy, explicit quote refresh, real receipt preflight pass/fail diagnostics, friendly `assert_mintable_ask::7` copy, explicit BTC MOVE copy, non-custodial receipt copy, disabled buy gating before preflight, enabled wallet review only after receipt preflight passes, UP/DOWN primitive execution gates, and RANGE mintable interval search and execution gates (pending Testnet validation).
 
-DeepVol-33 connected-wallet Runtime diagnostics acceptance was historical Open Design execution-parity verification. Under DeepVol-37, Open Design manual checks should confirm those diagnostics are not exposed as active local mintability, quote, preflight, or wallet-execution controls; verified execution diagnostics belong to `apps/deepvol-web/` checks only. Do not approve transaction prompts during diagnostics-only verification.
+DeepVol-33 connected-wallet Runtime diagnostics acceptance was historical Open Design execution-parity verification. Under DeepVol-38, Open Design manual checks should confirm diagnostics are rendered from shared `machine.diagnostics` only and do not compute or mutate gate state. Do not approve transaction prompts during diagnostics-only verification.
 
 DeepVol-11 browser guided redeem preflight verification should cover: portfolio receipt display, UP/DOWN position readback, redeem payout preview, explicit preflight action, local status labeling, and continued no-mainnet/no-withdraw/no-automatic-execution safety checks.
 

@@ -5,16 +5,17 @@ function readSource(path) {
   return existsSync(path) ? readFileSync(path, "utf8") : "";
 }
 
+const sharedRoot = "../../packages/deepvol-trading-react/src";
 const errorsSource = readSource("../../packages/sdk/src/deepbookPredict/errors.ts");
 const marketSource = readSource("../../packages/sdk/src/deepbookPredict/market.ts");
 const typeSource = readSource("../../packages/types/src/deepbookPredict.ts");
-const mintabilityLibSource = readSource("src/lib/moveSeriesMintability.ts");
-const mintabilityHookSource = readSource("src/hooks/useBtcMoveMintableRange.ts");
-const seriesHookSource = readSource("src/hooks/useActiveBtcMoveSeries.ts");
-const createHookSource = readSource("src/hooks/useCreateVolSeries.ts");
+const mintabilityLibSource = readSource(`${sharedRoot}/move/moveSeriesMintability.ts`);
+const mintabilityHookSource = readSource(`${sharedRoot}/move/useBtcMoveMintableRange.ts`);
+const seriesHookSource = readSource(`${sharedRoot}/move/useActiveBtcMoveSeries.ts`);
+const createHookSource = readSource(`${sharedRoot}/move/useCreateVolSeries.ts`);
 const buyPageSource = readSource("src/routes/BuyMovePage.tsx");
-const preflightSource = readSource("src/hooks/useDeepVolPreflight.ts");
-const buyGateSource = readSource("src/hooks/buyMoveReceiptGate.ts");
+const preflightSource = readSource(`${sharedRoot}/move/useDeepVolPreflight.ts`);
+const buyGateSource = readSource(`${sharedRoot}/move/buyMoveReceiptGate.ts`);
 const portfolioSource = readSource("src/routes/PortfolioPage.tsx");
 const primitivesSource = readSource("src/routes/PrimitiveQuotePage.tsx");
 

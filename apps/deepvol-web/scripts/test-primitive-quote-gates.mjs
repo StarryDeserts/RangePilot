@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 
-const gateSource = readFileSync("src/hooks/primitiveQuoteGate.ts", "utf8");
+const sharedRoot = "../../packages/deepvol-trading-react/src";
+const gateSource = readFileSync(`${sharedRoot}/primitives/primitiveQuoteGate.ts`, "utf8");
 const packageSource = readFileSync("package.json", "utf8");
 const routePath = "src/routes/PrimitiveQuotePage.tsx";
 const panelPath = "src/components/PrimitiveQuotePanel.tsx";
-const executionHookPath = "src/hooks/usePrimitiveWalletExecution.ts";
-const quoteHookPath = "src/hooks/usePrimitiveQuote.ts";
-const preflightHookPath = "src/hooks/usePrimitivePreflight.ts";
+const executionHookPath = `${sharedRoot}/primitives/usePrimitiveWalletExecution.ts`;
+const quoteHookPath = `${sharedRoot}/primitives/usePrimitiveQuote.ts`;
+const preflightHookPath = `${sharedRoot}/primitives/usePrimitivePreflight.ts`;
 
 for (const expected of [
   "Connect a Sui wallet before refreshing primitive quotes.",

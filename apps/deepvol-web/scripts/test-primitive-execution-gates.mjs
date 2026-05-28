@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const gateSource = readFileSync("src/hooks/primitiveQuoteGate.ts", "utf8");
-const executionSource = readFileSync("src/hooks/usePrimitiveWalletExecution.ts", "utf8");
-const storageSource = readFileSync("src/lib/deepVolPrimitiveStorage.ts", "utf8");
-const constantsSource = readFileSync("src/lib/constants.ts", "utf8");
+const sharedRoot = "../../packages/deepvol-trading-react/src";
+const gateSource = readFileSync(`${sharedRoot}/primitives/primitiveQuoteGate.ts`, "utf8");
+const executionSource = readFileSync(`${sharedRoot}/primitives/usePrimitiveWalletExecution.ts`, "utf8");
+const storageSource = readFileSync(`${sharedRoot}/primitives/deepVolPrimitiveStorage.ts`, "utf8");
+const constantsSource = readFileSync(`${sharedRoot}/core/constants.ts`, "utf8");
 const portfolioSource = readFileSync("src/routes/PortfolioPage.tsx", "utf8");
 const panelSource = readFileSync("src/components/PrimitiveQuotePanel.tsx", "utf8");
 const packageSource = readFileSync("package.json", "utf8");

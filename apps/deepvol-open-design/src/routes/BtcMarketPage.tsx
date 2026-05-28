@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { useActiveBtcPredictMarket } from "../hooks/useActiveBtcPredictMarket";
+import {
+  type DeepVolMachineAction,
+  type DeepVolMachineStep,
+  type DeepVolTradeMachine,
+  useActiveBtcPredictMarket,
+  useDownTradeMachine,
+  useMoveTradeMachine,
+  useRangeTradeMachine,
+  useUpTradeMachine,
+} from "@rangepilot/deepvol-trading-react";
 import { formatTimestampMs } from "../lib/format";
 import { type MarketProduct, verifiedTradingHref } from "../lib/productRoute";
 
@@ -456,13 +465,13 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
               </div>
             </div>
 
-            {/* RIGHT: Verified app handoff */}
+            {/* RIGHT: Shared verified state machine */}
             <div className="col-span-12 lg:col-span-4 glass p-0 overflow-hidden self-start">
               {/* Tabs */}
               <div className="px-6 pt-5 border-b hairline">
                 <div className="flex items-center justify-between mb-3 gap-3">
                   <h3 className="font-display text-lg text-white">Product action</h3>
-                  <span className="chip">VERIFIED APP</span>
+                  <span className="chip">SHARED MACHINE</span>
                 </div>
                 <div className="flex items-center gap-6 overflow-x-auto pb-1">
                   {tabs.map((t) => (
@@ -486,70 +495,12 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
                 </div>
               </div>
 
-              <div className="p-6 space-y-5">
-                <div className="rounded-2xl border border-aqua-400/25 bg-aqua-400/[0.06] p-4">
-                  <div className="label text-aqua-200">Verified execution</div>
-                  <p className="mt-2 text-sm text-ink-mid leading-relaxed">
-                    Trading execution is handled by the verified DeepVol app.
-                  </p>
-                </div>
-
-                <div>
-                  <div className="label">
-                    {activeTab === "MOVE" ? "Packaged volatility" : "Predict primitive"}
-                  </div>
-                  <h3 className="mt-2 font-display text-2xl text-white">
-                    {productCopy[activeTab].title}
-                  </h3>
-                  <p className="mt-2 text-sm text-ink-mid leading-relaxed">
-                    {productCopy[activeTab].description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="glass-inner p-3">
-                    <div className="label">Market status</div>
-                    <div className="mt-1.5 text-white">{market.statusLabel}</div>
-                  </div>
-                  <div className="glass-inner p-3">
-                    <div className="label">Expiry</div>
-                    <div className="mt-1.5 font-mono text-white">
-                      {expiryDisplay ?? "TBD"}
-                    </div>
-                  </div>
-                  <div className="glass-inner p-3 col-span-2">
-                    <div className="label">Reference range</div>
-                    <div className="mt-1.5 font-mono text-white">
-                      {market.market?.suggestedDownStrike ?? "TBD"} &#8212; {market.market?.suggestedUpStrike ?? "TBD"}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="label">High-level verified flow</div>
-                  <ol className="mt-3 space-y-2">
-                    {productCopy[activeTab].flow.map((step, index) => (
-                      <li key={step} className="flex items-center gap-3 text-sm text-ink-mid">
-                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-[11px] text-white">
-                          {index + 1}
-                        </span>
-                        <span>{step}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-
-                <a
-                  href={verifiedTradingHref(activeTab)}
-                  className="bg-cta block w-full rounded-2xl py-4 text-center font-medium text-white shadow-cta ring-aqua"
-                >
-                  {productCopy[activeTab].cta}
-                </a>
-
-                <p className="text-xs text-ink-low leading-relaxed">
-                  Testnet only. No wallet action is initiated from this Open Design page.
-                </p>
-              </div>
+              <ProductActionPanel
+                product={activeTab}
+                marketStatusLabel={market.statusLabel}
+                expiryDisplay={expiryDisplay}
+                referenceRange={`${market.market?.suggestedDownStrike ?? "TBD"} — ${market.market?.suggestedUpStrike ?? "TBD"}`}
+              />
             </div>
           </div>
         </div>
@@ -737,4 +688,267 @@ export function BtcMarketPage({ navigate, defaultProduct = "MOVE" }: Props) {
       </footer>
     </>
   );
+}
+
+type ProductMachinePanelProps = {
+  marketStatusLabel: string;
+  expiryDisplay: string | null;
+  referenceRange: string;
+};
+
+function ProductActionPanel({
+  product,
+  marketStatusLabel,
+  expiryDisplay,
+  referenceRange,
+}: ProductMachinePanelProps & { product: Product }) {
+  const props = { marketStatusLabel, expiryDisplay, referenceRange };
+
+  switch (product) {
+    case "MOVE":
+      return <MoveActionPanel {...props} />;
+    case "UP":
+      return <UpActionPanel {...props} />;
+    case "DOWN":
+      return <DownActionPanel {...props} />;
+    case "RANGE":
+      return <RangeActionPanel {...props} />;
+  }
+}
+
+function MoveActionPanel(props: ProductMachinePanelProps) {
+  const machine = useMoveTradeMachine();
+  return <MachineActionCard product="MOVE" machine={machine} {...props} />;
+}
+
+function UpActionPanel(props: ProductMachinePanelProps) {
+  const machine = useUpTradeMachine();
+  return <MachineActionCard product="UP" machine={machine} {...props} />;
+}
+
+function DownActionPanel(props: ProductMachinePanelProps) {
+  const machine = useDownTradeMachine();
+  return <MachineActionCard product="DOWN" machine={machine} {...props} />;
+}
+
+function RangeActionPanel(props: ProductMachinePanelProps) {
+  const machine = useRangeTradeMachine();
+  return <MachineActionCard product="RANGE" machine={machine} {...props} />;
+}
+
+function MachineActionCard({
+  product,
+  machine,
+  marketStatusLabel,
+  expiryDisplay,
+  referenceRange,
+}: {
+  product: Product;
+  machine: DeepVolTradeMachine;
+  marketStatusLabel: string;
+  expiryDisplay: string | null;
+  referenceRange: string;
+}) {
+  const reviewAction = machine.actions.reviewInWallet;
+  const reviewDisabled = machine.blockers.length > 0 || !reviewAction || reviewAction.disabled;
+  const prepActionIds = machinePrepActionIds(product);
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="rounded-2xl border border-aqua-400/25 bg-aqua-400/[0.06] p-4">
+        <div className="label text-aqua-200">Shared verified execution</div>
+        <p className="mt-2 text-sm text-ink-mid leading-relaxed">
+          Open Design direct controls use the shared verified trading state machine. Trading execution is handled by the verified DeepVol app.
+        </p>
+      </div>
+
+      <div>
+        <div className="label">
+          {product === "MOVE" ? "Packaged volatility" : "Predict primitive"}
+        </div>
+        <h3 className="mt-2 font-display text-2xl text-white">
+          {productCopy[product].title}
+        </h3>
+        <p className="mt-2 text-sm text-ink-mid leading-relaxed">
+          {productCopy[product].description}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="glass-inner p-3">
+          <div className="label">Machine status</div>
+          <div className="mt-1.5 text-white">{machine.status}</div>
+        </div>
+        <div className="glass-inner p-3">
+          <div className="label">Market status</div>
+          <div className="mt-1.5 text-white">{marketStatusLabel}</div>
+        </div>
+        <div className="glass-inner p-3">
+          <div className="label">Expiry</div>
+          <div className="mt-1.5 font-mono text-white">{expiryDisplay ?? "TBD"}</div>
+        </div>
+        <div className="glass-inner p-3">
+          <div className="label">Reference range</div>
+          <div className="mt-1.5 font-mono text-white">{referenceRange}</div>
+        </div>
+      </div>
+
+      <div>
+        <div className="label">Verified state-machine steps</div>
+        <ol className="mt-3 space-y-2">
+          {machine.steps.map((step, index) => (
+            <MachineStepRow key={step.id} step={step} index={index} />
+          ))}
+        </ol>
+      </div>
+
+      {machine.blockers.length > 0 && (
+        <div className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] p-4">
+          <div className="label text-amber-100">Blockers</div>
+          <ul className="mt-2 space-y-1 text-sm text-ink-mid">
+            {machine.blockers.map((blocker, index) => (
+              <li key={`${blocker}-${index}`}>• {blocker}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        {prepActionIds.map((actionId) => (
+          <MachineActionButton key={actionId} action={machine.actions[actionId]} />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        disabled={reviewDisabled}
+        onClick={() => void reviewAction?.run()}
+        className="bg-cta block w-full rounded-2xl py-4 text-center font-medium text-white shadow-cta ring-aqua disabled:cursor-not-allowed disabled:opacity-45"
+      >
+        Review in wallet
+      </button>
+
+      <a
+        href={verifiedTradingHref(product)}
+        className="block w-full rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-center text-sm font-medium text-white hover:border-aqua-400/40 ring-aqua"
+      >
+        Open verified DeepVol app
+      </a>
+
+      <MachineDiagnostics diagnostics={machine.diagnostics} />
+
+      <p className="text-xs text-ink-low leading-relaxed">
+        Testnet only. Automated smoke must not click wallet review or approve wallet prompts.
+      </p>
+    </div>
+  );
+}
+
+function MachineStepRow({ step, index }: { step: DeepVolMachineStep; index: number }) {
+  return (
+    <li className="flex items-start gap-3 text-sm text-ink-mid">
+      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-[11px] text-white">
+        {index + 1}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-white">{step.label}</span>
+          <span className={`pill text-[10px] ${stepToneClass(step.status)}`}>{step.status}</span>
+        </span>
+        {step.detail && <span className="mt-1 block break-words text-xs text-ink-low">{step.detail}</span>}
+      </span>
+    </li>
+  );
+}
+
+function MachineActionButton({ action }: { action: DeepVolMachineAction | undefined }) {
+  if (!action) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={action.disabled}
+      onClick={() => void action.run()}
+      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs text-white hover:border-aqua-400/40 disabled:cursor-not-allowed disabled:opacity-45"
+    >
+      {action.label}
+    </button>
+  );
+}
+
+function MachineDiagnostics({ diagnostics }: { diagnostics: Record<string, unknown> }) {
+  return (
+    <details className="group glass-inner p-4">
+      <summary className="label cursor-pointer select-none flex items-center gap-2 hover:text-ink-mid">
+        <span className="transition-transform group-open:rotate-90">&rsaquo;</span>
+        Runtime diagnostics
+      </summary>
+      <div className="mt-3 space-y-2 text-[11px] text-ink-mid">
+        {Object.entries(diagnostics).map(([key, value]) => (
+          <div key={key} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="label">{key}</div>
+            <div className="mt-1 break-all font-mono text-white">{formatDiagnosticValue(value)}</div>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function machinePrepActionIds(product: Product): string[] {
+  if (product === "MOVE") {
+    return ["refreshActiveMarket", "generateMintableRange", "createOrSelectVolSeries", "refreshQuote", "runPreflight"];
+  }
+
+  if (product === "RANGE") {
+    return ["refreshActiveMarket", "generateMintableInterval", "refreshQuote", "runPreflight"];
+  }
+
+  return ["refreshActiveMarket", "generateMintableStrike", "refreshQuote", "runPreflight"];
+}
+
+function stepToneClass(status: DeepVolMachineStep["status"]): string {
+  switch (status) {
+    case "passed":
+      return "pill-pass";
+    case "active":
+      return "pill-live";
+    case "blocked":
+    case "failed":
+      return "pill-fail";
+    case "pending":
+      return "pill-idle";
+  }
+}
+
+function formatDiagnosticValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "None";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+
+  try {
+    return JSON.stringify(value, (_key, nestedValue) => {
+      if (typeof nestedValue === "bigint") {
+        return nestedValue.toString();
+      }
+
+      if (typeof nestedValue === "function") {
+        return "[function]";
+      }
+
+      return nestedValue;
+    });
+  } catch {
+    return String(value);
+  }
 }

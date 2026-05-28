@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
+const appSource = readFileSync("src/App.tsx", "utf8");
 const marketsSource = readFileSync("src/routes/MarketsPage.tsx", "utf8");
 const primitiveCardsSource = readFileSync("src/components/PredictPrimitiveCards.tsx", "utf8");
 const portfolioSource = readFileSync("src/routes/PortfolioPage.tsx", "utf8");
@@ -26,14 +27,12 @@ assert.match(
   /UP and DOWN open wallet-gated primitive terminals\. RANGE remains quote\/preflight-only\./,
   "Primitive cards must describe DeepVol-15 primitive execution policy",
 );
-assert.match(primitiveCardsSource, /\/primitives\?type=UP/, "UP card must link to primitive terminal route");
-assert.match(primitiveCardsSource, /\/primitives\?type=DOWN/, "DOWN card must link to primitive terminal route");
-assert.match(primitiveCardsSource, /\/primitives\?type=RANGE/, "RANGE card must link to primitive terminal route");
 assert.doesNotMatch(
   primitiveCardsSource,
   /disabled>/,
   "Primitive card CTAs must not use obsolete preview-only disabled buttons",
 );
+assert.match(appSource, /\/primitives/, "Legacy primitive route must remain supported");
 assert.match(
   primitiveCardsSource,
   /Trade BTC MOVE receipt/,

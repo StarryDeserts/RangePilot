@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const gateSource = readFileSync("src/hooks/primitiveQuoteGate.ts", "utf8");
-const hookSource = readFileSync("src/hooks/usePrimitiveMintableStrike.ts", "utf8");
+const sharedRoot = "../../packages/deepvol-trading-react/src";
+const gateSource = readFileSync(`${sharedRoot}/primitives/primitiveQuoteGate.ts`, "utf8");
+const hookSource = readFileSync(`${sharedRoot}/primitives/usePrimitiveMintableStrike.ts`, "utf8");
 const routeSource = readFileSync("src/routes/PrimitiveQuotePage.tsx", "utf8");
-const cacheSource = readFileSync("src/lib/primitiveMintability.ts", "utf8");
-const constantsSource = readFileSync("src/lib/constants.ts", "utf8");
+const cacheSource = readFileSync(`${sharedRoot}/primitives/primitiveMintability.ts`, "utf8");
+const constantsSource = readFileSync(`${sharedRoot}/core/constants.ts`, "utf8");
 const errorsSource = readFileSync("../../packages/sdk/src/deepbookPredict/errors.ts", "utf8");
 const sdkSource = readFileSync("../../packages/sdk/src/deepbookPredict/primitiveMintability.ts", "utf8");
 const typesSource = readFileSync("../../packages/types/src/deepbookPredict.ts", "utf8");
@@ -83,8 +84,8 @@ assert.ok(
   "cache key must include strike",
 );
 assert.ok(
-  cacheSource.includes("5 * 60 * 1000"),
-  "cache TTL must be 5 minutes",
+  cacheSource.includes("DEEPVOL_MINTABILITY_PASS_TTL_MS"),
+  "cache TTL must use the shared 5-minute mintability TTL",
 );
 
 for (const status of ["passedRecent", "nonMintable", "expiredValidation", "validationRequired"]) {
@@ -219,7 +220,7 @@ assert.ok(
 
 // --- Execution hook wiring ---
 
-const executionSource = readFileSync("src/hooks/usePrimitiveWalletExecution.ts", "utf8");
+const executionSource = readFileSync(`${sharedRoot}/primitives/usePrimitiveWalletExecution.ts`, "utf8");
 assert.ok(
   executionSource.includes("primitiveMintabilityStatus"),
   "execution hook must accept primitiveMintabilityStatus parameter",

@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node", "react"]
+  },
+  "include": ["src/**/*.ts"]
+}

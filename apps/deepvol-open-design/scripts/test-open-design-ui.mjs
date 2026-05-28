@@ -80,17 +80,20 @@ assert("TradeTabs has RANGE tab", tradeTabs.includes("RANGE"));
 console.log("\nVerified app fallback boundary:");
 const btcMarket = fileContent("routes/BtcMarketPage.tsx");
 const productRoute = fileContent("lib/productRoute.ts");
+const packageJson = readFileSync(join(ROOT, "package.json"), "utf-8");
 assert("productRoute exports verifiedTradingHref", productRoute.includes("verifiedTradingHref"));
 assert("productRoute supports verified app base env", productRoute.includes("VITE_DEEPVOL_VERIFIED_APP_URL"));
 assert("verified MOVE route targets old app", productRoute.includes('MOVE: "/buy/btc-move"'));
 assert("verified UP route targets old app", productRoute.includes('UP: "/primitives?type=UP"'));
 assert("verified DOWN route targets old app", productRoute.includes('DOWN: "/primitives?type=DOWN"'));
 assert("verified RANGE route targets old app", productRoute.includes('RANGE: "/primitives?type=RANGE"'));
+assert("Open Design depends on shared trading package", packageJson.includes('"@rangepilot/deepvol-trading-react"'));
+assert("BtcMarketPage imports shared trading machines", btcMarket.includes("@rangepilot/deepvol-trading-react") && btcMarket.includes("useMoveTradeMachine") && btcMarket.includes("useUpTradeMachine") && btcMarket.includes("useDownTradeMachine") && btcMarket.includes("useRangeTradeMachine"));
 assert("BtcMarketPage imports verified trading helper", btcMarket.includes("verifiedTradingHref"));
-assert("BtcMarketPage does not use PredictManager session", !btcMarket.includes("usePredictManagerSession"));
 assert("BtcMarketPage does not render PredictManager setup", !btcMarket.includes("<PredictManagerSetup"));
-assert("BtcMarketPage explains verified app execution", btcMarket.includes("Trading execution is handled by the verified DeepVol app."));
-assert("BtcMarketPage states no Open Design wallet action", btcMarket.includes("No wallet action is initiated from this Open Design page."));
+assert("BtcMarketPage explains shared verified execution", btcMarket.includes("Open Design direct controls use the shared verified trading state machine."));
+assert("BtcMarketPage keeps verified app execution fallback copy", btcMarket.includes("Trading execution is handled by the verified DeepVol app."));
+assert("BtcMarketPage warns automated smoke not to review wallet", btcMarket.includes("Automated smoke must not click wallet review"));
 
 // ── PredictManager setup remains legacy-only ──
 console.log("\nPredictManager setup legacy component:");
@@ -202,8 +205,8 @@ assert(
   isolationClean,
 );
 
-// ── DeepVol-37: verified app handoff replaces direct execution ──
-console.log("\nVerified app handoff (DeepVol-37):");
+// ── DeepVol-38: shared machine direct controls with verified app fallback ──
+console.log("\nShared machine execution boundary (DeepVol-38):");
 const landingPage = fileContent("routes/LandingPage.tsx");
 const marketsPage = fileContent("routes/MarketsPage.tsx");
 const portfolioPage = fileContent("routes/PortfolioPage.tsx");
@@ -212,12 +215,14 @@ assert("MarketsPage uses verified trading CTA", marketsPage.includes("verifiedTr
 assert("PortfolioPage uses verified trading CTA", portfolioPage.includes("verifiedTradingHref"));
 assert("BtcMarketPage keeps product tabs", btcMarket.includes("MOVE") && btcMarket.includes("UP") && btcMarket.includes("DOWN") && btcMarket.includes("RANGE"));
 assert("BtcMarketPage keeps active market status", btcMarket.includes("market.statusLabel") && btcMarket.includes("expiryDisplay"));
-assert("BtcMarketPage keeps high-level verified flow", btcMarket.includes("High-level verified flow"));
-assert("BtcMarketPage uses verified CTA for active product", btcMarket.includes("href={verifiedTradingHref(activeTab)}"));
-assert("BtcMarketPage no longer renders execution diagnostics", !btcMarket.includes("<TradeRuntimeDiagnostics"));
-assert("BtcMarketPage no longer exposes mintability controls", !btcMarket.includes("Generate mintable") && !btcMarket.includes("Validate mintable"));
-assert("BtcMarketPage no longer exposes quote or preflight controls", !btcMarket.includes("Quote") || btcMarket.includes("High-level verified flow"));
-assert("BtcMarketPage no longer exposes wallet buy controls", !btcMarket.includes("Buy ") && !btcMarket.includes("Mint BTC MOVE"));
+assert("BtcMarketPage renders shared machine steps", btcMarket.includes("Verified state-machine steps") && btcMarket.includes("machine.steps"));
+assert("BtcMarketPage wires Review in wallet to shared action", btcMarket.includes("Review in wallet") && btcMarket.includes("machine.actions.reviewInWallet") && btcMarket.includes("reviewAction?.run()"));
+assert("BtcMarketPage gates Review in wallet on blockers and action state", btcMarket.includes("machine.blockers.length > 0") && btcMarket.includes("reviewAction.disabled"));
+assert("BtcMarketPage keeps verified CTA fallback for selected product", btcMarket.includes("href={verifiedTradingHref(product)}"));
+assert("BtcMarketPage renders display-only execution diagnostics", btcMarket.includes("<MachineDiagnostics") && btcMarket.includes("diagnostics={machine.diagnostics}"));
+assert("BtcMarketPage does not import Open Design local execution hooks", !btcMarket.includes("../hooks/useBtcMoveMintableRange") && !btcMarket.includes("../hooks/usePrimitiveMintableStrike") && !btcMarket.includes("../hooks/usePrimitiveMintableRange") && !btcMarket.includes("../hooks/useDeepVolQuote") && !btcMarket.includes("../hooks/useDeepVolPreflight") && !btcMarket.includes("../hooks/usePrimitivePreflight") && !btcMarket.includes("../hooks/usePrimitiveWalletExecution"));
+assert("BtcMarketPage exposes shared prep actions without faking pass state", btcMarket.includes("generateMintableRange") && btcMarket.includes("generateMintableStrike") && btcMarket.includes("generateMintableInterval") && !btcMarket.includes('status: "passed"'));
+assert("BtcMarketPage no longer renders legacy direct execution panels", !btcMarket.includes("<MoveExecutionPanel") && !btcMarket.includes("<BinaryPrimitiveExecutionPanel") && !btcMarket.includes("<RangeExecutionPanel"));
 assert("Fallback CTAs mention verified app", btcMarket.includes("verified DeepVol app") && landingPage.includes("verified DeepVol app") && marketsPage.includes("verified DeepVol app") && portfolioPage.includes("verified DeepVol app"));
 assert("Primitive fallback CTAs cover UP/DOWN/RANGE", portfolioPage.includes('"UP", "DOWN", "RANGE"') && productRoute.includes('UP: "/primitives?type=UP"') && productRoute.includes('DOWN: "/primitives?type=DOWN"'));
 assert("Legacy binary and range panels remain product-isolated", !binaryPanel.includes("BTC MOVE range") && !rangePanel.includes("BTC MOVE range"));

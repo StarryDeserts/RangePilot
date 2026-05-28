@@ -6,11 +6,12 @@ function readExisting(path) {
   return readFileSync(path, "utf8");
 }
 
+const sharedRoot = "../../packages/deepvol-trading-react/src";
 const packageSource = readExisting("package.json");
-const storageSource = readExisting("src/lib/predictManagerStorage.ts");
-const sessionSource = readExisting("src/hooks/usePredictManagerSession.ts");
+const storageSource = readExisting(`${sharedRoot}/predictManager/predictManagerStorage.ts`);
+const sessionSource = readExisting(`${sharedRoot}/predictManager/usePredictManagerSession.ts`);
 const deepVolManagerSource = readExisting("src/hooks/useDeepVolPredictManager.ts");
-const primitiveStorageSource = readExisting("src/lib/deepVolPrimitiveStorage.ts");
+const primitiveStorageSource = readExisting(`${sharedRoot}/primitives/deepVolPrimitiveStorage.ts`);
 const setupCardSource = readExisting("src/components/PredictManagerSetupCard.tsx");
 const buyMoveSource = readExisting("src/routes/BuyMovePage.tsx");
 const primitiveRouteSource = readExisting("src/routes/PrimitiveQuotePage.tsx");
@@ -25,7 +26,7 @@ for (const expected of [
   "writeStoredPredictManagerSession",
   "clearStoredPredictManagerSession",
   "normalizeStoredPredictManagerSession",
-  "DEEPVOL_STORAGE_KEYS.predictManager",
+  "DEFAULT_PREDICT_MANAGER_STORAGE_PREFIX",
   "walletAddress",
   "predictManagerId",
   "createdDigest",

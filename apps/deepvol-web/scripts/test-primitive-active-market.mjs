@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const hookSource = readFileSync("src/hooks/useActiveBtcPredictMarket.ts", "utf8");
+const sharedRoot = "../../packages/deepvol-trading-react/src";
+const hookSource = readFileSync(`${sharedRoot}/market/useActiveBtcPredictMarket.ts`, "utf8");
 const routeSource = readFileSync("src/routes/PrimitiveQuotePage.tsx", "utf8");
 const readbackSource = readFileSync("src/hooks/usePrimitivePositionReadback.ts", "utf8");
 const errorsSource = readFileSync("../../packages/sdk/src/deepbookPredict/errors.ts", "utf8");
-const preflightSource = readFileSync("src/hooks/usePrimitivePreflight.ts", "utf8");
-const executionSource = readFileSync("src/hooks/usePrimitiveWalletExecution.ts", "utf8");
+const preflightSource = readFileSync(`${sharedRoot}/primitives/usePrimitivePreflight.ts`, "utf8");
+const executionSource = readFileSync(`${sharedRoot}/primitives/usePrimitiveWalletExecution.ts`, "utf8");
 
 for (const expected of [
   "const canDiscover = Boolean(wallet.address && wallet.isTestnet);",

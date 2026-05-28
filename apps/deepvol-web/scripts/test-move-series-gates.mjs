@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const seriesHookSource = readFileSync("src/hooks/useActiveBtcMoveSeries.ts", "utf8");
-const createHookSource = readFileSync("src/hooks/useCreateVolSeries.ts", "utf8");
+const sharedRoot = "../../packages/deepvol-trading-react/src";
+const seriesHookSource = readFileSync(`${sharedRoot}/move/useActiveBtcMoveSeries.ts`, "utf8");
+const createHookSource = readFileSync(`${sharedRoot}/move/useCreateVolSeries.ts`, "utf8");
 const buyPageSource = readFileSync("src/routes/BuyMovePage.tsx", "utf8");
-const quoteHookSource = readFileSync("src/hooks/useDeepVolQuote.ts", "utf8");
+const quoteHookSource = readFileSync(`${sharedRoot}/move/useDeepVolQuote.ts`, "utf8");
 const marketSource = readFileSync("../../packages/sdk/src/deepbookPredict/market.ts", "utf8");
-const constantsSource = readFileSync("src/lib/constants.ts", "utf8");
+const constantsSource = readFileSync(`${sharedRoot}/core/constants.ts`, "utf8");
 
 // --- useActiveBtcMoveSeries assertions ---
 

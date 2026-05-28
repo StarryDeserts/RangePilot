@@ -1,7 +1,7 @@
 ---
 Purpose: Document the DeepVol-28 Open Design frontend rewrite as a standalone app.
 Audience: Developers, product contributors, reviewers, and AI agents.
-Status: DeepVol-37 makes `apps/deepvol-open-design/` a presentation and verified-app handoff surface. It preserves landing, markets, BTC product explanation/status, and portfolio readback, but executable trading remains in the verified `apps/deepvol-web/` app. Earlier direct-execution parity work is historical context, not the active Open Design execution path.
+Status: DeepVol-38 makes `apps/deepvol-open-design/` a view layer over `@rangepilot/deepvol-trading-react`. It preserves landing, markets, BTC product explanation/status, and portfolio readback while direct controls render shared-machine steps, blockers, diagnostics, and wallet-review actions. The DeepVol-37 verified-app handoff remains a secondary fallback.
 Source of truth relationship: Companion to DEEPVOL_FRONTEND_MVP.md; records the Open Design rewrite rationale, architecture, and boundaries.
 ---
 
@@ -71,14 +71,21 @@ Tailwind v4 `@theme` tokens extracted from the HTML mockups:
 
 ## Logic reuse boundaries
 
-**Copied verbatim** (zero UI imports, resolved via root tsconfig path aliases):
-- `src/hooks/` — 25 headless React hooks
-- `src/lib/` — 9 pure utility files
+**Shared execution state**:
+- `@rangepilot/deepvol-trading-react` supplies the MOVE / UP / DOWN / RANGE headless trade machines.
+- Open Design product tabs render `machine.steps`, `machine.blockers`, `machine.actions`, `machine.diagnostics`, and `machine.result`.
+- Open Design must not maintain separate mintability, quote, preflight, wallet execution, PredictManager session, or portfolio readback state machines.
 
 **Allowed runtime dependencies** (shared packages):
+- `@rangepilot/deepvol-trading-react`
 - `@rangepilot/sdk/*`
 - `@rangepilot/types/*`
 - `@rangepilot/config/*`
+
+**App-local responsibilities**:
+- Route parsing and product-tab selection
+- Visual layout, copy, design tokens, and responsive behavior
+- Verified-app fallback links through `verifiedTradingHref(product)`
 
 **Forbidden runtime imports**:
 - `apps/deepvol-web/src/components/**`
@@ -86,13 +93,15 @@ Tailwind v4 `@theme` tokens extracted from the HTML mockups:
 - `apps/deepvol-web/src/App.tsx`
 - `apps/deepvol-web/src/routes/**`
 
-## Verified execution handoff
+## Shared-machine execution and verified fallback
 
-DeepVol-37 stops exposing local Open Design trading execution. `apps/deepvol-web/` is the verified executable trading app for BTC MOVE and primitives. `apps/deepvol-open-design/` keeps product education, market/status context, and portfolio readback presentation, then sends execution-intent CTAs to verified app routes.
+DeepVol-38 restores Open Design direct controls only through `@rangepilot/deepvol-trading-react`. The primary BTC product action is `Review in wallet`, wired to `machine.actions.reviewInWallet.run`, and it must stay disabled whenever the shared machine reports blockers or the action is disabled.
 
-`VITE_DEEPVOL_VERIFIED_APP_URL` may point Open Design CTAs at a deployed verified app host. The value is trimmed of a trailing slash before route concatenation. If unset, CTAs use relative paths. Same-origin relative paths assume hosting/routing sends those paths to the verified `apps/deepvol-web/` app; if they resolve inside Open Design, compatibility routes remain non-executing presentation pages.
+Open Design renders shared-machine preparation actions for active-market refresh, mintability generation, quote refresh, preflight, and wallet review. It must not synthesize pass states or bypass quote, preflight, mintability, manager-balance, or wallet gates.
 
-Verified trading route mapping:
+The DeepVol-37 verified-app handoff remains a secondary/emergency fallback. `VITE_DEEPVOL_VERIFIED_APP_URL` may point fallback CTAs at a deployed verified app host. The value is trimmed of a trailing slash before route concatenation. If unset, CTAs use relative paths. Same-origin relative paths assume hosting/routing sends those paths to the verified `apps/deepvol-web/` app; if they resolve inside Open Design, compatibility routes should still use the shared machines and fallback controls.
+
+Verified fallback route mapping:
 
 | Product | Verified app path |
 |---|---|
@@ -101,17 +110,17 @@ Verified trading route mapping:
 | DOWN | `/primitives?type=DOWN` |
 | RANGE | `/primitives?type=RANGE` |
 
-The BTC market page must state that trading execution is handled by the verified DeepVol app and that no wallet action is initiated from Open Design.
+The BTC market page must state that Open Design direct controls use the shared verified trading state machine and that trading execution can still be opened in the verified DeepVol app.
 
 ## What the verified app remains for
 
 `apps/deepvol-web/` is preserved as:
 
-- Verified executable trading app and state machine
-- Logic reference for hook behavior and SDK integration patterns
+- Verified executable trading app and validation surface
+- Compatibility UI over the shared `@rangepilot/deepvol-trading-react` hooks
 - Historical Testnet validation evidence (browser buy, redeem, primitive execution)
 
-It is not the Open Design presentation surface.
+It is not the Open Design presentation surface, and Open Design must not fork its own transaction state from it.
 
 ## DeepVol-29: Historical execution parity
 
@@ -127,7 +136,7 @@ Wallet prompt only appears when all gates pass. No static fake buttons.
 
 Execution panels: `MoveExecutionPanel`, `BinaryPrimitiveExecutionPanel`, `RangeExecutionPanel`, `WalletActionButton` (shared).
 
-DeepVol-37 supersedes this as an active Open Design path: those local execution panels, wallet prompts, PredictManager setup/funding, quote, preflight, VolSeries creation, mint, redeem, deposit, and withdraw controls are historical context for why the handoff boundary exists.
+DeepVol-38 supersedes those local implementations as an active Open Design path: direct controls now come from `@rangepilot/deepvol-trading-react`, and the old local execution panels, wallet prompts, PredictManager setup/funding, quote, preflight, VolSeries creation, mint, redeem, deposit, and withdraw controls remain historical context for why the shared-machine boundary exists.
 
 Landing page blank section fixed (`.reveal` CSS default visibility changed from hidden to visible).
 
@@ -220,13 +229,14 @@ See [DEEPVOL_OLD_UI_TRADING_STATE_MACHINE.md](./DEEPVOL_OLD_UI_TRADING_STATE_MAC
 |-------|----------|
 | `npm run typecheck:open-design` | Pass |
 | `npm run build:open-design` | Pass |
-| `npm --workspace apps/deepvol-open-design run test:open-design-ui` | Pass, including verified-app handoff boundary assertions |
+| `npm --workspace apps/deepvol-open-design run test:open-design-ui` | Pass, including shared-machine and fallback boundary assertions |
 | Browser smoke (all routes) | Landing, markets, BTC products, and portfolio render without console errors |
 | Responsive 375px | Columns stack, no overflow |
 | Import isolation | No forbidden imports from `apps/deepvol-web` UI or CSS |
-| MOVE verified CTA | Uses `/buy/btc-move`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
-| UP verified CTA | Uses `/primitives?type=UP`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
-| DOWN verified CTA | Uses `/primitives?type=DOWN`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
-| RANGE verified CTA | Uses `/primitives?type=RANGE`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
-| Open Design wallet boundary | No local wallet prompt, PredictManager setup/funding, quote, preflight, VolSeries creation, mint, redeem, deposit, or withdraw control is exposed |
-| BTC market copy | States that trading execution is handled by the verified DeepVol app and no wallet action is initiated from Open Design |
+| Shared package dependency | Open Design imports product machines from `@rangepilot/deepvol-trading-react` |
+| MOVE fallback CTA | Uses `/buy/btc-move`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| UP fallback CTA | Uses `/primitives?type=UP`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| DOWN fallback CTA | Uses `/primitives?type=DOWN`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| RANGE fallback CTA | Uses `/primitives?type=RANGE`, optionally prefixed by `VITE_DEEPVOL_VERIFIED_APP_URL` |
+| Open Design wallet boundary | `Review in wallet` is shared-machine-gated; automated smoke must not click it or approve wallet prompts |
+| BTC market copy | States that Open Design direct controls use the shared verified trading state machine and that the verified app fallback remains available |

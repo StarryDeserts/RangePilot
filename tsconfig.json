@@ -6,6 +6,7 @@
     "allowImportingTsExtensions": true,
     "lib": ["ES2022", "DOM"],
     "strict": true,
+    "skipLibCheck": true,
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
@@ -35,6 +36,9 @@
       ],
       "@rangepilot/sdk/rangePilotStrategy": [
         "packages/sdk/src/rangePilotStrategy/index.ts"
+      ],
+      "@rangepilot/deepvol-trading-react": [
+        "packages/deepvol-trading-react/src/index.ts"
       ]
     }
   },

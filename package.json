@@ -8,7 +8,8 @@
     "apps/deepvol-open-design",
     "packages/config",
     "packages/sdk",
-    "packages/types"
+    "packages/types",
+    "packages/deepvol-trading-react"
   ],
   "engines": {
     "node": ">=18"
