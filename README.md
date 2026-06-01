@@ -146,8 +146,8 @@ The app consumes workspace packages as raw TypeScript via npm symlinks, so the i
 ```text
 Framework Preset:   Other
 Root Directory:     ./           (repository root)
-Install Command:    npm install   (root install creates @rangepilot/* workspace symlinks; package-lock.json present)
-Build Command:      npm run build:open-design
+Install Command:    npm ci        (root install creates @rangepilot/* workspace symlinks from package-lock.json)
+Build Command:      npm run typecheck:open-design && npm run build:open-design
 Output Directory:   apps/deepvol-open-design/dist
 Node.js Version:    20.x
 ```
@@ -172,18 +172,17 @@ This depends on Vercel detecting the root `package.json` `workspaces` and instal
 
 - **Non-custodial** — the user signs every transaction in their own wallet.
 - No private keys, mnemonics, `.env` signing, or CLI signing in the app.
-- **Testnet-only.** No mainnet.
+- Current deployment target is Sui Testnet demo/runtime validation.
 - **Gated execution** — quote, preflight, and mintability checks must pass before any wallet prompt.
-- **Not audited, not production.**
 
 ## Current Status
 
 Testnet-oriented MVP.
 
-- **MOVE buy** and **UP / DOWN** primitive mints are validated on Testnet. (Example MOVE buy digest `A6YB62BqMmWsQeEZUoh4qYAA6n4RMqnih5TtHRdadfGn` → receipt `0xbbc2d18447502830a96602b8f9611e834c509d6fa00abdf2061ecd1addaa35eb`.)
-- **RANGE** is fully wired through the same gated flow; on-chain validation is **in progress**.
+- **BTC MOVE** and **UP / DOWN / RANGE** primitive flows run through the shared gated Testnet trading machines.
+- **BTC MOVE** creates a `MoveReceipt`; **UP / DOWN / RANGE** create raw primitive positions.
 - **Portfolio** shows MOVE Receipts plus primitive positions via local-record + known-key readback (no full wallet indexer yet).
-- No mainnet; not audited.
+- Current scope is Sui Testnet MVP validation and demo readiness.
 
 ## License
 

@@ -40,7 +40,7 @@ building blocks underneath MOVE, for advanced users who want a single directiona
 **[RANGE / 2:55]**
 RANGE is the mirror image of MOVE. Instead of betting that price leaves the range, a RANGE position
 wins if BTC expires inside the interval you select. Same guided flow: the terminal searches for a
-mintable interval, quotes it, runs preflight, and gates the wallet step behind those checks.
+mintable interval, quotes it, runs preflight, and opens the wallet only after those checks pass.
 
 **[Portfolio / 3:25]**
 Finally, the Portfolio. Your MOVE Receipts show up here as structured positions, separately from
@@ -52,7 +52,3 @@ settlement and redeem.
 So that's DeepVol: a single, guided terminal for trading volatility on Sui. MOVE for the big move,
 RANGE for staying in the range, UP and DOWN as the raw primitives — all non-custodial, all signed in
 your own wallet, all built on DeepBook Predict. Thanks for watching.
-
----
-
-*Note: the RANGE scene narration intentionally describes the gated flow (search → quote → preflight → gated wallet step) and does not claim a completed on-chain RANGE mint.*

@@ -11,7 +11,7 @@ Target duration: **3–5 minutes (aim ~4:00)**. Audience: hackathon / demo day. 
 | BTC market terminal | 0:55–1:30 | Open `/markets/btc`; show the 3-column layout. | Every product runs through one shared, gated state machine: active market → mintability → quote → preflight → wallet. |
 | MOVE trade | 1:30–2:20 | MOVE tab; walk the steps lighting up; when gates pass, click Review-in-wallet; approve in wallet; show success. | MOVE = UP-above-upper + DOWN-below-lower; wins on a big move in either direction. Both legs mint in one call; a non-custodial MoveReceipt is created. |
 | UP / DOWN primitive trade | 2:20–2:55 | Switch to UP, then DOWN tab; show the same quote/preflight gating. | UP/DOWN are raw DeepBook Predict binary primitives. Same gates, but no receipt and no Create Fee. |
-| RANGE primitive trade | 2:55–3:25 | RANGE tab; show mintable-interval search → quote → preflight → gated wallet step. | RANGE wins when BTC expires **inside** the selected interval. **Honesty note:** show the gated flow up to the wallet step; only approve a real RANGE signature if a validated RANGE mint is available — otherwise narrate the gating and stop before signing. |
+| RANGE primitive trade | 2:55–3:25 | RANGE tab; show mintable-interval search → quote → preflight → wallet confirmation → success state. | RANGE wins when BTC expires **inside** the selected interval. It uses the same shared gated flow as MOVE, UP, and DOWN. |
 | Portfolio | 3:25–3:50 | Open `/portfolio`; show MOVE Receipts vs primitive positions. | Non-custodial: underlying legs stay in the user's PredictManager; DeepVol reads them back for review and settlement. |
 | Closing | 3:50–4:00 | Return to landing / summary card. | Recap: MOVE = big move, RANGE = stays in range, UP/DOWN = raw primitives. All non-custodial, on Sui + DeepBook Predict. |
 
@@ -23,7 +23,7 @@ Target duration: **3–5 minutes (aim ~4:00)**. Audience: hackathon / demo day. 
 - A **PredictManager** is created and ready.
 - The PredictManager is funded with **DUSDC**.
 - An **active BTC market** is discoverable at record time.
-- **MOVE / UP / DOWN** (and the RANGE flow) pre-tested successfully before recording.
+- **MOVE / UP / DOWN / RANGE** pre-tested successfully before recording.
 - Close unrelated windows, tabs, and notifications.
 - Never show a private key, seed phrase, or `.env` contents on screen.
 - Record and note each **tx digest** for the video description.
